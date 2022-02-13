@@ -5,9 +5,10 @@ BASE_SUFFIX = '_base'
 
 def loadShipBaseImage(shipImageName, multiverseFolderpath):
     try:
-        return imageio.imread(multiverseFolderpath + '\\img\\ships_glow\\' + shipImageName + BASE_SUFFIX + '.png')
+        return imageio.imread(
+            multiverseFolderpath + '\\img\\ships_glow\\' + shipImageName + BASE_SUFFIX + '.png'), "ships_glow"
     except FileNotFoundError:
-        try: #TODO: refactor to ensure gibs are placed next to base image (or assume all player ships have gibs)
-            return imageio.imread(multiverseFolderpath + '\\img\\ship\\' + shipImageName + BASE_SUFFIX + '.png')
+        try:
+            return imageio.imread(multiverseFolderpath + '\\img\\ship\\' + shipImageName + BASE_SUFFIX + '.png'), "ship"
         except FileNotFoundError:
             print('No image found for shipBlueprint img attribute: %s' % shipImageName)
