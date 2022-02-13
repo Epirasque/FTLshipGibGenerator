@@ -2,15 +2,33 @@ from skimage.segmentation import slic
 import imageio
 import numpy as np
 
-def segment():
-    img = imageio.imread('mup_engi_a_base.png')
-    for nr_gibs in range(2+1, 6+1):
-        transparency_mask = (img[:,:,3] != 0)
-        segments = slic(img, n_segments=nr_gibs, compactness=0.7, max_num_iter=10, mask=transparency_mask)
+#TODO: remove shipImageName as parameter
+def segment(shipImage, shipImageName, nrGibs):
+    transparency_mask = (shipImage[:, :, 3] != 0)
+    nrSuccessfulGibs = 0
+    nrSegmentationAttempts = 0
+    compactnessToUse = 0.
+    while nrSuccessfulGibs < nrGibs and nrSegmentationAttempts < 10:
+        nrSegmentationAttempts += 1
+        compactnessToUse += 0.1
+        # TODO: parameter for max iterations of kmeans
+        segments = slic(shipImage, n_segments=nrGibs, compactness=compactnessToUse, max_num_iter=10,
+                        mask=transparency_mask)
+        nrSuccessfulGibs = segments.max()
+    if nrSuccessfulGibs < nrGibs:
+        print("FAILED generating gibs for %s" % shipImageName)
+    else:
+        print("Segmented with %u attempts with compactness of %f " % (nrSegmentationAttempts, compactnessToUse))
+        gibs = []
+        for gibId in range(1, nrGibs + 1):
+            matchingSegmentIndex = (segments == gibId)
+            gibImage = np.zeros(shipImage.shape, dtype=np.uint8)
+            gibImage[matchingSegmentIndex] = shipImage[matchingSegmentIndex]
+            gib = {}
+            gib['id'] = gibId
+            gib['img'] = gibImage
+            gibs.append(gib)
 
-        for gib_id in range(1, nr_gibs+1):
-            print('processing gib %u of %u' % (gib_id, nr_gibs))
-            idx = (segments == gib_id)
-            gib = np.zeros(img.shape, dtype=np.uint8)
-            gib[idx] = img[idx]
-            imageio.imsave('gibs/gib_total_of_' + str(nr_gibs) + '_part_' + str(gib_id) + '.png', gib)
+            # TODO: toggle to disable it here
+            imageio.imsave('gibs/' + shipImageName + '_gib_' + str(gibId) + '.png', gibImage)
+        return gibs
