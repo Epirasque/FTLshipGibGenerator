@@ -13,13 +13,18 @@ def loadShipLayout(shipLayoutName, multiverseFolderpath):
         print('No layout XML file found for shipBlueprint layout attribute: %s' % shipLayoutName)
 
 
-def saveShipLayout(layout, shipLayoutName, multiverseFolderpath):
+def saveShipLayout(layout, shipLayoutName, multiverseFolderpath, developerBackup):
     filepath = multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml'
     ET.ElementTree(layout).write(filepath, encoding='utf-8', xml_declaration=True)
     removeRootNode(filepath)
+    if developerBackup == True:
+        developerBackupFilepath = 'layouts/' + shipLayoutName + '.xml'
+        ET.ElementTree(layout).write(developerBackupFilepath, encoding='utf-8', xml_declaration=True)
+        removeRootNode(developerBackupFilepath)
+
 
 def removeRootNode(filepath):
-    #taken and heavily adjusted from https://pynative.com/python-delete-lines-from-file/
+    # taken and heavily adjusted from https://pynative.com/python-delete-lines-from-file/
     with open(filepath, 'r+') as file:
         lines = file.readlines()
         file.seek(0)
