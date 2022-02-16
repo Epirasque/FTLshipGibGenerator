@@ -1,7 +1,7 @@
 import imageio
 
 
-def saveGibImages(gibs, shipImageName, shipImageSubfolder, multiverseFolderpath, developerBackup):
+def saveGibImagesStandalone(gibs, shipImageName, shipImageSubfolder, multiverseFolderpath, developerBackup):
     for gib in gibs:
         gibId = gib['id']
         imageio.imwrite(

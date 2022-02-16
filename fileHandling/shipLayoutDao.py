@@ -13,7 +13,7 @@ def loadShipLayout(shipLayoutName, multiverseFolderpath):
         print('No layout XML file found for shipBlueprint layout attribute: %s' % shipLayoutName)
 
 
-def saveShipLayout(layout, shipLayoutName, multiverseFolderpath, developerBackup):
+def saveShipLayoutStandalone(layout, shipLayoutName, multiverseFolderpath, developerBackup):
     filepath = multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml'
     ET.ElementTree(layout).write(filepath, encoding='utf-8', xml_declaration=True)
     removeRootNode(filepath)
@@ -21,6 +21,16 @@ def saveShipLayout(layout, shipLayoutName, multiverseFolderpath, developerBackup
         developerBackupFilepath = 'layouts/' + shipLayoutName + '.xml'
         ET.ElementTree(layout).write(developerBackupFilepath, encoding='utf-8', xml_declaration=True)
         removeRootNode(developerBackupFilepath)
+
+
+def saveShipLayoutAsAppendFile(appendContentString, shipLayoutName, addonFolderpath, developerBackup):
+    filepath = addonFolderpath + '\\data\\' + shipLayoutName + '.xml.append'
+    with open(filepath, "w") as appendFile:
+        appendFile.write(appendContentString)
+    if developerBackup == True:
+        developerBackupFilepath = 'layouts/' + shipLayoutName + '.xml.append'
+        with open(developerBackupFilepath, "w") as appendFile:
+            appendFile.write(appendContentString)
 
 
 def removeRootNode(filepath):

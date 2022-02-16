@@ -6,8 +6,7 @@ import numpy as np
 LOWER_BOUND_VELOCITY = .1
 UPPER_BOUND_VELOCITY = 1.
 DIRECTION_SPREAD = 40
-ANGLE_SPREAD = 1.4
-
+ANGULAR_SPREAD = 1.4
 
 def addGibEntriesToLayout(layout, gibs):
     ftlNode = layout.find('FTL')
@@ -82,8 +81,8 @@ def addGibEntriesToLayout(layout, gibs):
         gibEntry.append(directionEntry)
 
         angularEntry = ET.Element('angular')
-        angularEntry.set("min", str(- ANGLE_SPREAD / 2))
-        angularEntry.set("max", str(ANGLE_SPREAD / 2))
+        angularEntry.set("min", str(- ANGULAR_SPREAD / 2))
+        angularEntry.set("max", str(ANGULAR_SPREAD / 2))
         gibEntry.append(angularEntry)
 
         xEntry = ET.Element('x')

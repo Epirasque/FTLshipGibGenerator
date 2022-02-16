@@ -2,23 +2,27 @@ import sys
 import time
 
 from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.gibImageSaver import saveGibImages
+from fileHandling.gibImageSaver import saveGibImagesStandalone
 from fileHandling.shipBlueprintLoader import loadShipFileNames
 from fileHandling.shipImageLoader import loadShipBaseImage
-from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayout
+from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
 from imageProcessing.segmenter import segment
 from metadata.gibEntryAdder import addGibEntriesToLayout
 from metadata.gibEntryChecker import areGibsPresentInLayout
+from metadata.layoutToAppendContentConverter import convertLayoutToAppendContent
 
 MULTIVERSE_FOLDERPATH = 'FTL-Multiverse 5.1 Hotfix'
+ADDON_FOLDERPATH = 'addon'
 NR_GIBS = 2
+
 QUICK_AND_DIRTY_SEGMENT = True
-CHECK_SPECIFIC_SHIP = True
+CHECK_SPECIFIC_SHIP = False
 SPECIFIC_SHIP_NAME = 'MU_ORCHID_FIGHTER'
-BACKUP_SEGMENTS_FOR_DEVELOPER = False
-BACKUP_LAYOUTS_FOR_DEVELOPER = False
-LIMIT_ITERATIONS = False
+LIMIT_ITERATIONS = True
 ITERATION_LIMIT = 10
+
+BACKUP_SEGMENTS_FOR_DEVELOPER = False
+BACKUP_LAYOUTS_FOR_DEVELOPER = True
 
 
 def main(argv):
@@ -72,10 +76,12 @@ def main(argv):
                 else:
                     totalSaveGibImagesDuration = saveGibImagesWithProfiling(gibs, shipImageName, shipImageSubfolder,
                                                                             totalSaveGibImagesDuration)
-                    layoutWithNewGibs, totalAddGibEntriesToLayoutDuration = addGibEntriesToLayoutWithProfiling(gibs,
-                                                                                                               layout,
-                                                                                                               totalAddGibEntriesToLayoutDuration)
+                    layoutWithNewGibs, appendContentString, totalAddGibEntriesToLayoutDuration = addGibEntriesToLayoutWithProfiling(
+                        gibs,
+                        layout,
+                        totalAddGibEntriesToLayoutDuration)
                     totalSaveShipLayoutDuration = saveShipLayoutWithProfiling(layoutName, layoutWithNewGibs,
+                                                                              appendContentString,
                                                                               totalSaveShipLayoutDuration)
                     # print("Done with %s " % name)
                     nrShipsWithNewlyGeneratedGibs += 1
@@ -94,10 +100,12 @@ def main(argv):
     print('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
 
-def saveShipLayoutWithProfiling(layoutName, layoutWithNewGibs, totalSaveShipLayoutDuration):
+def saveShipLayoutWithProfiling(layoutName, layoutWithNewGibs, appendContentString, totalSaveShipLayoutDuration):
     start = time.time()
-    saveShipLayout(layoutWithNewGibs, layoutName, MULTIVERSE_FOLDERPATH,
-                   developerBackup=BACKUP_LAYOUTS_FOR_DEVELOPER)
+    saveShipLayoutStandalone(layoutWithNewGibs, layoutName, MULTIVERSE_FOLDERPATH,
+                             developerBackup=BACKUP_LAYOUTS_FOR_DEVELOPER)
+    saveShipLayoutAsAppendFile(appendContentString, layoutName, ADDON_FOLDERPATH,
+                               developerBackup=BACKUP_LAYOUTS_FOR_DEVELOPER)
     totalSaveShipLayoutDuration += time.time() - start
     return totalSaveShipLayoutDuration
 
@@ -105,14 +113,15 @@ def saveShipLayoutWithProfiling(layoutName, layoutWithNewGibs, totalSaveShipLayo
 def addGibEntriesToLayoutWithProfiling(gibs, layout, totalAddGibEntriesToLayoutDuration):
     start = time.time()
     layoutWithNewGibs = addGibEntriesToLayout(layout, gibs)
+    appendContentString = convertLayoutToAppendContent(layoutWithNewGibs)
     totalAddGibEntriesToLayoutDuration += time.time() - start
-    return layoutWithNewGibs, totalAddGibEntriesToLayoutDuration
+    return layoutWithNewGibs, appendContentString, totalAddGibEntriesToLayoutDuration
 
 
 def saveGibImagesWithProfiling(gibs, shipImageName, shipImageSubfolder, totalSaveGibImagesDuration):
     start = time.time()
-    saveGibImages(gibs, shipImageName, shipImageSubfolder, MULTIVERSE_FOLDERPATH,
-                  developerBackup=BACKUP_SEGMENTS_FOR_DEVELOPER)
+    saveGibImagesStandalone(gibs, shipImageName, shipImageSubfolder, MULTIVERSE_FOLDERPATH,
+                            developerBackup=BACKUP_SEGMENTS_FOR_DEVELOPER)
     totalSaveGibImagesDuration += time.time() - start
     return totalSaveGibImagesDuration
 
