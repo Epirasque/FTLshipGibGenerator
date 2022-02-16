@@ -5,14 +5,19 @@ from numpy import mean
 
 
 # TODO: remove shipImageName as parameter
-def segment(shipImage, shipImageName, nrGibs):
+def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     nonTranspartMask = (shipImage[:, :, 3] != 0)
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
     compactnessToUse = 0.2  # TODO: start with 0. ?
-    while nrSuccessfulGibs < nrGibs and nrSegmentationAttempts < 13:  # TODO: proper nr attempts approach
+    compactnessGainPerAttempt = 0.1
+    nrMaximumSegmentationAttempts = 13
+    if segmentQuickAndDirty:
+        compactnessToUse = 1.
+        nrMaximumSegmentationAttempts = 1
+    while nrSuccessfulGibs < nrGibs and nrSegmentationAttempts < nrMaximumSegmentationAttempts:  # TODO: proper nr attempts approach
         nrSegmentationAttempts += 1
-        compactnessToUse += 0.1  # TODO: make configurable
+        compactnessToUse += compactnessGainPerAttempt  # TODO: make configurable
         # TODO: parameter for max iterations of kmeans
         # TODO: upon failure, retry with less/more gibs
         segments = slic(shipImage, n_segments=nrGibs, compactness=compactnessToUse, max_num_iter=100,

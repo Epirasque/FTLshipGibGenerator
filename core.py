@@ -1,16 +1,18 @@
 import sys
 import time
 
+from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
 from fileHandling.gibImageSaver import saveGibImages
 from fileHandling.shipBlueprintLoader import loadShipFileNames
 from fileHandling.shipImageLoader import loadShipBaseImage
 from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayout
 from imageProcessing.segmenter import segment
 from metadata.gibEntryAdder import addGibEntriesToLayout
-from metadata.gibEntryChecker import areGibsPresent
+from metadata.gibEntryChecker import areGibsPresentInLayout
 
 MULTIVERSE_FOLDERPATH = 'FTL-Multiverse 5.1 Hotfix'
-NR_GIBS = 5
+NR_GIBS = 2
+QUICK_AND_DIRTY_SEGMENT = True
 BACKUP_SEGMENTS_FOR_DEVELOPER = False
 BACKUP_LAYOUTS_FOR_DEVELOPER = False
 LIMIT_ITERATIONS = False
@@ -24,6 +26,7 @@ def main(argv):
     nrShips = len(ships)
     nrShipsWithNewlyGeneratedGibs = 0
     nrShipsWithGibsAlreadyPresent = 0
+    nrShipsWithIncompleteGibSetup = 0
     nrErrorsInMultiverseData = 0
     nrErrorsInSegmentation = 0
     nrErrorsUnknownCause = 0
@@ -38,8 +41,9 @@ def main(argv):
         nrIterations += 1
         printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsUnknownCause,
                            nrIterations, nrShips, nrShipsWithGibsAlreadyPresent, nrShipsWithNewlyGeneratedGibs,
-                           totalAddGibEntriesToLayoutDuration, totalLoadShipBaseImageDuration,
-                           totalSaveGibImagesDuration, totalSaveShipLayoutDuration, totalSegmentDuration)
+                           nrShipsWithIncompleteGibSetup, totalAddGibEntriesToLayoutDuration,
+                           totalLoadShipBaseImageDuration, totalSaveGibImagesDuration, totalSaveShipLayoutDuration,
+                           totalSegmentDuration)
         shipImageName = filenames['img']
         layoutName = filenames['layout']
         # print('Processing %s ' % name)
@@ -47,10 +51,12 @@ def main(argv):
         if layout == None:
             print('Cannot process layout for %s ' % name)
             nrErrorsInMultiverseData += 1
-        elif areGibsPresent(layout):
+        elif areGibsPresentInLayout(layout) and areGibsPresentAsImageFiles(shipImageName, MULTIVERSE_FOLDERPATH):
             # print('Gibs already present for %s ' % name)
             nrShipsWithGibsAlreadyPresent += 1
         else:
+            if areGibsPresentInLayout(layout) or areGibsPresentAsImageFiles(shipImageName, MULTIVERSE_FOLDERPATH):
+                nrShipsWithIncompleteGibSetup += 1
             try:
                 baseImg, shipImageSubfolder, totalLoadShipBaseImageDuration = loadShipBaseImageWithProfiling(
                     shipImageName, totalLoadShipBaseImageDuration)
@@ -75,8 +81,9 @@ def main(argv):
             break
 
     print(
-        "DONE. Created gibs for %u ships out of %u ships, %u of which had gibs before. \nErrors when loading multiverse data: %u. Failed ship segmentations: %u. Unknown errors: %u" % (
-            nrShipsWithNewlyGeneratedGibs, nrShips, nrShipsWithGibsAlreadyPresent, nrErrorsInMultiverseData,
+        "DONE. Created gibs for %u ships out of %u ships, %u of which had gibs before, %u of which had an incomplete gib setup. \nErrors when loading multiverse data: %u. Failed ship segmentations: %u. Unknown errors: %u" % (
+            nrShipsWithNewlyGeneratedGibs, nrShips, nrShipsWithGibsAlreadyPresent, nrShipsWithIncompleteGibSetup,
+            nrErrorsInMultiverseData,
             nrErrorsInSegmentation, nrErrorsUnknownCause))
     print('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
@@ -106,7 +113,7 @@ def saveGibImagesWithProfiling(gibs, shipImageName, shipImageSubfolder, totalSav
 
 def segmentWithProfiling(baseImg, shipImageName, totalSegmentDuration):
     start = time.time()
-    gibs = segment(baseImg, shipImageName, NR_GIBS)
+    gibs = segment(baseImg, shipImageName, NR_GIBS, QUICK_AND_DIRTY_SEGMENT)
     totalSegmentDuration += time.time() - start
     return gibs, totalSegmentDuration
 
@@ -120,7 +127,8 @@ def loadShipBaseImageWithProfiling(shipImageName, totalLoadShipBaseImageDuration
 
 def printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsUnknownCause,
                        nrIterations, nrShips, nrShipsWithGibsAlreadyPresent, nrShipsWithNewlyGeneratedGibs,
-                       totalAddGibEntriesToLayoutDuration, totalLoadShipBaseImageDuration, totalSaveGibImagesDuration,
+                       nrShipsWithIncompleteGibSetup, totalAddGibEntriesToLayoutDuration,
+                       totalLoadShipBaseImageDuration, totalSaveGibImagesDuration,
                        totalSaveShipLayoutDuration, totalSegmentDuration):
     if (nrIterations % 1) == 0:
         elapsedMinutes = (time.time() - globalStart) / 60.
@@ -128,24 +136,26 @@ def printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSe
         remainingFraction = 1. - finishedFraction
         remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
         print(
-            "Iterating ships: %u / %u (%.0f%%), elapsed %u minutes, remaining %u minutes, current entry: %s; new: %u, untouched: %u, errors MV: %u, errors SLIC: %u, unknown errors: %u" % (
+            "Iterating ships: %u / %u (%.0f%%), elapsed %u minutes, remaining %u minutes, current entry: %s; new: %u, untouched: %u, incomplete in MV: %u, errors MV: %u, errors SLIC: %u, unknown errors: %u" % (
                 nrIterations, nrShips, 100. * finishedFraction, elapsedMinutes, remainingMinutes, name,
-                nrShipsWithNewlyGeneratedGibs, nrShipsWithGibsAlreadyPresent, nrErrorsInMultiverseData,
+                nrShipsWithNewlyGeneratedGibs, nrShipsWithGibsAlreadyPresent, nrShipsWithIncompleteGibSetup,
+                nrErrorsInMultiverseData,
                 nrErrorsInSegmentation, nrErrorsUnknownCause))
     if (nrIterations % 5) == 0:  # note that this is BEFORE the current iteration has finished!
         totalDuration = totalLoadShipBaseImageDuration + totalSegmentDuration + totalSaveGibImagesDuration + totalAddGibEntriesToLayoutDuration + totalSaveShipLayoutDuration
-        totalLoadShipBaseImagePercentage = round(100 * totalLoadShipBaseImageDuration / totalDuration)
-        totalSegmentDurationPercentage = round(100 * totalSegmentDuration / totalDuration)
-        totalSaveGibImagesDurationPercentage = round(100 * totalSaveGibImagesDuration / totalDuration)
-        totalAddGibEntriesToLayoutDurationPercentage = round(
-            100 * totalAddGibEntriesToLayoutDuration / totalDuration)
-        totalSaveShipLayoutDurationPercentage = round(100 * totalSaveShipLayoutDuration / totalDuration)
-        print(
-            "PROFILING: average profiled duration per iteration: %.3f seconds, loadShipBaseImage: %u%%, segment: %u%%, saveGibImages: %u%%, addGibEntriesToLayout: %u%%, saveShipLayout: %u%%" % (
-                (totalDuration / (nrIterations - 1.)), totalLoadShipBaseImagePercentage,
-                totalSegmentDurationPercentage,
-                totalSaveGibImagesDurationPercentage, totalAddGibEntriesToLayoutDurationPercentage,
-                totalSaveShipLayoutDurationPercentage))
+        if totalDuration > 0:
+            totalLoadShipBaseImagePercentage = round(100 * totalLoadShipBaseImageDuration / totalDuration)
+            totalSegmentDurationPercentage = round(100 * totalSegmentDuration / totalDuration)
+            totalSaveGibImagesDurationPercentage = round(100 * totalSaveGibImagesDuration / totalDuration)
+            totalAddGibEntriesToLayoutDurationPercentage = round(
+                100 * totalAddGibEntriesToLayoutDuration / totalDuration)
+            totalSaveShipLayoutDurationPercentage = round(100 * totalSaveShipLayoutDuration / totalDuration)
+            print(
+                "PROFILING: average profiled duration per iteration: %.3f seconds, loadShipBaseImage: %u%%, segment: %u%%, saveGibImages: %u%%, addGibEntriesToLayout: %u%%, saveShipLayout: %u%%" % (
+                    (totalDuration / (nrIterations - 1.)), totalLoadShipBaseImagePercentage,
+                    totalSegmentDurationPercentage,
+                    totalSaveGibImagesDurationPercentage, totalAddGibEntriesToLayoutDurationPercentage,
+                    totalSaveShipLayoutDurationPercentage))
 
 
 if __name__ == '__main__':

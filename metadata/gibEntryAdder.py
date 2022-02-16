@@ -23,6 +23,13 @@ def addGibEntriesToLayout(layout, gibs):
     else:
         explosionNode = ftlNode.find('explosion')
 
+    oldGibNodes = []
+    for childNode in explosionNode:
+        if childNode.tag[0:3] == "gib":
+            oldGibNodes.append(childNode)
+    for oldGibNode in oldGibNodes:
+        explosionNode.remove(oldGibNode)
+
     for gib in gibs:
         gibId = gib['id']
         gibEntry = ET.Element('gib' + str(gibId))

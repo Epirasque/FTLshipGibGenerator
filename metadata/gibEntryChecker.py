@@ -1,7 +1,7 @@
 import xml.etree.ElementTree as ET
 
 
-def areGibsPresent(layout):
+def areGibsPresentInLayout(layout):
     # TODO: check gib images instead of metadata? yes if addon
     ftlNode = layout.find('FTL')
     if ftlNode == None:
