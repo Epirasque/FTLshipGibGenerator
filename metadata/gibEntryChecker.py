@@ -2,7 +2,11 @@ import xml.etree.ElementTree as ET
 
 
 def areGibsPresent(layout):
-    explosionNode = layout.find('explosion')
+    ftlNode = layout.find('FTL')
+    if ftlNode == None:
+        explosionNode = layout.find('explosion')
+    else:
+        explosionNode = ftlNode.find('explosion')
     if explosionNode == None:
         return False
 

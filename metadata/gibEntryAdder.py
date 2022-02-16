@@ -17,7 +17,12 @@ def addGibEntriesToLayout(layout, gibs):
     biggestPossibleShipRadius = np.linalg.norm(np.array([baseWidth, baseHeight])) / 2
     nrGibs = len(gibs)
 
-    explosionNode = layout.find('explosion')
+    ftlNode = layout.find('FTL')
+    if ftlNode == None:
+        explosionNode = layout.find('explosion')
+    else:
+        explosionNode = ftlNode.find('explosion')
+
     for gib in gibs:
         gibId = gib['id']
         gibEntry = ET.Element('gib' + str(gibId))
