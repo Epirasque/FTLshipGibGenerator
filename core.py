@@ -13,6 +13,8 @@ from metadata.gibEntryChecker import areGibsPresentInLayout
 MULTIVERSE_FOLDERPATH = 'FTL-Multiverse 5.1 Hotfix'
 NR_GIBS = 2
 QUICK_AND_DIRTY_SEGMENT = True
+CHECK_SPECIFIC_SHIP = True
+SPECIFIC_SHIP_NAME = 'MU_ORCHID_FIGHTER'
 BACKUP_SEGMENTS_FOR_DEVELOPER = False
 BACKUP_LAYOUTS_FOR_DEVELOPER = False
 LIMIT_ITERATIONS = False
@@ -38,6 +40,9 @@ def main(argv):
     totalSaveShipLayoutDuration = 0
     print("Iterating ships... (nr gibs per ship: %u)" % NR_GIBS)
     for name, filenames in ships.items():
+        if CHECK_SPECIFIC_SHIP == True:
+            if name != SPECIFIC_SHIP_NAME:
+                continue
         nrIterations += 1
         printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsUnknownCause,
                            nrIterations, nrShips, nrShipsWithGibsAlreadyPresent, nrShipsWithNewlyGeneratedGibs,
@@ -46,6 +51,7 @@ def main(argv):
                            totalSegmentDuration)
         shipImageName = filenames['img']
         layoutName = filenames['layout']
+
         # print('Processing %s ' % name)
         layout = loadShipLayout(layoutName, MULTIVERSE_FOLDERPATH)
         if layout == None:

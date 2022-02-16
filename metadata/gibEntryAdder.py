@@ -10,14 +10,19 @@ ANGLE_SPREAD = 1.4
 
 
 def addGibEntriesToLayout(layout, gibs):
-    imgNode = layout.find('img')
+    ftlNode = layout.find('FTL')
+
+    if ftlNode == None:
+        imgNode = layout.find('img')
+    else:
+        imgNode = ftlNode.find('img')
+
     baseWidth = int(imgNode.attrib['w'])
     baseHeight = int(imgNode.attrib['h'])
     shipPixelsIncludingTransparentOnes = baseWidth * baseHeight
     biggestPossibleShipRadius = np.linalg.norm(np.array([baseWidth, baseHeight])) / 2
     nrGibs = len(gibs)
 
-    ftlNode = layout.find('FTL')
     if ftlNode == None:
         explosionNode = layout.find('explosion')
     else:
