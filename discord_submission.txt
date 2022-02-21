@@ -1,0 +1,7 @@
+Version: 0.8
+Developer: Epirasque
+Description: Provides auto-generated Gibs (debris pieces that are shown whenever ships are destroyed) wherever they are missing in FTL-Multiverse 5.1.
+This currently affects about 1300 ships.
+Download Link: https://drive.google.com/file/d/11YlBrNHCpyIEwX41IEj2RjWP6haH3--4
+Potential incompatibilities: This addon is not fully compatible with other addons that add Gibs for any ships that are currently in Multiverse 5.1, it will overwrite them.
+Addon category: minor

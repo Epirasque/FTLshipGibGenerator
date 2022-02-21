@@ -12,7 +12,7 @@ def areGibsPresentInLayout(layout):
         return False
 
     gibsArePresent = False
-    for gibId in range(1, 6 + 1):
+    for gibId in range(1, 10 + 1):
         gibNode = explosionNode.find('gib%u' % gibId)
         if gibNode != None:
             gibsArePresent = True

@@ -10,26 +10,35 @@ from imageProcessing.segmenter import segment
 from metadata.gibEntryAdder import addGibEntriesToLayout
 from metadata.gibEntryChecker import areGibsPresentInLayout
 from metadata.layoutToAppendContentConverter import convertLayoutToAppendContent
+from metadata.weaponMountGibIdUpdater import setWeaponMountGibIdsAsAppendContent
 
+# Source for metadata semantics: https://www.ftlwiki.com/wiki/Modding_ships
 MULTIVERSE_FOLDERPATH = 'FTL-Multiverse 5.1 Hotfix'
-ADDON_FOLDERPATH = 'MV Add-On GenGibs v1.0'
-SAVE_STANDALONE = False
-# TODO: auto-throwaway previous results? maybe toggle
+ADDON_FOLDERPATH = 'MV Addon GenGibs v0.9'
+# tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug, has no layout file
+SHIPS_TO_IGNORE = ['PLAYER_SHIP_TUTORIAL', 'MU_COALITION_CONSTRUCTION']
+SAVE_STANDALONE = False  # does NOT support weapon mounts yet!
 SAVE_ADDON = True
 BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER = False
 BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER = False
 
-NR_GIBS = 2
-QUICK_AND_DIRTY_SEGMENT = True
+NR_GIBS = 5
+QUICK_AND_DIRTY_SEGMENT = False
 
-CHECK_SPECIFIC_SHIP = True
-SPECIFIC_SHIP_NAME = 'MU_ORCHID_FIGHTER'
+CHECK_SPECIFIC_SHIP = False
+SPECIFIC_SHIP_NAME = 'MU_FREEMANTIS_GUARD'
 LIMIT_ITERATIONS = False
-ITERATION_LIMIT = 10
+ITERATION_LIMIT = 2
+
+parameters = [MULTIVERSE_FOLDERPATH, ADDON_FOLDERPATH, SAVE_ADDON, SAVE_ADDON, BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER,
+              BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER, NR_GIBS, QUICK_AND_DIRTY_SEGMENT, CHECK_SPECIFIC_SHIP,
+              SPECIFIC_SHIP_NAME, LIMIT_ITERATIONS, ITERATION_LIMIT]
 
 
 def main(argv):
     globalStart = time.time()
+    print("Starting Gib generation at %s, with parameters:" % globalStart)
+    print(parameters)
     print("Loading ship file names...")
     ships = loadShipFileNames(MULTIVERSE_FOLDERPATH)
     nrShips = len(ships)
@@ -38,22 +47,28 @@ def main(argv):
     nrShipsWithIncompleteGibSetup = 0
     nrErrorsInMultiverseData = 0
     nrErrorsInSegmentation = 0
+    nrErrorsInWeaponMounts = 0
     nrErrorsUnknownCause = 0
     nrIterations = 0
     totalLoadShipBaseImageDuration = 0
     totalSegmentDuration = 0
     totalSaveGibImagesDuration = 0
     totalAddGibEntriesToLayoutDuration = 0
+    totalSetWeaponMountGibIdsDuration = 0
     totalSaveShipLayoutDuration = 0
-    print("Iterating ships... (nr gibs per ship: %u)" % NR_GIBS)
+    print("Iterating ships...")
     for name, filenames in ships.items():
         if CHECK_SPECIFIC_SHIP == True:
             if name != SPECIFIC_SHIP_NAME:
                 continue
+        if name in SHIPS_TO_IGNORE:
+            print("Skipping %s" % name)
+            continue
         nrIterations += 1
-        printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsUnknownCause,
-                           nrIterations, nrShips, nrShipsWithGibsAlreadyPresent, nrShipsWithNewlyGeneratedGibs,
-                           nrShipsWithIncompleteGibSetup, totalAddGibEntriesToLayoutDuration,
+        printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsInWeaponMounts,
+                           nrErrorsUnknownCause, nrIterations, nrShips, nrShipsWithGibsAlreadyPresent,
+                           nrShipsWithNewlyGeneratedGibs, nrShipsWithIncompleteGibSetup,
+                           totalAddGibEntriesToLayoutDuration, totalSetWeaponMountGibIdsDuration,
                            totalLoadShipBaseImageDuration, totalSaveGibImagesDuration, totalSaveShipLayoutDuration,
                            totalSegmentDuration)
         shipImageName = filenames['img']
@@ -64,12 +79,19 @@ def main(argv):
         if layout == None:
             print('Cannot process layout for %s ' % name)
             nrErrorsInMultiverseData += 1
-        elif areGibsPresentInLayout(layout) and areGibsPresentAsImageFiles(shipImageName, MULTIVERSE_FOLDERPATH):
+        elif areGibsPresentInLayout(layout) == True and areGibsPresentAsImageFiles(shipImageName,
+                                                                                   MULTIVERSE_FOLDERPATH) == True:
             # print('Gibs already present for %s ' % name)
             nrShipsWithGibsAlreadyPresent += 1
         else:
-            if areGibsPresentInLayout(layout) or areGibsPresentAsImageFiles(shipImageName, MULTIVERSE_FOLDERPATH):
+            if areGibsPresentInLayout(layout) == True or areGibsPresentAsImageFiles(shipImageName,
+                                                                                    MULTIVERSE_FOLDERPATH) == True:
                 nrShipsWithIncompleteGibSetup += 1
+                if areGibsPresentInLayout(layout) == True:
+                    print("There are gibs in layout %s, but no images %s_gibN for it." % (layoutName, shipImageName))
+                if areGibsPresentAsImageFiles(shipImageName, MULTIVERSE_FOLDERPATH) == True:
+                    print("There are gib-images for base image %s, but no layout entries in %s for it." % (
+                        shipImageName, layoutName))
             try:
                 baseImg, shipImageSubfolder, totalLoadShipBaseImageDuration = loadShipBaseImageWithProfiling(
                     shipImageName, totalLoadShipBaseImageDuration)
@@ -83,6 +105,10 @@ def main(argv):
                         gibs,
                         layout,
                         totalAddGibEntriesToLayoutDuration)
+                    appendContentString, totalSetWeaponMountGibIdsDuration, nrWeaponMountsWithoutGibId = setWeaponMountGibIdsWithProfiling(
+                        gibs, layoutWithNewGibs, appendContentString, totalSetWeaponMountGibIdsDuration)
+                    if nrWeaponMountsWithoutGibId > 0:
+                        nrErrorsInWeaponMounts += 1
                     totalSaveShipLayoutDuration = saveShipLayoutWithProfiling(layoutName, layoutWithNewGibs,
                                                                               appendContentString,
                                                                               totalSaveShipLayoutDuration)
@@ -96,10 +122,9 @@ def main(argv):
             break
 
     print(
-        "DONE. Created gibs for %u ships out of %u ships, %u of which had gibs before, %u of which had an incomplete gib setup. \nErrors when loading multiverse data: %u. Failed ship segmentations: %u. Unknown errors: %u" % (
+        "DONE. Created gibs for %u ships out of %u ships, %u of which had gibs before, %u of which had an incomplete gib setup. \nErrors when loading multiverse data: %u. Failed ship segmentations: %u. Ships with unassociated weaponMounts: %u. Unknown errors: %u" % (
             nrShipsWithNewlyGeneratedGibs, nrShips, nrShipsWithGibsAlreadyPresent, nrShipsWithIncompleteGibSetup,
-            nrErrorsInMultiverseData,
-            nrErrorsInSegmentation, nrErrorsUnknownCause))
+            nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsInWeaponMounts, nrErrorsUnknownCause))
     print('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
 
@@ -118,9 +143,18 @@ def saveShipLayoutWithProfiling(layoutName, layoutWithNewGibs, appendContentStri
 def addGibEntriesToLayoutWithProfiling(gibs, layout, totalAddGibEntriesToLayoutDuration):
     start = time.time()
     layoutWithNewGibs = addGibEntriesToLayout(layout, gibs)
-    appendContentString = convertLayoutToAppendContent(layoutWithNewGibs)
+    appendContentString = convertLayoutToAppendContent(layoutWithNewGibs)  # TODO: separate method
     totalAddGibEntriesToLayoutDuration += time.time() - start
     return layoutWithNewGibs, appendContentString, totalAddGibEntriesToLayoutDuration
+
+
+def setWeaponMountGibIdsWithProfiling(gibs, layoutWithNewGibs, appendContentString, totalSetWeaponMountGibIdsDuration):
+    start = time.time()
+    additionalAppendContentString, nrWeaponMountsWithoutGibId = setWeaponMountGibIdsAsAppendContent(gibs,
+                                                                                                    layoutWithNewGibs)
+    appendContentString += additionalAppendContentString
+    totalSetWeaponMountGibIdsDuration += time.time() - start
+    return appendContentString, totalSetWeaponMountGibIdsDuration, nrWeaponMountsWithoutGibId
 
 
 def saveGibImagesWithProfiling(gibs, shipImageName, shipImageSubfolder, totalSaveGibImagesDuration):
@@ -149,10 +183,10 @@ def loadShipBaseImageWithProfiling(shipImageName, totalLoadShipBaseImageDuration
     return baseImg, shipImageSubfolder, totalLoadShipBaseImageDuration
 
 
-def printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsUnknownCause,
-                       nrIterations, nrShips, nrShipsWithGibsAlreadyPresent, nrShipsWithNewlyGeneratedGibs,
-                       nrShipsWithIncompleteGibSetup, totalAddGibEntriesToLayoutDuration,
-                       totalLoadShipBaseImageDuration, totalSaveGibImagesDuration,
+def printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsInWeaponMounts,
+                       nrErrorsUnknownCause, nrIterations, nrShips, nrShipsWithGibsAlreadyPresent,
+                       nrShipsWithNewlyGeneratedGibs, nrShipsWithIncompleteGibSetup, totalAddGibEntriesToLayoutDuration,
+                       totalSetWeaponMountGibIdsDuration, totalLoadShipBaseImageDuration, totalSaveGibImagesDuration,
                        totalSaveShipLayoutDuration, totalSegmentDuration):
     if (nrIterations % 1) == 0:
         elapsedMinutes = (time.time() - globalStart) / 60.
@@ -160,25 +194,26 @@ def printIterationInfo(globalStart, name, nrErrorsInMultiverseData, nrErrorsInSe
         remainingFraction = 1. - finishedFraction
         remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
         print(
-            "Iterating ships: %u / %u (%.0f%%), elapsed %u minutes, remaining %u minutes, current entry: %s; new: %u, untouched: %u, incomplete in MV: %u, errors MV: %u, errors SLIC: %u, unknown errors: %u" % (
+            "Iterating ships: %u / %u (%.0f%%), elapsed %u minutes, remaining %u minutes, current entry: %s; new: %u, untouched: %u, incomplete in MV: %u, errors MV: %u, errors SLIC: %u, errors weaponMounts: %u, unknown errors: %u" % (
                 nrIterations, nrShips, 100. * finishedFraction, elapsedMinutes, remainingMinutes, name,
                 nrShipsWithNewlyGeneratedGibs, nrShipsWithGibsAlreadyPresent, nrShipsWithIncompleteGibSetup,
-                nrErrorsInMultiverseData,
-                nrErrorsInSegmentation, nrErrorsUnknownCause))
+                nrErrorsInMultiverseData, nrErrorsInSegmentation, nrErrorsInWeaponMounts, nrErrorsUnknownCause))
     if (nrIterations % 5) == 0:  # note that this is BEFORE the current iteration has finished!
-        totalDuration = totalLoadShipBaseImageDuration + totalSegmentDuration + totalSaveGibImagesDuration + totalAddGibEntriesToLayoutDuration + totalSaveShipLayoutDuration
+        totalDuration = totalLoadShipBaseImageDuration + totalSegmentDuration + totalSaveGibImagesDuration + totalAddGibEntriesToLayoutDuration + totalSetWeaponMountGibIdsDuration + totalSaveShipLayoutDuration
         if totalDuration > 0:
-            totalLoadShipBaseImagePercentage = round(100 * totalLoadShipBaseImageDuration / totalDuration)
-            totalSegmentDurationPercentage = round(100 * totalSegmentDuration / totalDuration)
-            totalSaveGibImagesDurationPercentage = round(100 * totalSaveGibImagesDuration / totalDuration)
+            totalLoadShipBaseImagePercentage = round(100. * totalLoadShipBaseImageDuration / totalDuration)
+            totalSegmentDurationPercentage = round(100. * totalSegmentDuration / totalDuration)
+            totalSaveGibImagesDurationPercentage = round(100. * totalSaveGibImagesDuration / totalDuration)
             totalAddGibEntriesToLayoutDurationPercentage = round(
-                100 * totalAddGibEntriesToLayoutDuration / totalDuration)
-            totalSaveShipLayoutDurationPercentage = round(100 * totalSaveShipLayoutDuration / totalDuration)
+                100. * totalAddGibEntriesToLayoutDuration / totalDuration)
+            totalSetWeaponMountGibIdsDurationPercentage = round(
+                100. * totalSetWeaponMountGibIdsDuration / totalDuration)
+            totalSaveShipLayoutDurationPercentage = round(100. * totalSaveShipLayoutDuration / totalDuration)
             print(
-                "PROFILING: average profiled duration per iteration: %.3f seconds, loadShipBaseImage: %u%%, segment: %u%%, saveGibImages: %u%%, addGibEntriesToLayout: %u%%, saveShipLayout: %u%%" % (
+                "PROFILING: average profiled duration per iteration: %.3f seconds, loadShipBaseImage: %u%%, segment: %u%%, saveGibImages: %u%%, addGibEntriesToLayout: %u%%, totalSetWeaponMountGibIdsDurationPercentage: %u%%, saveShipLayout: %u%%" % (
                     (totalDuration / (nrIterations - 1.)), totalLoadShipBaseImagePercentage,
-                    totalSegmentDurationPercentage,
-                    totalSaveGibImagesDurationPercentage, totalAddGibEntriesToLayoutDurationPercentage,
+                    totalSegmentDurationPercentage, totalSaveGibImagesDurationPercentage,
+                    totalAddGibEntriesToLayoutDurationPercentage, totalSetWeaponMountGibIdsDurationPercentage,
                     totalSaveShipLayoutDurationPercentage))
 
 

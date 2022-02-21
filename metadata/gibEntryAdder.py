@@ -1,12 +1,12 @@
 import xml.etree.ElementTree as ET
 
-# Source for metadata semantics: https://www.ftlwiki.com/wiki/Modding_ships
 import numpy as np
 
 LOWER_BOUND_VELOCITY = .1
 UPPER_BOUND_VELOCITY = 1.
 DIRECTION_SPREAD = 40
 ANGULAR_SPREAD = 1.4
+
 
 def addGibEntriesToLayout(layout, gibs):
     ftlNode = layout.find('FTL')
@@ -45,7 +45,8 @@ def addGibEntriesToLayout(layout, gibs):
         normalizedDistanceFromCenter = 1. * gibVectorLength / biggestPossibleShipRadius
         relativeMass = 1. * gibMass / shipPixelsIncludingTransparentOnes
         relativeMassRegardlessOfNrGibs = relativeMass * nrGibs  # more gibs means less mass per gib -> counter that here
-        maximumVelocity = min(normalizedDistanceFromCenter / relativeMassRegardlessOfNrGibs, UPPER_BOUND_VELOCITY)
+        maximumVelocity = max(min(normalizedDistanceFromCenter / relativeMassRegardlessOfNrGibs, UPPER_BOUND_VELOCITY),
+                              LOWER_BOUND_VELOCITY)
         minimalVelocity = max(maximumVelocity * 0.3, LOWER_BOUND_VELOCITY)
 
         velocityEntry = ET.Element('velocity')

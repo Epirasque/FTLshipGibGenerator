@@ -12,7 +12,7 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     compactnessToUse = 0.2  # TODO: start with 0. ?
     compactnessGainPerAttempt = 0.1
     nrMaximumSegmentationAttempts = 13
-    if segmentQuickAndDirty:
+    if segmentQuickAndDirty == True:
         compactnessToUse = 1.
         nrMaximumSegmentationAttempts = 1
     while nrSuccessfulGibs < nrGibs and nrSegmentationAttempts < nrMaximumSegmentationAttempts:  # TODO: proper nr attempts approach
@@ -23,31 +23,33 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
         segments = slic(shipImage, n_segments=nrGibs, compactness=compactnessToUse, max_num_iter=100,
                         mask=nonTranspartMask)
         nrSuccessfulGibs = segments.max()
-    if nrSuccessfulGibs < nrGibs:
-        print("FAILED generating gibs for %s" % shipImageName)
+    if nrSuccessfulGibs == 0:
+        print("FAILED to generate any gibs for %s" % shipImageName)
         return []
-    else:
-        if nrSegmentationAttempts > 1:
-            print("Segmented with %u attempts with compactness of %f " % (nrSegmentationAttempts, compactnessToUse))
-        gibs = []
-        # TODO: sort gibs by velocity (maybe just mass) so faster ones are on top
-        for gibId in range(1, nrGibs + 1):
-            matchingSegmentIndex = (segments == gibId)
-            gibImage = np.zeros(shipImage.shape, dtype=np.uint8)
-            gibImage[matchingSegmentIndex] = shipImage[matchingSegmentIndex]
-            croppedGibImage, center, minX, minY = crop(gibImage)
-            # TODO: reenable, but its slow nrVisiblePixels = sum(matchingSegmentIndex.flatten() == True)
+    if nrSuccessfulGibs < nrGibs:
+        print("Did not generate all gibs for %s, ended up with %u of %u" % (shipImageName, nrSuccessfulGibs, nrGibs))
+        nrGibs = nrSuccessfulGibs
+    if nrSegmentationAttempts > 1:
+        print("Segmented with %u attempts with compactness of %f " % (nrSegmentationAttempts, compactnessToUse))
+    gibs = []
+    # TODO: sort gibs by velocity (maybe just mass) so faster ones are on top
+    for gibId in range(1, nrGibs + 1):
+        matchingSegmentIndex = (segments == gibId)
+        gibImage = np.zeros(shipImage.shape, dtype=np.uint8)
+        gibImage[matchingSegmentIndex] = shipImage[matchingSegmentIndex]
+        croppedGibImage, center, minX, minY = crop(gibImage)
+        # TODO: reenable, but its slow nrVisiblePixels = sum(matchingSegmentIndex.flatten() == True)
 
-            gib = {}
-            gib['id'] = gibId
-            gib['img'] = croppedGibImage
-            gib['center'] = center
-            gib['x'] = minX
-            gib['y'] = minY
-            gib['mass'] = (center['x'] - minX) * (center['y'] - minY) * 4  # TODO: reenable nrVisiblePixels
-            gibs.append(gib)
+        gib = {}
+        gib['id'] = gibId
+        gib['img'] = croppedGibImage
+        gib['center'] = center
+        gib['x'] = minX
+        gib['y'] = minY
+        gib['mass'] = (center['x'] - minX) * (center['y'] - minY) * 4  # TODO: reenable nrVisiblePixels
+        gibs.append(gib)
 
-        return gibs
+    return gibs
 
 
 def crop(image):

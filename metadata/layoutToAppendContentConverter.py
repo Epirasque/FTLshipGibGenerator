@@ -17,7 +17,7 @@ def convertLayoutToAppendContent(layout):
     else:
         explosionNode = ftlNode.find('explosion')
 
-    for gibId in range(1, 6 + 1):
+    for gibId in range(1, 10 + 1):
         gibNode = explosionNode.find('gib%u' % gibId)
         # TODO: verify this is not needed, assumption is overwriting is sufficient (assumption nrGibs >= already existing gibs in files)
         #        if gibNode == None:
