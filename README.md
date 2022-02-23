@@ -9,18 +9,34 @@ In standalone-mode (recommended): saves the output directly in the input folder 
 
 In addon-mode: saves the output as a separate addon (this is the mode used for the GenGibs addon that provides gibs for vanilla Multiverse). 
 
-### Recommended Order Of Patching In The Slipstream Mod Manager:
-1. Multiverse
-2. GenGibs
-3. Your own addon with its own generated gibs
-
 ## How Can I Run It?
 
 You need to install Python 3.8 as well as the appropriate libraries that are used. 
 I personally use the PyCharm Community Edition IDE, it makes loading additional libraries much easier (the IDE offers it as quick fix recommendations).  
-Set the appropriate parameters in `core.py`. There are comments what the parameters are used for. 
 
-Run the main method without any additional arguments. 
+Set the appropriate parameters in `core.py`, e.g. you can change the desired `NR_GIBS`. At very least you have to set the `INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH`. Read the comments above the parameters for more details. 
+Afterwards just run the main method without any additional arguments. 
+
+### Recommended Workflow
+Have two copies of your unpacked addon folder:
+
+1. A backup from which you can restore a clean state
+2. A directory which will contain the output
+
+Keep developing your addon in 1. until it is ready for a new release. Then overwrite 2. with the contents of 1. Then run the Gib Generator against 2. If something goes wrong, fix the issue, overwrite 2. with the contents of 1. and run the Gib Generator again until you are happy with the result. 
+Finally, compress 2. into a `.zip` or `.ftl` and it is ready to be delivered; but please test it first, just in case. 
+
+You can use scripts to speed this up. I personally use `.bat` files which you can also find in this repository, you can use them as a template by adjusting the folderpaths inside. 
+Please try to properly understand them and double check what you are doing because mistakes might cause you to accidentally overwrite or delete data! 
+
+### Recommended Order Of Patching In The Slipstream Mod Manager
+1. Multiverse
+2. GenGibs
+3. Your own addon with its own generated gibs
+
+### Speeding Things Up
+Check the settings in `core.py` on how to run the Gib Generator much more quickly, e.g. for a sanity check or debugging purposes. 
+
 
 ## What EXACTLY Does It Do?
 ### Program Flow
