@@ -1,16 +1,20 @@
 import xml.etree.ElementTree as ET
+from os.path import exists
 
 SHIP_BLUEPRINT_ATTRIBUTE = 'shipBlueprint'
 
 
 def loadShipFileNames(multiverseFolderpath):
-    playerBlueprints = ET.parse(multiverseFolderpath + "\\data\\blueprints.xml.append")
-    autoBlueprints = ET.parse(multiverseFolderpath + "\\data\\autoBlueprints.xml.append")
-    bossBlueprints = ET.parse(multiverseFolderpath + "\\data\\bosses.xml.append")
-
-    blueprints = playerBlueprints.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE)
-    blueprints.extend(autoBlueprints.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
-    blueprints.extend(bossBlueprints.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
+    blueprints = []
+    if exists(multiverseFolderpath + "\\data\\blueprints.xml.append") == True:
+        parsed = ET.parse(multiverseFolderpath + "\\data\\blueprints.xml.append")
+        blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
+    if exists(multiverseFolderpath + "\\data\\autoBlueprints.xml.append") == True:
+        parsed = ET.parse(multiverseFolderpath + "\\data\\blueprints.xml.append")
+        blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
+    if exists(multiverseFolderpath + "\\data\\bosses.xml.append") == True:
+        parsed = ET.parse(multiverseFolderpath + "\\data\\blueprints.xml.append")
+        blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
 
     ships = {}
     for blueprint in blueprints:

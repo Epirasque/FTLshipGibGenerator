@@ -4,6 +4,7 @@
 #		<mod:setAttributes gib="666" />
 #	</mod:findLike>
 # </mod:findLike>
+SEARCH_RADIUS_REPORT_THRESHOLD = 10
 MAX_SEARCH_RADIUS = 500 #biggest known: 140, results in 2 bugged ships (maybe: same as errors when loading multiverse data? no...)
 
 
@@ -23,8 +24,8 @@ def setWeaponMountGibIdsAsAppendContent(gibs, layoutWithNewGibs):
         mountGibId = -1
         for additionalSearchRadius in range(0, MAX_SEARCH_RADIUS + 1):
             if mountGibId != -1:
-                if additionalSearchRadius > 1:
-                    print("Found gib association for weapon mount at search radius %d" % (additionalSearchRadius - 1))
+                if additionalSearchRadius >= SEARCH_RADIUS_REPORT_THRESHOLD:
+                    print("Found gib association for weapon mount at search radius %d" % additionalSearchRadius)
                 break
             for xDelta in range(-additionalSearchRadius, additionalSearchRadius + 1):
                 for yDelta in range(-additionalSearchRadius, additionalSearchRadius + 1):
@@ -47,11 +48,11 @@ def setWeaponMountGibIdsAsAppendContent(gibs, layoutWithNewGibs):
         if mountGibId == -1:
             print("Weapon mount x=%d, y=%d could not be associated with a gibId" % (exactMountX, exactMountY))
             nrWeaponMountsWithoutGibId += 1
-        mount.attrib[id] = mountGibId
+        mount.set('gib', str(mountGibId))
         appendString += '<mod:findLike type="weaponMounts">\n'
         appendString += '\t<mod:findLike type="mount">\n'
         appendString += '\t\t<mod:selector x="%u" y="%u" />\n' % (exactMountX, exactMountY)
-        appendString += '\t<mod:setAttributes gib="%d" />\n' % mountGibId
+        appendString += '\t\t<mod:setAttributes gib="%d" />\n' % mountGibId
         appendString += '\t</mod:findLike>\n'
         appendString += '</mod:findLike>\n'
 

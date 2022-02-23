@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 def loadShipLayout(shipLayoutName, multiverseFolderpath):
     try:
         # workaround: ElementTree expect a single root node
-        with open(multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml') as file:
+        with open(multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml', encoding='utf-8') as file:
             rawXml = file.read()
         return ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", rawXml) + "</root>")
         # return ET.parse(multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml')
@@ -36,15 +36,8 @@ def saveShipLayoutAsAppendFile(appendContentString, shipLayoutName, addonFolderp
 def removeRootNode(filepath):
     # taken and heavily adjusted from https://pynative.com/python-delete-lines-from-file/
     with open(filepath, 'r+') as file:
-        lines = file.readlines()
+        content = file.read()
         file.seek(0)
+        content = content.replace("<root>", '').replace("</root>", '')
+        file.write(content)
         file.truncate()
-
-        for number, line in enumerate(lines):
-            writeIt = True
-            if line == '<root>\n' or line == '</root>\n' or line == '</root>' or (number == 2 and line == '\n'):
-                writeIt = False
-            if number == 4:
-                file.write("<!--Copyright (c) 2012 by Subset Games. All rights reserved.-->\n")
-            if writeIt:
-                file.write(line)
