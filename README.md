@@ -128,7 +128,7 @@ In arbitrary order, *no promises if or when these will be done*:
 - Resolving remaining TODOs in the code
 - Provide a compiled version that runs without installing Python
 
-# How Can I Contact The Author?
+# How Can I Contact The Author Or Otherwise Get Involved?
 
 Write to Epirasque in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb), I'm looking forward to your feedback and suggestions. 
 

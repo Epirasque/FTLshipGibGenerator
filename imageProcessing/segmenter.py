@@ -1,7 +1,6 @@
 from skimage.segmentation import slic
 import imageio
 import numpy as np
-from numpy import mean
 
 
 # TODO: remove shipImageName as parameter

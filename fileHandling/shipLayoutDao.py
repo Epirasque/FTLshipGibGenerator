@@ -2,19 +2,19 @@ import re
 import xml.etree.ElementTree as ET
 
 
-def loadShipLayout(shipLayoutName, multiverseFolderpath):
+def loadShipLayout(shipLayoutName, sourceFolderpath):
     try:
         # workaround: ElementTree expect a single root node
-        with open(multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml', encoding='utf-8') as file:
+        with open(sourceFolderpath + '\\data\\' + shipLayoutName + '.xml', encoding='utf-8') as file:
             rawXml = file.read()
         return ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", rawXml) + "</root>")
-        # return ET.parse(multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml')
+        # return ET.parse(sourceFolderpath + '\\data\\' + shipLayoutName + '.xml')
     except FileNotFoundError:
         print('No layout XML file found for shipBlueprint layout attribute: %s' % shipLayoutName)
 
 
-def saveShipLayoutStandalone(layout, shipLayoutName, multiverseFolderpath, developerBackup):
-    filepath = multiverseFolderpath + '\\data\\' + shipLayoutName + '.xml'
+def saveShipLayoutStandalone(layout, shipLayoutName, sourceFolderpath, developerBackup):
+    filepath = sourceFolderpath + '\\data\\' + shipLayoutName + '.xml'
     ET.ElementTree(layout).write(filepath, encoding='utf-8', xml_declaration=True)
     removeRootNode(filepath)
     if developerBackup == True:

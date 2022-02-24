@@ -4,16 +4,16 @@ from os.path import exists
 SHIP_BLUEPRINT_ATTRIBUTE = 'shipBlueprint'
 
 
-def loadShipFileNames(multiverseFolderpath):
+def loadShipFileNames(sourceFolderpath):
     blueprints = []
-    if exists(multiverseFolderpath + "\\data\\blueprints.xml.append") == True:
-        parsed = ET.parse(multiverseFolderpath + "\\data\\blueprints.xml.append")
+    if exists(sourceFolderpath + "\\data\\blueprints.xml.append") == True:
+        parsed = ET.parse(sourceFolderpath + "\\data\\blueprints.xml.append")
         blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
-    if exists(multiverseFolderpath + "\\data\\autoBlueprints.xml.append") == True:
-        parsed = ET.parse(multiverseFolderpath + "\\data\\blueprints.xml.append")
+    if exists(sourceFolderpath + "\\data\\autoBlueprints.xml.append") == True:
+        parsed = ET.parse(sourceFolderpath + "\\data\\blueprints.xml.append")
         blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
-    if exists(multiverseFolderpath + "\\data\\bosses.xml.append") == True:
-        parsed = ET.parse(multiverseFolderpath + "\\data\\blueprints.xml.append")
+    if exists(sourceFolderpath + "\\data\\bosses.xml.append") == True:
+        parsed = ET.parse(sourceFolderpath + "\\data\\blueprints.xml.append")
         blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
 
     ships = {}

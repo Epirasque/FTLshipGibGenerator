@@ -1,11 +1,5 @@
-# <mod:findLike type="weaponMounts">
-#	<mod:findLike type="mount">
-#		<mod:selector x="399" y="166" />
-#		<mod:setAttributes gib="666" />
-#	</mod:findLike>
-# </mod:findLike>
 SEARCH_RADIUS_REPORT_THRESHOLD = 10
-MAX_SEARCH_RADIUS = 500 #biggest known: 140, results in 2 bugged ships (maybe: same as errors when loading multiverse data? no...)
+MAX_SEARCH_RADIUS = 500 #biggest known: 140, results in 2 bugged ships
 
 
 def setWeaponMountGibIdsAsAppendContent(gibs, layoutWithNewGibs):

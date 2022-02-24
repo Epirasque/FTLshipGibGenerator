@@ -1,11 +1,5 @@
 import xml.etree.ElementTree as ET
 
-
-# TODO:
-# in .append to add (without overwriting)
-# <mod:findLike type="explosion">
-#	<mod-append:gib1><x>-24</x></mod-append:gib1>
-# </mod:findLike>
 # note: overwrite might leave some previous ones remaining e.g. when nr_gibs=3 but that should not be an issue right?
 
 def convertLayoutToAppendContent(layout):
