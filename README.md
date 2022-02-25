@@ -130,6 +130,6 @@ In arbitrary order, *no promises if or when these will be done*:
 
 # How Can I Contact The Author Or Otherwise Get Involved?
 
-Write to Epirasque in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb), I'm looking forward to your feedback and suggestions. 
+Write to Epirasque in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb), I'm looking forward to your feedback and suggestions. My timezone is GMT+1. 
 
-If you have something that should be discussed with more people (e.g. if you have strong feelings about how the gibs' physics should behave) then use the [the-shipyard channel](https://discord.gg/Q9FaGZQw) for now. 
+If you have something that should be discussed with more people (e.g. if you have strong feelings about how the gibs' physics should behave) then please use the [the-shipyard channel](https://discord.gg/Q9FaGZQw) for now. 

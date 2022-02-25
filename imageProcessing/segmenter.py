@@ -30,6 +30,10 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
         nrGibs = nrSuccessfulGibs
     if nrSegmentationAttempts > 1:
         print("Segmented with %u attempts with compactness of %f " % (nrSegmentationAttempts, compactnessToUse))
+    return turnSegmentsIntoGibs(nrGibs, segments, shipImage)
+
+
+def turnSegmentsIntoGibs(nrGibs, segments, shipImage):
     gibs = []
     # TODO: sort gibs by velocity (maybe just mass) so faster ones are on top
     for gibId in range(1, nrGibs + 1):
@@ -47,7 +51,6 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
         gib['y'] = minY
         gib['mass'] = (center['x'] - minX) * (center['y'] - minY) * 4  # TODO: reenable nrVisiblePixels
         gibs.append(gib)
-
     return gibs
 
 
