@@ -133,3 +133,10 @@ In arbitrary order, *no promises if or when these will be done*:
 Write to Epirasque in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb), I'm looking forward to your feedback and suggestions. My timezone is GMT+1. 
 
 If you have something that should be discussed with more people (e.g. if you have strong feelings about how the gibs' physics should behave) then please use the [the-shipyard channel](https://discord.gg/Q9FaGZQw) for now. 
+
+# Special Thanks
+
+- marcrusian for consulting support
+- [Multiverse](https://subsetgames.com/forum/viewtopic.php?f=11&t=38203) and [Hyperspace](https://subsetgames.com/forum/viewtopic.php?f=11&t=35095) developers and community for feedback and support
+- Subset games for a great game and modding foundation for it
+- [Slipstream](https://subsetgames.com/forum/viewtopic.php?f=12&t=17102) for properly managing mods in general, as well as providing a handy addon-sandbox
