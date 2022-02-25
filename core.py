@@ -34,16 +34,16 @@ NR_GIBS = 5
 QUICK_AND_DIRTY_SEGMENT = False
 
 # if enabled, all ships except SPECIFIC_SHIP_NAME are skipped
-CHECK_SPECIFIC_SHIP = False
-SPECIFIC_SHIP_NAME = 'PLAYER_SHIP_CRACKED_MU_CIVILIAN_STATION_DAMAGED'
+CHECK_SPECIFIC_SHIPS = False
+SPECIFIC_SHIP_NAMES = ['MU_REBEL_DROPSHIP', 'MU_REBEL_DROPSHIP_ELITE']
 # if enabled, only ITERATION_LIMIT amount of ships will be processed
 LIMIT_ITERATIONS = False
 ITERATION_LIMIT = 1
 
 parameters = [INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH, ADDON_OUTPUT_FOLDERPATH, SHIPS_TO_IGNORE, SAVE_ADDON, SAVE_ADDON,
               BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER, BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER, NR_GIBS,
-              QUICK_AND_DIRTY_SEGMENT, CHECK_SPECIFIC_SHIP,
-              SPECIFIC_SHIP_NAME, LIMIT_ITERATIONS, ITERATION_LIMIT]
+              QUICK_AND_DIRTY_SEGMENT, CHECK_SPECIFIC_SHIPS,
+              SPECIFIC_SHIP_NAMES, LIMIT_ITERATIONS, ITERATION_LIMIT]
 
 
 def main(argv):
@@ -69,8 +69,8 @@ def main(argv):
              'totalSaveShipLayoutDuration': 0}
     print("Iterating ships...")
     for name, filenames in ships.items():
-        if CHECK_SPECIFIC_SHIP == True:
-            if name != SPECIFIC_SHIP_NAME:
+        if CHECK_SPECIFIC_SHIPS == True:
+            if name not in SPECIFIC_SHIP_NAMES:
                 continue
         if name in SHIPS_TO_IGNORE:
             print("Skipping %s" % name)
