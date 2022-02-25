@@ -118,7 +118,13 @@ The angular value is simply determined as a random value in a spread of 1.4, mea
 Weapon mounts have x and y coordinates. A challenge here is that these coordinates are not always inside the ship image. 
 For each weapon mount, all gibs are checked wether the coordinates overlap with them. 
 If that is not the case, the search radius around the initial weapon mount coordinates is increased by one (think of a square made of 8 pixels). 
-This is repeated until a maximum radius of 500 is reached; the biggest known radius needed so far for Multiverse was 140. 
+This is repeated until a maximum radius of 500 is reached; the biggest known radius needed so far for Multiverse was 140.
+
+# Known Issues
+
+- Parsing addons which use the `<mod...` tags causes an error as it is now recognized as valid xml
+- In a few cases gibs are not placed on the correct x and y coordinates
+- One known case of `tile cannot extend outside image` when generating
 
 # What Is Planned For The Future?
 In arbitrary order, *no promises if or when these will be done*:
