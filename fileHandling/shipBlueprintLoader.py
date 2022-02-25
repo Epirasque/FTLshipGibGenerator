@@ -10,10 +10,10 @@ def loadShipFileNames(sourceFolderpath):
         parsed = ET.parse(sourceFolderpath + "\\data\\blueprints.xml.append")
         blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
     if exists(sourceFolderpath + "\\data\\autoBlueprints.xml.append") == True:
-        parsed = ET.parse(sourceFolderpath + "\\data\\blueprints.xml.append")
+        parsed = ET.parse(sourceFolderpath + "\\data\\autoBlueprints.xml.append")
         blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
     if exists(sourceFolderpath + "\\data\\bosses.xml.append") == True:
-        parsed = ET.parse(sourceFolderpath + "\\data\\blueprints.xml.append")
+        parsed = ET.parse(sourceFolderpath + "\\data\\bosses.xml.append")
         blueprints.extend(parsed.getroot().findall(SHIP_BLUEPRINT_ATTRIBUTE))
 
     ships = {}
