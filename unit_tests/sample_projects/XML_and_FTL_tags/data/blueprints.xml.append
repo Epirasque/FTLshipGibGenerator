@@ -58,6 +58,17 @@
 	<aug name="O2_MASKS" />
 </shipBlueprint>
 
+<mod:findName type = "blueprintList" name = "SOME_MOD_NAME">
+    <mod-append:name>SOME_APPEND_1</mod-append:name>
+    <mod-append:name>SOME_APPEND_2</mod-append:name>
+</mod:findName>
+
+<mod:findName type = "blueprintList" name = "SOME_OTHER_MOD_NAME">
+    <mod-append:name>SOME_APPEND_1</mod-append:name>
+    <mod-append:name>SOME_APPEND_3</mod-append:name>
+    <mod-append:name>SOME_APPEND_4</mod-append:name>
+</mod:findName>
+
 <!-- test duplicate layout usage -->
 <shipBlueprint name="TEST_SHIP3" layout="test_layout2" img="test_image3">
 	<name>TEST_SHIP_NAME</name>

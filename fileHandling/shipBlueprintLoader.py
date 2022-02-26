@@ -3,6 +3,7 @@ from os.path import exists
 import re
 
 SHIP_BLUEPRINT_ATTRIBUTE = 'shipBlueprint'
+MOD_TAG_PREFIXES = ['mod:', 'mod-append:', 'mod-overwrite:']
 
 
 def loadShipFileNames(sourceFolderpath):
@@ -25,6 +26,8 @@ def addBlueprintsFromFile(blueprints, sourceFolderpath, filename):
         with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
             rawXml = file.read()
         # TODO: get rid of all <mod:...> sections
-        validXmlString =  '<root>' + re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml) + '</root>'
-        parsed = ET.ElementTree(ET.fromstring(validXmlString))
+        treeFormedXmlString = '<root>' + re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml) + '</root>'
+        for modPrefix in MOD_TAG_PREFIXES:
+            treeFormedXmlString = treeFormedXmlString.replace(modPrefix, modPrefix[:-1] + "_")
+        parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
         blueprints.extend(parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE))

@@ -121,7 +121,6 @@ If that is not the case, the search radius around the initial weapon mount coord
 This is repeated until a maximum radius of 500 is reached; the biggest known radius needed so far for Multiverse was 140.
 
 # Known Issues
-- Parsing addons which use the `<mod...` tags causes an error as it is not recognized as valid xml
 - In a few cases gibs are not placed on the correct x and y coordinates; this is apparently cause by multiple ships with different images using the same ship layout
 - One known case of `tile cannot extend outside image` when generating
 
