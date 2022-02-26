@@ -25,6 +25,6 @@ def addBlueprintsFromFile(blueprints, sourceFolderpath, filename):
         with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
             rawXml = file.read()
         # TODO: get rid of all <mod:...> sections
-        validXmlString =  '<root>' + re.sub(r"(<\?xml[^>]+\?>)", r"\1", rawXml) + '</root>'
+        validXmlString =  '<root>' + re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml) + '</root>'
         parsed = ET.ElementTree(ET.fromstring(validXmlString))
         blueprints.extend(parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE))

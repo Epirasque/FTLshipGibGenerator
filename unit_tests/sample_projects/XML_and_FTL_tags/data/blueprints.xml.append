@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FTL>
+<shipBlueprint name="TEST_SHIP1" layout="test_layout1" img="test_image1">
+	<name>TEST_SHIP_NAME</name>
+	<desc>For testing</desc>
+	<class>Test ship class</class>
+	<systemList>
+		<battery power="1" max="2" room="10" start="false" />
+		<doors power="1" max="3" room="8" start="false" />
+		<drones power="1" max="5" room="17" start="true" />
+		<medbay power="1" max="3" room="0" start="false" />
+		<oxygen power="1" max="1" room="4" start="true" />
+		<shields power="2" max="8" room="3" start="true" />
+		<teleporter power="1" max="2" room="16" start="false" />
+		<weapons power="2" max="5" room="2" start="true" />
+	</systemList>
+	<weaponSlots>3</weaponSlots>
+	<droneSlots>2</droneSlots>
+	<weaponList missiles="10" count="3" load="TEST_WEAPONS" >
+		<weapon name="TEST_WEAPONS" />
+		<weapon name="TEST_WEAPONS" />
+		<weapon name="TEST_WEAPONS" />
+	</weaponList>
+	<droneList drones="10" count="2" load="TEST_DRONES" />
+	<health amount="12" />
+	<maxPower amount="7" />
+	<crewCount amount="4" max="10" class="human" />
+	<boardingAI>sabotage</boardingAI>
+	<aug name="O2_MASKS" />
+</shipBlueprint>
+
+<shipBlueprint name="TEST_SHIP2" layout="test_layout2" img="test_image2">
+	<name>TEST_SHIP_NAME</name>
+	<desc>For testing</desc>
+	<class>Test ship class</class>
+	<systemList>
+		<battery power="1" max="2" room="10" start="false" />
+		<doors power="1" max="3" room="8" start="false" />
+		<drones power="1" max="5" room="17" start="true" />
+		<medbay power="1" max="3" room="0" start="false" />
+		<oxygen power="1" max="1" room="4" start="true" />
+		<shields power="2" max="8" room="3" start="true" />
+		<teleporter power="1" max="2" room="16" start="false" />
+		<weapons power="2" max="5" room="2" start="true" />
+	</systemList>
+	<weaponSlots>3</weaponSlots>
+	<droneSlots>2</droneSlots>
+	<weaponList missiles="10" count="3" load="TEST_WEAPONS" >
+		<weapon name="TEST_WEAPONS" />
+		<weapon name="TEST_WEAPONS" />
+		<weapon name="TEST_WEAPONS" />
+	</weaponList>
+	<droneList drones="10" count="2" load="TEST_DRONES" />
+	<health amount="12" />
+	<maxPower amount="7" />
+	<crewCount amount="4" max="10" class="human" />
+	<boardingAI>sabotage</boardingAI>
+	<aug name="O2_MASKS" />
+</shipBlueprint>
+
+<!-- test duplicate layout usage -->
+<shipBlueprint name="TEST_SHIP3" layout="test_layout2" img="test_image3">
+	<name>TEST_SHIP_NAME</name>
+	<desc>For testing</desc>
+	<class>Test ship class</class>
+	<systemList>
+		<battery power="1" max="2" room="10" start="false" />
+		<doors power="1" max="3" room="8" start="false" />
+		<drones power="1" max="5" room="17" start="true" />
+		<medbay power="1" max="3" room="0" start="false" />
+		<oxygen power="1" max="1" room="4" start="true" />
+		<shields power="2" max="8" room="3" start="true" />
+		<teleporter power="1" max="2" room="16" start="false" />
+		<weapons power="2" max="5" room="2" start="true" />
+	</systemList>
+	<weaponSlots>3</weaponSlots>
+	<droneSlots>2</droneSlots>
+	<weaponList missiles="10" count="3" load="TEST_WEAPONS" >
+		<weapon name="TEST_WEAPONS" />
+		<weapon name="TEST_WEAPONS" />
+		<weapon name="TEST_WEAPONS" />
+	</weaponList>
+	<droneList drones="10" count="2" load="TEST_DRONES" />
+	<health amount="12" />
+	<maxPower amount="7" />
+	<crewCount amount="4" max="10" class="human" />
+	<boardingAI>sabotage</boardingAI>
+	<aug name="O2_MASKS" />
+</shipBlueprint>
+</FTL>
