@@ -6,3 +6,5 @@ gibs/*
 layouts/*
 readme_modders.txt
 TODOS.txt
+.idea/
+*.iml

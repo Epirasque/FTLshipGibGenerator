@@ -93,6 +93,8 @@ def main(argv):
                 stats['nrShipsWithIncompleteGibSetup'] += 1
                 if areGibsPresentInLayout(layout) == True:
                     print("There are gibs in layout %s, but no images %s_gibN for it." % (layoutName, shipImageName))
+                    # TODO: profiling?
+
                 if areGibsPresentAsImageFiles(shipImageName, INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH) == True:
                     print("There are gib-images for base image %s, but no layout entries in %s for it." % (
                         shipImageName, layoutName))

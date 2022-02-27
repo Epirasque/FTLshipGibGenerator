@@ -5,7 +5,7 @@ import numpy as np
 
 # TODO: remove shipImageName as parameter
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
-    nonTranspartMask = (shipImage[:, :, 3] != 0)
+    nonTransparentMask = (shipImage[:, :, 3] != 0)
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
     compactnessToUse = 0.2  # TODO: start with 0. ?
@@ -20,7 +20,7 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
         # TODO: parameter for max iterations of kmeans
         # TODO: upon failure, retry with less/more gibs
         segments = slic(shipImage, n_segments=nrGibs, compactness=compactnessToUse, max_num_iter=100,
-                        mask=nonTranspartMask)
+                        mask=nonTransparentMask)
         nrSuccessfulGibs = segments.max()
     if nrSuccessfulGibs == 0:
         print("FAILED to generate any gibs for %s" % shipImageName)
