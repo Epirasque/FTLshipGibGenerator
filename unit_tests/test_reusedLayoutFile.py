@@ -13,6 +13,7 @@ from fileHandling.gibImageSaver import saveGibImages
 from fileHandling.shipBlueprintLoader import loadShipFileNames
 from fileHandling.shipImageLoader import loadShipBaseImage
 from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayoutStandalone
+from flow.sameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
 from imageProcessing.segmenter import segment, crop
 from metadata.gibEntryAdder import addGibEntriesToLayout
 from metadata.gibEntryChecker import areGibsPresentInLayout, getExplosionNode
@@ -45,38 +46,11 @@ class ReusedLayoutFileTest(unittest.TestCase):
             gibsInLayout = areGibsPresentInLayout(layout)
             gibsInImage = areGibsPresentAsImageFiles(shipImageName, standaloneFolderPath)
             if gibsInLayout == False or gibsInImage == False:
+                foundGibsSameLayout = False
                 if gibsInLayout == True and gibsInImage == False:
-                    print('Gibs in layout %s but not in image %s for %s' % (layoutName, shipImageName, name))
-                    for searchName, searchFilenames in ships.items():
-                        searchShipName = searchFilenames['img']
-                        searchLayoutName = searchFilenames['layout']
-                        if searchName != name and layoutName == searchLayoutName:
-                            print('Found identical layout with existing gibs for image %s' % searchShipName)
-                            explosionNode = getExplosionNode(layout)  # layout is same as searchLayout
-                            newBaseImage, irrelevantPath = loadShipBaseImage(shipImageName, standaloneFolderPath)
-
-                            gibs = []
-                            for gibId in range(1, nrGibs + 1):
-                                gibNode = explosionNode.find('gib%u' % gibId)
-                                gib = {}
-                                gib['id'] = gibId
-                                gib['x'] = int(gibNode.find('x').text)
-                                gib['y'] = int(gibNode.find('y').text)
-                                uncroppedSearchGibImg = Image.fromarray(np.zeros(newBaseImage.shape, dtype=np.uint8))
-                                searchGibImg = Image.open(
-                                    standaloneFolderPath + '/img/ship/' + searchShipName + '_gib' + str(gibId) + '.png')
-                                uncroppedSearchGibImg.paste(searchGibImg, (gib['x'], gib['y']), searchGibImg)
-                                searchGibTransparentMask = np.asarray(uncroppedSearchGibImg)[:, :, 3] == 0
-                                uncroppedNewGib = deepcopy(newBaseImage)
-                                uncroppedNewGib[searchGibTransparentMask] = (0, 0, 0, 0)
-
-                                gib['img'], center, minX, minY = crop(uncroppedNewGib)
-                                # self.assertEqual(gib['x'], minX)
-                                # self.assertEqual(gib['y'], minY)
-                                gibs.append(gib)
-                            saveGibImages(gibs, shipImageName, shipImageSubfolder, standaloneFolderPath,
-                                          developerBackup=False)  # TODO: duplicate line with below. but better to have it?
-                else:
+                    foundGibsSameLayout, unusedGibs, unusedPath = generateGibsBasedOnSameLayoutGibMask(layout, layoutName, name, nrGibs, shipImageName,
+                                                         ships, standaloneFolderPath)
+                if foundGibsSameLayout == False:
                     baseImg, shipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
                     gibs = segment(baseImg, shipImageName, nrGibs, quickAndDirty)
                     saveGibImages(gibs, shipImageName, shipImageSubfolder, standaloneFolderPath,

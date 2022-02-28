@@ -3,9 +3,9 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 LOWER_BOUND_VELOCITY = .1
-UPPER_BOUND_VELOCITY = 1.
-DIRECTION_SPREAD = 40
-ANGULAR_SPREAD = 1.4
+UPPER_BOUND_VELOCITY = 2.
+DIRECTION_SPREAD = 20
+MAXIMUM_ANGULAR_SPREAD = 1.4
 
 
 def addGibEntriesToLayout(layout, gibs):
@@ -42,7 +42,7 @@ def createGibEntry(baseHeight, baseWidth, biggestPossibleShipRadius, gib, nrGibs
 
     addVelocityToGibEntry(gibEntry, normalizedDistanceFromCenter, relativeMassRegardlessOfNrGibs)
     addDirectionToGibEntry(gibEntry, gibVectorX, gibVectorY)
-    addAngularToGibEntry(gibEntry)
+    addAngularToGibEntry(gibEntry, relativeMassRegardlessOfNrGibs)
     addCoordinatesToGibEntry(gibEntry, gib)
     return gibEntry
 
@@ -56,10 +56,10 @@ def addCoordinatesToGibEntry(gibEntry, gib):
     gibEntry.append(yEntry)
 
 
-def addAngularToGibEntry(gibEntry):
+def addAngularToGibEntry(gibEntry, relativeMassRegardlessOfNrGibs):
     angularEntry = ET.Element('angular')
-    angularEntry.set("min", str(- ANGULAR_SPREAD / 2))
-    angularEntry.set("max", str(ANGULAR_SPREAD / 2))
+    angularEntry.set("min", str(- MAXIMUM_ANGULAR_SPREAD * relativeMassRegardlessOfNrGibs / 2))
+    angularEntry.set("max", str(MAXIMUM_ANGULAR_SPREAD * relativeMassRegardlessOfNrGibs / 2))
     gibEntry.append(angularEntry)
 
 
@@ -89,7 +89,7 @@ def addDirectionToGibEntry(gibEntry, gibVectorX, gibVectorY):
 
 
 def addVelocityToGibEntry(gibEntry, normalizedDistanceFromCenter, relativeMassRegardlessOfNrGibs):
-    maximumVelocity = max(min(normalizedDistanceFromCenter / relativeMassRegardlessOfNrGibs, UPPER_BOUND_VELOCITY),
+    maximumVelocity = max(min(UPPER_BOUND_VELOCITY * normalizedDistanceFromCenter / relativeMassRegardlessOfNrGibs, UPPER_BOUND_VELOCITY),
                           LOWER_BOUND_VELOCITY)
     minimalVelocity = max(maximumVelocity * 0.3, LOWER_BOUND_VELOCITY)
     velocityEntry = ET.Element('velocity')
