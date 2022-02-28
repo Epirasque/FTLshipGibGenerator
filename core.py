@@ -15,7 +15,7 @@ from metadata.weaponMountGibIdUpdater import setWeaponMountGibIdsAsAppendContent
 # Source for metadata semantics: https://www.ftlwiki.com/wiki/Modding_ships
 
 # note: use / instead of \ to avoid character-escaping issues
-INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'AllEnemyShipsPlayable v1.3'  # 'FTL-Multiverse 5.1 Hotfix'
+INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.1 Hotfix'  # 'FTL-Multiverse 5.1 Hotfix'
 ADDON_OUTPUT_FOLDERPATH = 'MV Addon GenGibs v0.9.1'  # e.g. 'MV Addon GenGibs v0.9'
 # tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug in MV, has no layout file
 SHIPS_TO_IGNORE = ['PLAYER_SHIP_TUTORIAL', 'MU_COALITION_CONSTRUCTION']
@@ -25,8 +25,8 @@ SAVE_STANDALONE = False
 SAVE_ADDON = True
 # if enabled, save a separate copy of the output in gibs and/or layouts folders;
 # these have to exist as subfolders of glaive and they are NOT cleaned up automatically
-BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER = True
-BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER = True
+BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER = False
+BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER = False
 
 # actual number can be less: if the algorithm has an issue it is retried with fewer gibs
 NR_GIBS = 5
@@ -34,7 +34,7 @@ NR_GIBS = 5
 QUICK_AND_DIRTY_SEGMENT = False
 
 # if enabled, all ships except SPECIFIC_SHIP_NAME are skipped
-CHECK_SPECIFIC_SHIPS = True
+CHECK_SPECIFIC_SHIPS = False
 SPECIFIC_SHIP_NAMES = ['MU_REBEL_DROPSHIP', 'MU_REBEL_DROPSHIP_ELITE']
 # if enabled, only ITERATION_LIMIT amount of ships will be processed
 LIMIT_ITERATIONS = False
