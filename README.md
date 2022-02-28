@@ -1,4 +1,4 @@
-# GLAIVE v0.9: Pre-Generate Ship Debris For Faster Than Light (FTL) Mods
+# GLAIVE v0.9.1: Pre-Generate Ship Debris For Faster Than Light (FTL) Mods
 
 # What Does It Do? (TL;DR)
 Pointed to a mod directory it looks for ships that have no gibs, meaning ships that disappear the moment you destroy them. 
