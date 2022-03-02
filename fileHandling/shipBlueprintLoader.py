@@ -11,6 +11,8 @@ def loadShipFileNames(sourceFolderpath):
     addBlueprintsFromFile(blueprints, sourceFolderpath, 'blueprints.xml.append')
     addBlueprintsFromFile(blueprints, sourceFolderpath, 'autoBlueprints.xml.append')
     addBlueprintsFromFile(blueprints, sourceFolderpath, 'bosses.xml.append')
+    addBlueprintsFromFile(blueprints, sourceFolderpath, 'dlcBlueprints.xml.append')
+    addBlueprintsFromFile(blueprints, sourceFolderpath, 'dlcBlueprintsOverwrite.xml.append')
 
     ships = {}
     for blueprint in blueprints:
