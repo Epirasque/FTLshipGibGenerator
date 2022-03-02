@@ -1,4 +1,4 @@
-<shipBlueprint name="TEST_SHIP1" layout="test_layout1" img="test_image1">
+<shipBlueprint name="TEST_SHIP1" layout="test_layoutA" img="test_image1">
 	<name>TEST_SHIP_NAME</name>
 	<desc>For testing</desc>
 	<class>Test ship class</class>
@@ -27,7 +27,7 @@
 	<aug name="O2_MASKS" />
 </shipBlueprint>
 
-<shipBlueprint name="TEST_SHIP2" layout="test_layout2" img="test_image2">
+<shipBlueprint name="TEST_SHIP2" layout="test_layoutB" img="test_image2">
 	<name>TEST_SHIP_NAME</name>
 	<desc>For testing</desc>
 	<class>Test ship class</class>
@@ -68,7 +68,7 @@
 </mod:findName>
 
 <!-- test duplicate layout usage -->
-<shipBlueprint name="TEST_SHIP3" layout="test_layout2" img="test_image3">
+<shipBlueprint name="TEST_SHIP3" layout="test_layoutB" img="test_image3">
 	<name>TEST_SHIP_NAME</name>
 	<desc>For testing</desc>
 	<class>Test ship class</class>
