@@ -3,9 +3,9 @@ import collections
 
 # Source for metadata semantics: https://www.ftlwiki.com/wiki/Modding_ships
 
-# note: use / instead of \ to avoid character-escaping issues
 from flow.generatorLooper import startGeneratorLoop
 
+# note: use / instead of \ to avoid character-escaping issues
 INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.1 Hotfix'  # 'FTL-Multiverse 5.1 Hotfix'
 ADDON_OUTPUT_FOLDERPATH = 'MV Addon GenGibs v0.9.2'  # e.g. 'MV Addon GenGibs v0.9'
 # tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug in MV, has no layout file
@@ -28,7 +28,7 @@ QUICK_AND_DIRTY_SEGMENT = False
 CHECK_SPECIFIC_SHIPS = False
 SPECIFIC_SHIP_NAMES = ['MU_FED_SCOUT', 'MU_FED_SCOUT_ELITE']
 # if enabled, only ITERATION_LIMIT amount of ships will be processed
-LIMIT_ITERATIONS = True
+LIMIT_ITERATIONS = False
 ITERATION_LIMIT = 3
 
 parameters = collections.namedtuple("parameters",
