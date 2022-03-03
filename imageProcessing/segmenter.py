@@ -4,8 +4,11 @@ import numpy as np
 
 
 # TODO: remove shipImageName as parameter
+
+TRANSPARENCY_ALPHA_VALUE = 0
+
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
-    nonTransparentMask = (shipImage[:, :, 3] != 0)
+    nonTransparentMask = (shipImage[:, :, 3] != TRANSPARENCY_ALPHA_VALUE)
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
     compactnessToUse = 0.2  # TODO: start with 0. ?
