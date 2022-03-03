@@ -20,12 +20,12 @@ def convertLayoutToAppendContent(layout):
         #            appendString += '\t</mod:findLike>\n'
         #            appendString += '</mod:findLike>\n'
         if gibNode != None:
-            appendString += createAppendStringForGibEntry(appendString, gibId, gibNode)
+            appendString += createAppendStringForGibEntry(gibId, gibNode)
 
     return appendString
 
 
-def createAppendStringForGibEntry(appendString, gibId, gibNode):
+def createAppendStringForGibEntry(gibId, gibNode):
     velocityNode = gibNode.find('velocity')
     velocityMin = velocityNode.attrib['min']
     velocityMax = velocityNode.attrib['max']
@@ -39,16 +39,17 @@ def createAppendStringForGibEntry(appendString, gibId, gibNode):
     xValue = xNode.text
     yNode = gibNode.find('y')
     yValue = yNode.text
-    appendString += '<mod:findLike type="explosion">\n'
-    appendString += '\t<mod-overwrite:gib%u>\n' % gibId
-    appendString += '\t\t<velocity  min="%s" max="%s" />\n' % (velocityMin, velocityMax)
-    appendString += '\t\t<direction min="%s" max="%s" />\n' % (directionMin, directionMax)
-    appendString += '\t\t<angular   min="%s" max="%s" />\n' % (angularMin, angularMax)
-    appendString += '\t\t<x>%s</x>\n' % (xValue)
-    appendString += '\t\t<y>%s</y>\n' % (yValue)
-    appendString += '\t</mod-overwrite:gib%u>\n' % gibId
-    appendString += '</mod:findLike>\n'
-    return appendString
+    gibString = ''
+    gibString += '<mod:findLike type="explosion">\n'
+    gibString += '\t<mod-overwrite:gib%u>\n' % gibId
+    gibString += '\t\t<velocity  min="%s" max="%s" />\n' % (velocityMin, velocityMax)
+    gibString += '\t\t<direction min="%s" max="%s" />\n' % (directionMin, directionMax)
+    gibString += '\t\t<angular   min="%s" max="%s" />\n' % (angularMin, angularMax)
+    gibString += '\t\t<x>%s</x>\n' % (xValue)
+    gibString += '\t\t<y>%s</y>\n' % (yValue)
+    gibString += '\t</mod-overwrite:gib%u>\n' % gibId
+    gibString += '</mod:findLike>\n'
+    return gibString
 
 
 def getExplosionNode(layout):

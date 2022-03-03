@@ -3,21 +3,21 @@ MAX_SEARCH_RADIUS = 500  # biggest known: 140, results in 2 bugged ships
 
 
 def setWeaponMountGibIdsAsAppendContent(gibs, layoutWithNewGibs):
-    appendString = '\n'
+    weaponString = '\n'
     nrWeaponMountsWithoutGibId = 0
 
     weaponMountsNode = getWeaponMountsNode(layoutWithNewGibs)
 
     for mount in weaponMountsNode:
-        weaponMountAppendString, nrWeaponMountsWithoutGibId = generateAppendStringForWeaponMount(appendString, gibs,
+        weaponMountAppendString, nrWeaponMountsWithoutGibId = generateAppendStringForWeaponMount(gibs,
                                                                                                  mount,
                                                                                                  nrWeaponMountsWithoutGibId)
-        appendString += weaponMountAppendString
+        weaponString += weaponMountAppendString
 
-    return appendString, nrWeaponMountsWithoutGibId
+    return weaponString, nrWeaponMountsWithoutGibId
 
 
-def generateAppendStringForWeaponMount(appendString, gibs, mount, nrWeaponMountsWithoutGibId):
+def generateAppendStringForWeaponMount(gibs, mount, nrWeaponMountsWithoutGibId):
     exactMountX = int(mount.attrib['x'])
     exactMountY = int(mount.attrib['y'])
     mountGibId = findGibIdForWeaponMountCoordinates(exactMountX, exactMountY, gibs)
@@ -25,13 +25,14 @@ def generateAppendStringForWeaponMount(appendString, gibs, mount, nrWeaponMounts
         print("Weapon mount x=%d, y=%d could not be associated with a gibId" % (exactMountX, exactMountY))
         nrWeaponMountsWithoutGibId += 1
     mount.set('gib', str(mountGibId))
-    appendString += '<mod:findLike type="weaponMounts">\n'
-    appendString += '\t<mod:findLike type="mount">\n'
-    appendString += '\t\t<mod:selector x="%u" y="%u" />\n' % (exactMountX, exactMountY)
-    appendString += '\t\t<mod:setAttributes gib="%d" />\n' % mountGibId
-    appendString += '\t</mod:findLike>\n'
-    appendString += '</mod:findLike>\n'
-    return appendString, nrWeaponMountsWithoutGibId
+    weaponString = ''
+    weaponString += '<mod:findLike type="weaponMounts">\n'
+    weaponString += '\t<mod:findLike type="mount">\n'
+    weaponString += '\t\t<mod:selector x="%u" y="%u" />\n' % (exactMountX, exactMountY)
+    weaponString += '\t\t<mod:setAttributes gib="%d" />\n' % mountGibId
+    weaponString += '\t</mod:findLike>\n'
+    weaponString += '</mod:findLike>\n'
+    return weaponString, nrWeaponMountsWithoutGibId
 
 
 def findGibIdForWeaponMountCoordinates(exactMountX, exactMountY, gibs):
