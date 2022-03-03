@@ -39,24 +39,37 @@ For Multiverse addons:
 Check the settings in `core.py` on how to run the Gib Generator much more quickly, e.g. for a sanity check or debugging purposes. 
 
 
-# How does it work?
+# How Does It Work?
 ## Program Flow
+### Loading Blueprints
 Given the path to an unpacked FTL mod, the generator will look for the following files in the `data` subfolder:
 * `blueprints.xml.append`
 * `autoBlueprints.xml.append`
 * `bosses.xml.append` 
+* `dlcBlueprints.xml.append`
+* `dlcBlueprintsOverwrite.xml.append`
 
 For each of those files found, it will look for all `shipBlueprint` entries and remember the `layout` and the `image` names from there. 
 This provides a list of candidate ships for gib generation. 
 
+### Loading The Ship Layout
 First, the `layout` will be loaded. 
 A candidate will be skipped if it already has gib entries in its `layout` as well as existing `_gib` images (if either is missing they will be replaced/updated). 
 
-Next, the `_base` image of the ship will be loaded. It is used as input for the segmentation algorithm. 
+### Dealing With Layouts That Are Used Multiple Times
+If the `layout` already has gib entries, it is an indication that it is used more than once: ships can use the same layout but a different image, this makes sense if the shape and weapon mounts remain the same but the ship has a different color schema. 
+To address this, a cache is checked to see if the generator already made gibs for this `layout` before. This cache is located in the `gibCache` folder of this project, an in-memory attempt had exceeded certain limits. 
+If the cache contains gibs from a previously processed ship then those gibs will be used as a mask to cut out gibs for the ship that is currently being iterated. 
+This ensures an identical shape of gibs for the same layout, which is necessary to match with the `x` and `y` coordinates stored in the `layout` file. 
+If the cache does not contain an entry, all `shipBlueprint` entries that were initially loaded are searched for an identical `layout`. If any of those is found and already has existing gib images, then these are used for as the mask. This is the case if gibs existed before running the generator, otherwise they would be part of the cache).
+
+### Creating Gibs
+If there are no gibs for any other ships that happen to have the same `layout`, then the `_base` image of the ship will be loaded. It is used as input for the segmentation algorithm. 
 That algorithm outputs the gib images including additional information such as coordinates and pixel-mass. 
 
 Those gib images are then saved next to the `_base` image. 
 
+### Updating The Layout
 Next, the explosion gib metadata is added to the layout. This outputs the updated layout as well as the `appendContentString` that contains the same changes in a Slipstream-Advanced-XML separate-mod format (see Slipstreams' `readme_modders.txt`) which is used for the generator's addon mode.
 
 Afterwards, the layout and the `appendContentString` are further extended by also setting the proper gib ID for the ship's weapon mounts.
