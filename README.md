@@ -1,4 +1,4 @@
-# GLAIVE v0.9.1: Pre-Generate Ship Debris For Faster Than Light (FTL) Mods
+# GLAIVE v0.9.2: Pre-Generate Ship Debris For Faster Than Light (FTL) Mods
 
 # What Does It Do? (TL;DR)
 
@@ -25,6 +25,8 @@ the `INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH`. Read the comments above the parame
 run the main method without any additional arguments.
 
 ## Recommended Workflow
+
+The generator will ignore ships which already have gibs (regardless if they were drawn manually or generated). This means you might want to always apply it to an 'ungenerated' version of your addon because once generated they will not be overwritten anymore even if you run a new version of the generator. 
 
 Have two copies of your unpacked addon folder:
 
@@ -202,6 +204,7 @@ In arbitrary order, *no promises if or when these will be done*:
   existing gibs (there will definately be a way to turn that off as it does not look like standard FTL gibs anymore)
 - Resolving remaining TODOs in the code
 - Provide a compiled version that runs without installing Python
+- Avoid having longer lines sticking out of gibs (usually black lines that separate parts of the ship image)
 
 # How Can I Contact The Author Or Otherwise Get Involved?
 
