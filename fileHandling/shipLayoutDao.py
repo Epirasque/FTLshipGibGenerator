@@ -1,5 +1,6 @@
 import re
 import xml.etree.ElementTree as ET
+import os
 
 
 def loadShipLayout(shipLayoutName, sourceFolderpath):
@@ -25,6 +26,8 @@ def saveShipLayoutStandalone(layout, shipLayoutName, sourceFolderpath, developer
 
 def saveShipLayoutAsAppendFile(appendContentString, shipLayoutName, addonFolderpath, developerBackup):
     filepath = addonFolderpath + '\\data\\' + shipLayoutName + '.xml.append'
+    if os.path.exists(filepath):
+        os.remove(filepath)
     with open(filepath, "w") as appendFile:
         appendFile.write(appendContentString)
     if developerBackup == True:

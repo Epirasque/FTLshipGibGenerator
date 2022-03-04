@@ -1,90 +1,95 @@
-import unittest
+import collections
 import os
-from copy import deepcopy
-
-import imageio
-import numpy as np
 import shutil
-from PIL import Image
-from skimage.io import imshow
+import unittest
 
-from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.gibImageSaver import saveGibImages
+import numpy as np
+from PIL import Image
+
 from fileHandling.shipBlueprintLoader import loadShipFileNames
 from fileHandling.shipImageLoader import loadShipBaseImage
-from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayoutStandalone
-from imageProcessing.segmenter import segment, crop
-from metadata.gibEntryAdder import addGibEntriesToLayout
-from metadata.gibEntryChecker import areGibsPresentInLayout, getExplosionNode
+from fileHandling.shipLayoutDao import loadShipLayout
+from flow.generatorLooper import startGeneratorLoop
+from metadata.gibEntryChecker import getExplosionNode
 
 
 class ReusedLayoutFileTest(unittest.TestCase):
-    def test_properCoordinatesForReusedLayoutFile(self):
+    def test_properCoordinatesForReusedLayoutFileWithoutAnyGibs(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/XML_and_FTL_tags'
+        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
-        quickAndDirty = True
-        for imageId in range(1, 3 + 1):
-            for gibId in range(1, 10 + 1):
-                try:
-                    os.remove(standaloneFolderPath + '/img/ship/test_image%u_gib%u.png' % (imageId, gibId))
-                except:
-                    pass
-        shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layout1.xml',
-                        standaloneFolderPath + '/data/test_layout1.xml')
-        shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layout2.xml',
-                        standaloneFolderPath + '/data/test_layout2.xml')
 
-        ships = loadShipFileNames(standaloneFolderPath)
+        parameters = collections.namedtuple("parameters",
+                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
+        coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                    ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                    SAVE_STANDALONE=True, SAVE_ADDON=True,
+                                    BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                    BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                    QUICK_AND_DIRTY_SEGMENT=True,
+                                    CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
+                                    ITERATION_LIMIT=0)
+
+        self.resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
         # ACT
-        for name, filenames in ships.items():
-            shipImageName = filenames['img']
-            layoutName = filenames['layout']
-            layout = loadShipLayout(layoutName, standaloneFolderPath)
-            gibsInLayout = areGibsPresentInLayout(layout)
-            gibsInImage = areGibsPresentAsImageFiles(shipImageName, standaloneFolderPath)
-            if gibsInLayout == False or gibsInImage == False:
-                if gibsInLayout == True and gibsInImage == False:
-                    print('Gibs in layout %s but not in image %s for %s' % (layoutName, shipImageName, name))
-                    for searchName, searchFilenames in ships.items():
-                        searchShipName = searchFilenames['img']
-                        searchLayoutName = searchFilenames['layout']
-                        if searchName != name and layoutName == searchLayoutName:
-                            print('Found identical layout with existing gibs for image %s' % searchShipName)
-                            explosionNode = getExplosionNode(layout)  # layout is same as searchLayout
-                            newBaseImage, irrelevantPath = loadShipBaseImage(shipImageName, standaloneFolderPath)
-
-                            gibs = []
-                            for gibId in range(1, nrGibs + 1):
-                                gibNode = explosionNode.find('gib%u' % gibId)
-                                gib = {}
-                                gib['id'] = gibId
-                                gib['x'] = int(gibNode.find('x').text)
-                                gib['y'] = int(gibNode.find('y').text)
-                                uncroppedSearchGibImg = Image.fromarray(np.zeros(newBaseImage.shape, dtype=np.uint8))
-                                searchGibImg = Image.open(
-                                    standaloneFolderPath + '/img/ship/' + searchShipName + '_gib' + str(gibId) + '.png')
-                                uncroppedSearchGibImg.paste(searchGibImg, (gib['x'], gib['y']), searchGibImg)
-                                searchGibTransparentMask = np.asarray(uncroppedSearchGibImg)[:, :, 3] == 0
-                                uncroppedNewGib = deepcopy(newBaseImage)
-                                uncroppedNewGib[searchGibTransparentMask] = (0, 0, 0, 0)
-
-                                gib['img'], center, minX, minY = crop(uncroppedNewGib)
-                                # self.assertEqual(gib['x'], minX)
-                                # self.assertEqual(gib['y'], minY)
-                                gibs.append(gib)
-                            saveGibImages(gibs, shipImageName, shipImageSubfolder, standaloneFolderPath,
-                                          developerBackup=False)  # TODO: duplicate line with below. but better to have it?
-                else:
-                    baseImg, shipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
-                    gibs = segment(baseImg, shipImageName, nrGibs, quickAndDirty)
-                    saveGibImages(gibs, shipImageName, shipImageSubfolder, standaloneFolderPath,
-                                  developerBackup=False)
-                    layoutWithNewGibs = addGibEntriesToLayout(layout, gibs)
-                    saveShipLayoutStandalone(layoutWithNewGibs, layoutName, standaloneFolderPath, False)
+        startGeneratorLoop(coreParameters)
 
         # ASSERT
+        ships = loadShipFileNames(standaloneFolderPath)
+        self.assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath)
+
+        with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
+            content = layoutA.read()
+            for gibId in range(1, nrGibs + 1):
+                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
+            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
+        with open(addonFolderPath + '/data/test_layoutB.xml.append') as layoutA:
+            content = layoutA.read()
+            for gibId in range(1, nrGibs + 1):
+                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
+            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
+
+    def test_properCoordinatesForReusedLayoutFileWithSomeGibs(self):
+        # ARRANGE
+        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        nrGibs = 2
+        imageIdWithGibs = 3
+
+        parameters = collections.namedtuple("parameters",
+                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
+        coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                    ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                    SAVE_STANDALONE=True, SAVE_ADDON=True,
+                                    BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                    BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                    QUICK_AND_DIRTY_SEGMENT=True,
+                                    CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
+                                    ITERATION_LIMIT=0)
+
+        self.resetTestResources(standaloneFolderPath, addonFolderPath, [imageIdWithGibs])
+
+        # ACT
+        startGeneratorLoop(coreParameters)
+
+        # ASSERT
+        ships = loadShipFileNames(standaloneFolderPath)
+        self.assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath)
+
+        with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
+            content = layoutA.read()
+            for gibId in range(1, nrGibs + 1):
+                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
+            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
+        with open(addonFolderPath + '/data/test_layoutB.xml.append') as layoutA:
+            content = layoutA.read()
+            for gibId in range(1, nrGibs + 1):
+                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
+            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
+
+    def assertShipReconstructedFromGibsIsAccurateEnough(self, nrGibs, ships, standaloneFolderPath):
         for name, filenames in ships.items():
             shipImageName = filenames['img']
             layoutName = filenames['layout']
@@ -119,7 +124,34 @@ class ReusedLayoutFileTest(unittest.TestCase):
                 reconstructedFromGibs.save('reconstructed.png')
                 Image.fromarray(shipImage).save('original.png')
 
-            self.assertTrue(percentage < 5)  # add assertion here
+            self.assertTrue(percentage < 5)
+
+    def resetTestResources(self, standaloneFolderPath, addonFolderPath, imageIdsToKeepGibsFor):
+        for imageId in range(1, 4 + 1):
+            if imageId in imageIdsToKeepGibsFor:
+                print('Keeping gibs for image ID %u' % imageId)
+                continue
+            for gibId in range(1, 10 + 1):
+                try:
+                    os.remove(standaloneFolderPath + '/img/ship/test_image%u_gib%u.png' % (imageId, gibId))
+                except:
+                    pass
+                try:
+                    os.remove(addonFolderPath + '/img/ship/test_image%u_gib%u.png' % (imageId, gibId))
+                except:
+                    pass
+                try:
+                    os.remove(addonFolderPath + '/data/test_layoutA.xml.append')
+                except:
+                    pass
+                try:
+                    os.remove(addonFolderPath + '/data/test_layoutB.xml.append')
+                except:
+                    pass
+        shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layoutA.xml',
+                        standaloneFolderPath + '/data/test_layoutA.xml')
+        shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layoutB.xml',
+                        standaloneFolderPath + '/data/test_layoutB.xml')
 
 
 if __name__ == '__main__':
