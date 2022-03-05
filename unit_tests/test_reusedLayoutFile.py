@@ -1,4 +1,5 @@
 import collections
+import copy
 import os
 import shutil
 import unittest
@@ -102,8 +103,9 @@ class ReusedLayoutFileTest(unittest.TestCase):
                 gib = {}
                 gib['x'] = int(gibNode.find('x').text)
                 gib['y'] = int(gibNode.find('y').text)
-                gib['img'] = Image.open(
-                    standaloneFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png')
+                with Image.open(
+                        standaloneFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png') as gibImage:
+                    gib['img'] = copy.deepcopy(gibImage)
                 gibs.append(gib)
 
             shipImage, shipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
