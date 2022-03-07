@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 LOWER_BOUND_VELOCITY = .1
-UPPER_BOUND_VELOCITY = 2.
+UPPER_BOUND_VELOCITY = 1.5
 DIRECTION_SPREAD = 20
 MAXIMUM_ANGULAR_SPREAD = 1.4
 
