@@ -1,4 +1,4 @@
-# GLAIVE v0.9.2: Pre-Generate Ship Debris For Faster Than Light (FTL) Mods
+# GLAIVE v0.9.3: Pre-Generate Ship Debris For Faster Than Light (FTL) Mods
 
 # What Does It Do? (TL;DR)
 

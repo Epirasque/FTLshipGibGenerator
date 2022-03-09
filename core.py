@@ -6,8 +6,8 @@ import collections
 from flow.generatorLooper import startGeneratorLoop
 
 # note: use / instead of \ to avoid character-escaping issues
-INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.1 Hotfix'  # 'FTL-Multiverse 5.1 Hotfix'
-ADDON_OUTPUT_FOLDERPATH = 'MV Addon GenGibs v0.9.2'  # e.g. 'MV Addon GenGibs v0.9'
+INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.2.1'  # 'FTL-Multiverse 5.2.1'
+ADDON_OUTPUT_FOLDERPATH = 'MV Addon GenGibs v0.9.3'  # e.g. 'MV Addon GenGibs v0.9.3'
 # tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug in MV, has no layout file
 SHIPS_TO_IGNORE = ['PLAYER_SHIP_TUTORIAL', 'MU_COALITION_CONSTRUCTION']
 # configure whether the output is meant for standalone or as an addon.
