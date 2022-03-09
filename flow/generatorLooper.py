@@ -1,6 +1,7 @@
 import shutil
 import time
 
+from fileHandling import shipInternalsLoader
 from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
 from fileHandling.gibImageSaver import saveGibImages
 from fileHandling.shipBlueprintLoader import loadShipFileNames
@@ -8,6 +9,7 @@ from fileHandling.shipImageLoader import loadShipBaseImage
 from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
 from flow.sameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
 from imageProcessing.segmenter import segment
+from imageProcessing.shipInternalsAttacher import attachShipInternals
 from metadata.gibEntryAdder import addGibEntriesToLayout
 from metadata.gibEntryChecker import areGibsPresentInLayout
 from metadata.layoutToAppendContentConverter import convertLayoutToAppendContent
@@ -42,6 +44,9 @@ def startGeneratorLoop(parameters):
         print("Did not clean gibCache (e.g. folder was already cleaned up): %s" % e)
     except Exception as e:
         print("EXCEPTION when cleaning up gibCache: %s" % e)
+    tilesets = {}
+    if(parameters.GENERATE_SHIP_INTERNALS == True):
+        tilesets = shipInternalsLoader.loadTilesets()
     print("Iterating ships...")
     layoutNameToGibCache = {}
     for name, filenames in ships.items():
@@ -67,7 +72,7 @@ def startGeneratorLoop(parameters):
         else:
             stats, layoutNameToGibCache = createNewGibs(parameters, layout, layoutName,
                                                                 layoutNameToGibCache, name,
-                                                                shipImageName, ships, stats)
+                                                                shipImageName, ships, stats, tilesets)
 
         if parameters.LIMIT_ITERATIONS == True and stats['nrIterations'] >= parameters.ITERATION_LIMIT:
             break
@@ -87,7 +92,7 @@ def startGeneratorLoop(parameters):
     print('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
 
-def createNewGibs(parameters, layout, layoutName, layoutNameToGibCache, name, shipImageName, ships, stats):
+def createNewGibs(parameters, layout, layoutName, layoutNameToGibCache, name, shipImageName, ships, stats, tilesets):
     foundGibsSameLayout = False
     gibs = []
     shipImageSubfolder = 'not set'
@@ -106,7 +111,7 @@ def createNewGibs(parameters, layout, layoutName, layoutNameToGibCache, name, sh
             print("There are gib-images for base image %s, but no layout entries in %s for it." % (
                 shipImageName, layoutName))
         try:
-            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(parameters, layout, layoutName, shipImageName, stats)
+            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, tilesets)
             layoutNameToGibCache[layoutName] = shipImageName, len(gibs), layoutWithNewGibs
         except Exception as e:
             print("UNEXPECTED EXCEPTION: %s" % e)
@@ -137,9 +142,11 @@ def attemptGeneratingGibsFromIdenticalLayout(parameters, layout, layoutName,
     return foundGibsSameLayout, gibs, shipImageSubfolder
 
 
-def generateGibsForShip(parameters, layout, layoutName, shipImageName, stats):
+def generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, tilesets):
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(parameters, shipImageName, stats)
     gibs, stats = segmentWithProfiling(parameters, baseImg, shipImageName, stats)
+    if parameters.GENERATE_SHIP_INTERNALS == True:
+        gibs = attachShipInternals(gibs, tilesets)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:

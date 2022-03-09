@@ -1,0 +1,81 @@
+import copy
+import os
+import shutil
+
+import numpy as np
+from PIL import Image
+
+from fileHandling.shipImageLoader import loadShipBaseImage
+from fileHandling.shipLayoutDao import loadShipLayout
+from metadata.gibEntryChecker import getExplosionNode
+
+
+def resetTestResources(standaloneFolderPath, addonFolderPath, imageIdsToKeepGibsFor):
+    for imageId in range(1, 4 + 1):
+        if imageId in imageIdsToKeepGibsFor:
+            print('Keeping gibs for image ID %u' % imageId)
+            continue
+        for gibId in range(1, 10 + 1):
+            try:
+                os.remove(standaloneFolderPath + '/img/ship/test_image%u_gib%u.png' % (imageId, gibId))
+            except:
+                pass
+            try:
+                os.remove(addonFolderPath + '/img/ship/test_image%u_gib%u.png' % (imageId, gibId))
+            except:
+                pass
+            try:
+                os.remove(addonFolderPath + '/data/test_layoutA.xml.append')
+            except:
+                pass
+            try:
+                os.remove(addonFolderPath + '/data/test_layoutB.xml.append')
+            except:
+                pass
+    shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layoutA.xml',
+                    standaloneFolderPath + '/data/test_layoutA.xml')
+    shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layoutB.xml',
+                    standaloneFolderPath + '/data/test_layoutB.xml')
+
+
+def assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent):
+    isAccurateEnough = True
+    for name, filenames in ships.items():
+        shipImageName = filenames['img']
+        layoutName = filenames['layout']
+        layout = loadShipLayout(layoutName, standaloneFolderPath)
+        explosionNode = getExplosionNode(layout)
+
+        gibs = []
+        for gibId in range(1, nrGibs + 1):
+            gibNode = explosionNode.find('gib%u' % gibId)
+            gib = {}
+            gib['x'] = int(gibNode.find('x').text)
+            gib['y'] = int(gibNode.find('y').text)
+            with Image.open(
+                    standaloneFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png') as gibImage:
+                gib['img'] = copy.deepcopy(gibImage)
+            gibs.append(gib)
+
+        shipImage, shipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
+        reconstructedFromGibs = Image.fromarray(np.zeros(shipImage.shape, dtype=np.uint8))
+        for gib in gibs:
+            gibImage = gib['img']
+            reconstructedFromGibs.paste(gibImage, (gib['x'], gib['y']), gibImage)
+        differentTransparencyPixels = abs(shipImage - reconstructedFromGibs)[:, :, 3] > 0
+        percentage = 100. * differentTransparencyPixels.sum() / (shipImage.shape[0] * shipImage.shape[1])
+        print("Deviating pixels for ship %s layout %s: %u of %u (%.2f%%)" % (
+            shipImageName, layoutName, differentTransparencyPixels.sum(), shipImage.shape[0] * shipImage.shape[1],
+            percentage))
+        highlightingImage = np.zeros(shipImage.shape, dtype=np.uint8)
+        highlightingImage[differentTransparencyPixels] = (255, 0, 0, 255)
+
+        if percentage >= requiredAccuracyInPercent:
+            Image.fromarray(highlightingImage).save('delta.png')
+            reconstructedFromGibs.save('reconstructed.png')
+            Image.fromarray(shipImage).save('original.png')
+
+        if percentage >= requiredAccuracyInPercent:
+            isAccurateEnough = False
+            break
+    return isAccurateEnough

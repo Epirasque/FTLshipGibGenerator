@@ -206,6 +206,36 @@ In arbitrary order, *no promises if or when these will be done*:
 - Provide a compiled version that runs without installing Python
 - Avoid having longer lines sticking out of gibs (usually black lines that separate parts of the ship image)
 
+# Progress Of Ship Internals
+
+- [ ] tilesets
+  - [ ] initializing tilesets
+    - [x] load and split
+    - [ ] detect origin/edge
+    - [ ] pre-rotate in 15° steps (plus re-crop)
+  - [ ] program flow
+    - [x] feature toggle
+    - [ ] flow to class at lowest level
+    - [ ] profiling
+  - [ ] support different layers
+  - [ ] support different themes
+- [ ] mark seams between gibs
+  - [x] prototype
+- [ ] innermost layer1 (chunks)
+  - [ ] tileset
+  - [ ] determine general direction
+    - [x] prototype
+- [ ] layer2
+- [ ] layer3
+- [ ] layer4
+- [ ] ensure ship internals are always hidden initially
+  - [x] unit test
+  - [ ] don't generate outside of base ship shape
+  - [ ] ensure gibs cover each other properly (edge-asymmetry/logic needed)
+- [ ] deal with re-use layout mechanism: issue differentiating core gib and internals?
+- [ ] shading
+- [ ] tweak until it looks great
+
 # How Can I Contact The Author Or Otherwise Get Involved?
 
 Write to Epirasque in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb), I'm looking forward to

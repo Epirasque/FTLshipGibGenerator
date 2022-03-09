@@ -12,6 +12,7 @@ from fileHandling.shipImageLoader import loadShipBaseImage
 from fileHandling.shipLayoutDao import loadShipLayout
 from flow.generatorLooper import startGeneratorLoop
 from metadata.gibEntryChecker import getExplosionNode
+from unit_tests.test_utilties import resetTestResources, assertShipReconstructedFromGibsIsAccurateEnough
 
 
 class ReusedLayoutFileTest(unittest.TestCase):
@@ -22,24 +23,24 @@ class ReusedLayoutFileTest(unittest.TestCase):
         nrGibs = 2
 
         parameters = collections.namedtuple("parameters",
-                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
+                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_SHIP_INTERNALS CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
         coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                     ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
                                     SAVE_STANDALONE=True, SAVE_ADDON=True,
                                     BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                     BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                    QUICK_AND_DIRTY_SEGMENT=True,
+                                    QUICK_AND_DIRTY_SEGMENT=True, GENERATE_SHIP_INTERNALS=False,
                                     CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
                                     ITERATION_LIMIT=0)
 
-        self.resetTestResources(standaloneFolderPath, addonFolderPath, [])
+        resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
         # ACT
         startGeneratorLoop(coreParameters)
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
-        self.assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath)
+        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent=5)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -60,24 +61,24 @@ class ReusedLayoutFileTest(unittest.TestCase):
         imageIdWithGibs = 3
 
         parameters = collections.namedtuple("parameters",
-                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
+                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_SHIP_INTERNALS CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
         coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                     ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
                                     SAVE_STANDALONE=True, SAVE_ADDON=True,
                                     BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                     BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                    QUICK_AND_DIRTY_SEGMENT=True,
+                                    QUICK_AND_DIRTY_SEGMENT=True, GENERATE_SHIP_INTERNALS=False,
                                     CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
                                     ITERATION_LIMIT=0)
 
-        self.resetTestResources(standaloneFolderPath, addonFolderPath, [imageIdWithGibs])
+        resetTestResources(standaloneFolderPath, addonFolderPath, [imageIdWithGibs])
 
         # ACT
         startGeneratorLoop(coreParameters)
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
-        self.assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath)
+        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent=5)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -90,7 +91,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
                 self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
             self.assertEqual(4, content.count('<mod:findLike type="mount">'))
 
-    def assertShipReconstructedFromGibsIsAccurateEnough(self, nrGibs, ships, standaloneFolderPath):
+    def assertShipReconstructedFromGibsIsAccurateEnough(self, nrGibs, ships, standaloneFolderPath,
+                                                        requiredAccuracyInPercent):
         for name, filenames in ships.items():
             shipImageName = filenames['img']
             layoutName = filenames['layout']
@@ -121,39 +123,12 @@ class ReusedLayoutFileTest(unittest.TestCase):
             highlightingImage = np.zeros(shipImage.shape, dtype=np.uint8)
             highlightingImage[differentTransparencyPixels] = (255, 0, 0, 255)
 
-            if percentage >= 5:
+            if percentage >= requiredAccuracyInPercent:
                 Image.fromarray(highlightingImage).save('delta.png')
                 reconstructedFromGibs.save('reconstructed.png')
                 Image.fromarray(shipImage).save('original.png')
 
-            self.assertTrue(percentage < 5)
-
-    def resetTestResources(self, standaloneFolderPath, addonFolderPath, imageIdsToKeepGibsFor):
-        for imageId in range(1, 4 + 1):
-            if imageId in imageIdsToKeepGibsFor:
-                print('Keeping gibs for image ID %u' % imageId)
-                continue
-            for gibId in range(1, 10 + 1):
-                try:
-                    os.remove(standaloneFolderPath + '/img/ship/test_image%u_gib%u.png' % (imageId, gibId))
-                except:
-                    pass
-                try:
-                    os.remove(addonFolderPath + '/img/ship/test_image%u_gib%u.png' % (imageId, gibId))
-                except:
-                    pass
-                try:
-                    os.remove(addonFolderPath + '/data/test_layoutA.xml.append')
-                except:
-                    pass
-                try:
-                    os.remove(addonFolderPath + '/data/test_layoutB.xml.append')
-                except:
-                    pass
-        shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layoutA.xml',
-                        standaloneFolderPath + '/data/test_layoutA.xml')
-        shutil.copyfile(standaloneFolderPath + '/data/TO_USE_test_layoutB.xml',
-                        standaloneFolderPath + '/data/test_layoutB.xml')
+            self.assertTrue(percentage < requiredAccuracyInPercent)
 
 
 if __name__ == '__main__':
