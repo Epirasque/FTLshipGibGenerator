@@ -152,7 +152,7 @@ image (while there are ways to counting the individual pixels relatively fast, i
 The velocity (speed in the given direction) of a gib consists of a minimum and a maximum value. Whenever the ship is
 destroyed, FTL will pick a random value within that range.
 
-The maximum velocity is computed by the distance from the ship center to the center of the gib divided by the mass of
+The maximum velocity is computed by 2 times the distance from the ship center to the center of the gib, divided by the mass of
 the gib. The idea is that a gib in the center will move slower than a gib on the edge. Additionally, bigger gibs will
 move more slowly than smaller gibs.
 
@@ -189,8 +189,6 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 
 # Known Issues
 
-- In a few cases gibs are not placed on the correct x and y coordinates; this is apparently cause by multiple ships with
-  different images using the same ship layout
 - One known case of `tile cannot extend outside image` when generating
 
 # What Is Planned For The Future?
