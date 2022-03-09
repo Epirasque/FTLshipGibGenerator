@@ -215,7 +215,7 @@ In arbitrary order, *no promises if or when these will be done*:
     - [ ] pre-rotate in 15° steps (plus re-crop)
   - [ ] program flow
     - [x] feature toggle
-    - [ ] flow to class at lowest level
+    - [x] flow to class at lowest level
     - [ ] profiling
   - [ ] support different layers
   - [ ] support different themes
