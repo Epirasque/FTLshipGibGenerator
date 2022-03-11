@@ -62,12 +62,11 @@ def assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFol
         for gib in gibs:
             gibImage = gib['img']
             reconstructedFromGibs.paste(gibImage, (gib['x'], gib['y']), gibImage)
-        differentTransparencyPixels = abs(shipImage - reconstructedFromGibs)[:, :, 3] > 0
-        percentage = 100. * differentTransparencyPixels.sum() / (shipImage.shape[0] * shipImage.shape[1])
-        print("Deviating pixels for ship %s layout %s: %u of %u (%.2f%%)" % (
-            shipImageName, layoutName, differentTransparencyPixels.sum(), shipImage.shape[0] * shipImage.shape[1],
-            percentage))
+        percentage = imageDifferenceInPercentage(shipImage, reconstructedFromGibs)
+        print("Deviating pixels for ship %s layout %s: %.2f%%" % (
+            shipImageName, layoutName, percentage))
         highlightingImage = np.zeros(shipImage.shape, dtype=np.uint8)
+        differentTransparencyPixels = abs(shipImage - reconstructedFromGibs)[:, :, 3] > 0
         highlightingImage[differentTransparencyPixels] = (255, 0, 0, 255)
 
         if percentage >= requiredAccuracyInPercent:
@@ -79,3 +78,11 @@ def assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFol
             isAccurateEnough = False
             break
     return isAccurateEnough
+
+
+def imageDifferenceInPercentage(imageA, imageB):
+    differentTransparencyPixels = abs(imageA - imageB)[:, :, 3] > 0
+    percentage = 100. * differentTransparencyPixels.sum() / (imageA.shape[0] * imageA.shape[1])
+    print("Deviating by %u of %u pixels (%.2f%%)" % (
+    differentTransparencyPixels.sum(), imageA.shape[0] * imageA.shape[1], percentage))
+    return percentage

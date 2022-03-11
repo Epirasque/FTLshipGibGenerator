@@ -1,5 +1,6 @@
 import shutil
 import time
+import traceback
 
 from fileHandling import shipInternalsLoader
 from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
@@ -87,8 +88,8 @@ def startGeneratorLoop(parameters):
         shutil.rmtree('gibCache')
     except OSError as e:
         print("Did not clean gibCache (e.g. folder was already cleaned up): %s" % e)
-    except Exception as e:
-        print("UNEXPECTED EXCEPTION when cleaning up gibCache: %s" % e)
+    except Exception:
+        print("UNEXPECTED EXCEPTION when cleaning up gibCache: %s" % traceback.format_exc())
     print('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
 
@@ -113,8 +114,8 @@ def createNewGibs(parameters, layout, layoutName, layoutNameToGibCache, name, sh
         try:
             stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, tilesets)
             layoutNameToGibCache[layoutName] = shipImageName, len(gibs), layoutWithNewGibs
-        except Exception as e:
-            print("UNEXPECTED EXCEPTION: %s" % e)
+        except Exception:
+            print("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
             stats['nrErrorsUnknownCause'] += 1
     return stats, layoutNameToGibCache
 
@@ -136,8 +137,8 @@ def attemptGeneratingGibsFromIdenticalLayout(parameters, layout, layoutName,
                                                                                              ships,
                                                                                              parameters.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
                                                                                              layoutNameToGibCache)
-    except Exception as e:
-        print("UNEXPECTED EXCEPTION: %s" % e)
+    except Exception:
+        print("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
         stats['nrErrorsUnknownCause'] += 1
     return foundGibsSameLayout, gibs, shipImageSubfolder
 
@@ -146,7 +147,7 @@ def generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, ti
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(parameters, shipImageName, stats)
     gibs, stats = segmentWithProfiling(parameters, baseImg, shipImageName, stats)
     if parameters.GENERATE_SHIP_INTERNALS == True:
-        gibs = attachShipInternals(gibs, tilesets)
+        gibs = attachShipInternals(gibs, baseImg, tilesets)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:

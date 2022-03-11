@@ -90,7 +90,7 @@ class MyTestCase(unittest.TestCase):
                                                 array[y, x, 3] = 255
                                     except:
                                         pass
-                Image.fromarray(array).show()
+                #Image.fromarray(array).show()
 
                 nonEdgeMask = np.where(np.any(array != [255, 1, 2, 255], axis=-1))
                 # straight forward inversion with ~ does not seem to work
@@ -152,7 +152,7 @@ class MyTestCase(unittest.TestCase):
                 # TODO avoid out of bounds (workaround: uncropped gib which is fine; should be basis later on anyway)
                 array[lineY_A, lineX_A] = [1, 2, 255, 255]
 
-                Image.fromarray(array).show()
+                #Image.fromarray(array).show()
                 pass
                 break
             break
