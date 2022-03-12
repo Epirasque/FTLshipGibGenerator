@@ -46,7 +46,7 @@ def startGeneratorLoop(parameters):
     except Exception as e:
         print("EXCEPTION when cleaning up gibCache: %s" % e)
     tilesets = {}
-    if (parameters.GENERATE_SHIP_INTERNALS == True):
+    if (parameters.GENERATE_METAL_BITS == True):
         tilesets = loadTilesets()
     print("Iterating ships...")
     layoutNameToGibCache = {}
@@ -147,7 +147,7 @@ def attemptGeneratingGibsFromIdenticalLayout(parameters, layout, layoutName,
 def generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, tilesets):
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(parameters, shipImageName, stats)
     gibs, stats = segmentWithProfiling(parameters, baseImg, shipImageName, stats)
-    if parameters.GENERATE_SHIP_INTERNALS == True:
+    if parameters.GENERATE_METAL_BITS == True:
         gibs = attachMetalBits(gibs, baseImg, tilesets)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1

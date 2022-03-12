@@ -8,9 +8,24 @@ from imageProcessing.ImageCropper import cropImage
 def attachMetalBits(gibs, shipImage, tilesets):
     uncropGibs(gibs, shipImage)
     buildSeamTopology(gibs, shipImage)
+    populateSeams(gibs, shipImage, tilesets)
     orderGibsByZCoordinates(gibs)
     cropAndUpdateGibs(gibs)
     return gibs
+
+
+def populateSeams(gibs, shipImage, tilesets):
+    for gibToPopulate in gibs:
+        for neighbouringGib in gibs:
+            neighbourId = neighbouringGib['id']
+            if gibToPopulate['id'] != neighbourId:
+                if gibToPopulate['coveredByNeighbour'][neighbourId] == True:
+                    populateSeam(gibToPopulate, shipImage, tilesets)
+
+
+def populateSeam(gibToPopulate, shipImage, tilesets):
+    # TODO: ensure does not reach into any of coversNeighbour or outside of ship image shape -> use mask, also one for gib itself
+    pass
 
 
 def buildSeamTopology(gibs, shipImage):
@@ -55,6 +70,7 @@ def defineTopologyWithNeighbours(gibToProcess, gibs, nrGibs):
 def determineSeamsWithNeighbours(gibToProcess, gibs, shipImage):
     searchRadius = 1
     gibImageArray = gibToProcess['img']
+    # TODO: refactor into something more efficient to improve performance
     for x in range(gibImageArray.shape[1]):
         for y in range(gibImageArray.shape[0]):
             if gibImageArray[y, x, 3] != 0:
@@ -69,10 +85,6 @@ def determineSeamsWithNeighbours(gibToProcess, gibs, shipImage):
                                         if gibNeighbour['id'] != gibImageArray['id']:
                                             if gibNeighbour['img'][ySearch, xSearch, 3] != 0:
                                                 gibToProcess['neighbourToSeam'].append([ySearch, xSearch])
-                                    # centerMostGib[y, x, 0] = 255
-                                    # centerMostGib[y, x, 1] = 1
-                                    # centerMostGib[y, x, 2] = 2
-                                    # centerMostGib[y, x, 3] = 255
                         except:
                             pass
 
@@ -83,9 +95,10 @@ def initializeGibAttributes(currentZ, gibToProcess, nrGibs):
     gibToProcess['coveredByNeighbour'] = {}
     gibToProcess['neighbourToSeam'] = {}
     for gibId in range(1, nrGibs + 1):
-        gibToProcess['neighbourToSeam'][gibId] = []
-        gibToProcess['coversNeighbour'][gibId] = False
-        gibToProcess['coveredByNeighbour'][gibId] = False
+        if gibId != gibToProcess['id']:
+            gibToProcess['neighbourToSeam'][gibId] = []
+            gibToProcess['coversNeighbour'][gibId] = False
+            gibToProcess['coveredByNeighbour'][gibId] = False
 
 
 def cropAndUpdateGibs(gibs):
