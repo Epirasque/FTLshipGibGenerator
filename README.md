@@ -228,8 +228,9 @@ In arbitrary order, *no promises if or when these will be done*:
 - [ ] layer4
 - [ ] ensure ship internals are always hidden initially
   - [x] unit test
+    - [ ] update to reconstruct based on z-layers
   - [ ] don't generate outside of base ship shape
-  - [ ] ensure gibs cover each other properly (edge-asymmetry/logic needed)
+  - [x] ensure gibs cover each other properly (edge-asymmetry/logic needed)
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and internals?
 - [ ] shading
 - [ ] tweak until it looks great

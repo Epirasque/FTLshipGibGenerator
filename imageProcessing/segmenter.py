@@ -49,6 +49,7 @@ def turnSegmentsIntoGibs(nrGibs, segments, shipImage):
 
         gib = {}
         gib['id'] = gibId
+        gib['z'] = gibId
         gib['img'] = croppedGibImage
         gib['center'] = center
         gib['x'] = minX

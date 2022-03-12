@@ -7,12 +7,97 @@ from imageProcessing.imageCropper import cropImage
 
 def attachShipInternals(gibs, shipImage, tilesets):
     uncropGibs(gibs, shipImage)
-
-    centerMostGibId = getCenterMostGibId(gibs, shipImage)
-
+    buildSeamTopology(gibs, shipImage)
     cropAndUpdateGibs(gibs)
-
     return gibs
+
+
+def buildSeamTopology(gibs, shipImage):
+    nrGibs = len(gibs)
+    currentZ = 1
+    for gib in gibs:
+        # overwrite fallback defined by non-metalbit part of segmenter
+        gib['z'] = None
+    centerMostGib = getCenterMostGib(gibs, shipImage)
+    buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage)
+
+    # todo: iterate neighbours: add centerMostGib to their "covers"
+
+    for currentZ in range(2, nrGibs + 1):
+        for gib in gibs:
+            if gib['z'] == None:
+                nextGib = gib
+                break
+           #     validCandidate = True
+           #     for gibCoverCheck in gibs:
+           #         if gibCoverCheck['z'] == None:
+           #             validCandidate = False
+           #             break
+           #     if validCandidate == True:
+           #         nextGib = gib
+           #         break
+        buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage)
+        # nextGib['z'] = currentZ
+        # centerMostGib['neighbourToSeam'] = []
+        # centerMostGib['neighbourToSeam'].append(
+        #    'TODO: every edge, includes neighbor-information an if it should be populated')
+        # centerMostGib['covers'] = []  # this should remain empty
+        ## todo: iterate seams, determine neighbours
+        # centerMostGib['coveredBy'] = []  # -> neighbours
+    # TODO: rearrange gibs by z-value (NEED TO DO THAT! is just 'inverse' of z-value, if this is done also update covers/coveredBy IDs!), or store them according to z-value later on
+
+def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage):
+    initializeGibAttributes(currentZ, gibToProcess, nrGibs)
+    determineSeamsWithNeighbours(gibToProcess, gibs, shipImage)
+    defineTopologyWithNeighbours(gibToProcess, gibs, nrGibs)
+
+
+def defineTopologyWithNeighbours(gibToProcess, gibs, nrGibs):
+    for neighbourId in range(1, nrGibs + 1):
+        if neighbourId != gibToProcess['id']:
+            if len(gibToProcess['neighbourToSeam'][neighbourId]) > 0:
+                if gibs[neighbourId]['z'] != None:  # this implies the z is smaller than current gib
+                    gibToProcess['coversNeighbour'][neighbourId] = True
+                    gibToProcess['coveredByNeighbour'][neighbourId] = False
+                else:
+                    gibToProcess['coversNeighbour'][neighbourId] = False
+                    gibToProcess['coveredByNeighbour'][neighbourId] = True
+
+
+def determineSeamsWithNeighbours(gibToProcess, gibs, shipImage):
+    searchRadius = 1
+    gibImageArray = gibToProcess['img']
+    for x in range(gibImageArray.shape[1]):
+        for y in range(gibImageArray.shape[0]):
+            if gibImageArray[y, x, 3] != 0:
+                for xSearchOffset in range(-searchRadius, searchRadius + 1):
+                    xSearch = x + xSearchOffset
+                    for ySearchOffset in range(-searchRadius, searchRadius + 1):
+                        ySearch = y + ySearchOffset
+                        try:
+                            if gibImageArray[ySearch, xSearch, 3] == 0:
+                                if shipImage[ySearch, xSearch, 3] != 0:
+                                    for gibNeighbour in gibs:
+                                        if gibNeighbour['id'] != gibImageArray['id']:
+                                            if gibNeighbour['img'][ySearch, xSearch, 3] != 0:
+                                                gibToProcess['neighbourToSeam'].append([ySearch, xSearch])
+                                    # centerMostGib[y, x, 0] = 255
+                                    # centerMostGib[y, x, 1] = 1
+                                    # centerMostGib[y, x, 2] = 2
+                                    # centerMostGib[y, x, 3] = 255
+                        except:
+                            pass
+
+
+def initializeGibAttributes(currentZ, gibToProcess, nrGibs):
+    gibToProcess['z'] = currentZ
+    gibToProcess['coversNeighbour'] = {}
+    gibToProcess['coveredByNeighbour'] = {}
+    gibToProcess['neighbourToSeam'] = {}
+    for gibId in range(1, nrGibs + 1):
+        gibToProcess['neighbourToSeam'][gibId] = []
+        gibToProcess['coversNeighbour'][gibId] = False
+        gibToProcess['coveredByNeighbour'][gibId] = False
 
 
 def cropAndUpdateGibs(gibs):
@@ -38,14 +123,14 @@ def uncropGibs(gibs, shipImage):
         gib['img'] = np.asarray(uncroppedGib)
 
 
-def getCenterMostGibId(gibs, shipImage):
+def getCenterMostGib(gibs, shipImage):
     shipCenter = shipImage.shape[0] / 2, shipImage.shape[1] / 2
-    centerMostGibId = gibs[0]['id']
+    centerMostGib = gibs[0]
     upperBound = shipCenter[0] * shipCenter[1]
     closestDistanceToCenter = upperBound
     for gib in gibs:
         distanceToCenter = getDistanceBetweenPoints(gib['center']['x'], gib['center']['y'], shipCenter[1],
                                                     shipCenter[0])
         if distanceToCenter < closestDistanceToCenter:
-            centerMostGibId = gib['id']
-    return centerMostGibId
+            centerMostGib = gib
+    return centerMostGib

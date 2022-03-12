@@ -38,6 +38,7 @@ def resetTestResources(standaloneFolderPath, addonFolderPath, imageIdsToKeepGibs
                     standaloneFolderPath + '/data/test_layoutB.xml')
 
 
+# TODO: consider z-coordinates
 def assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent):
     isAccurateEnough = True
     for name, filenames in ships.items():
