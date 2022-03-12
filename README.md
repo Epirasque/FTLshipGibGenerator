@@ -190,6 +190,7 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 # Known Issues
 
 - One known case of `tile cannot extend outside image` when generating
+- There seems to be still at least one layout re-usage issue (rebel elite destroyer) that screws up gib coordinates
 
 # What Is Planned For The Future?
 
@@ -225,14 +226,18 @@ In arbitrary order, *no promises if or when these will be done*:
   - [ ] constraints
     - [ ] don't leave metal bit origin visible anywhere
     - [ ] don't generate outside of base ship shape
-    - [ ] don't cover gibs with higher z-value
+    - [ ] don't cover gibs with lower z-value
 - [ ] layer2
 - [ ] layer3
 - [ ] layer4
-- [x] ensure ship internals are always hidden initially
+- [x] ensure metal bits are always hidden initially
   - [x] unit test
     - [x] update to reconstruct based on z-layers
   - [x] ensure gibs cover each other properly (edge-asymmetry/logic needed)
+- [ ] QoL
+  - [x] feature toggle
+  - [x] save generation process as gif for debugging
+  - [ ] performance improvements
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and internals?
 - [ ] shading
 - [ ] tweak until it looks great

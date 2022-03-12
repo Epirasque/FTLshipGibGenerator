@@ -9,8 +9,8 @@ from unit_tests.TestUtilities import resetTestResources, assertShipReconstructed
 class MetalBitsTest(unittest.TestCase):
     def test_metalBitsAreHiddenInitially(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        standaloneFolderPath = 'sample_projects/metalBits'
+        addonFolderPath = 'unset'
         nrGibs = 5
 
         parameters = collections.namedtuple("parameters",
