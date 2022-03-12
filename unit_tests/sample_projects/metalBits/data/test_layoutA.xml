@@ -1,14 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
 
+
 <img x="-70" y="-80" w="300" h="400" />
 <offsets>
 	<floor x="150" y="150" />
 	<cloak x="150" y="15" />
 </offsets>
-<!--weaponMounts/>
-	<mount x="100" y="100" rotate="false" mirror="true" gib="-1" slide="left" />
-	<mount x="200" y="100" rotate="false" mirror="false" gib="-1" slide="right" />
-	<mount x="100" y="200" rotate="false" mirror="true" gib="-1" slide="up" />
-	<mount x="200" y="200" rotate="false" mirror="false" gib="-1" slide="up" />
-</weaponMounts-->
-<explosion/>
+
+<explosion><gib1><velocity min="0.26770473312346094" max="0.8923491104115365" /><direction min="274" max="294" /><angular min="-0.742" max="0.742" /><x>223</x><y>83</y></gib1><gib2><velocity min="0.1" max="0.20589883774484996" /><direction min="383" max="403" /><angular min="-0.9222791666666665" max="0.9222791666666665" /><x>26</x><y>83</y></gib2><gib3><velocity min="0.44999999999999996" max="1.5" /><direction min="295" max="315" /><angular min="-0.50365" max="0.50365" /><x>271</x><y>2</y></gib3><gib4><velocity min="0.37546901786861064" max="1.2515633928953689" /><direction min="380" max="400" /><angular min="-0.50365" max="0.50365" /><x>12</x><y>2</y></gib4><gib5><velocity min="0.1" max="0.3250903064188795" /><direction min="250" max="270" /><angular min="-0.7158666666666668" max="0.7158666666666668" /><x>136</x><y>121</y></gib5></explosion>

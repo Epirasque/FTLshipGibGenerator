@@ -1,4 +1,5 @@
 import os
+import random
 
 import imageio
 import numpy as np
@@ -6,8 +7,10 @@ from PIL import Image
 from numpy.ma import copy
 
 from imageProcessing.ImageCropper import cropImage
-from imageProcessing.ImageProcessingUtilities import getDistanceBetweenPoints
+from imageProcessing.ImageProcessingUtilities import getDistanceBetweenPoints, areAllVisiblePixelsContained, \
+    areVisiblePixelsOverlapping, pasteNonTransparentBlackValuesIntoArray
 
+NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM = 20
 EDGE_SEARCH_RADIUS = 1
 
 
@@ -17,7 +20,7 @@ def attachMetalBits(gibs, shipImage, tilesets, parameters, shipImageName):
     buildSeamTopology(gibs, shipImage)
     gibs = orderGibsByZCoordinates(gibs)
     animateTopology(gifFrames, parameters, gibs)
-    populateSeams(gibs, shipImage, tilesets)
+    populateSeams(gibs, shipImage, tilesets, gifFrames, parameters)
     cropAndUpdateGibs(gibs)
     saveGif(gifFrames, shipImageName, parameters)
     return gibs
@@ -28,7 +31,7 @@ def saveGif(gifFrames, shipImageName, parameters):
         filePath = '../metalBitsDebugAnimations/%s.gif' % shipImageName
         if os.path.exists(filePath):
             os.remove(filePath)
-        imageio.mimwrite(filePath, gifFrames, format='GIF', fps=1.)
+        imageio.mimwrite(filePath, gifFrames, format='GIF', fps=2.)
         # TODO: smaller filesize using pygifsicle.optimize(filePath)
 
 
@@ -39,39 +42,78 @@ def initialGifImageArray(parameters, shipImage):
     return gifFrames
 
 
-def populateSeams(gibs, shipImage, tilesets):
+def populateSeams(gibs, shipImage, tilesets, gifFrames, parameters):
     for gibToPopulate in gibs:
         for neighbouringGib in gibs:
             neighbourId = neighbouringGib['id']
             if gibToPopulate['id'] != neighbourId:
                 if gibToPopulate['coveredByNeighbour'][neighbourId] == True:
-                    populateSeam(gibToPopulate, shipImage, tilesets)
+                    populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, parameters)
 
 
-def populateSeam(gibToPopulate, shipImage, tilesets):
+def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, parameters):
     # TODO: ensure does not reach into any of coversNeighbour or outside of ship image shape -> use mask, also one for gib itself
+    seamCoordinates = gibToPopulate['neighbourToSeam'][neighbourId]
+    metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
 
-    pass
+    for coordinates in seamCoordinates:
+        metalBits[coordinates] = [0, 255, 0, 255]
+    # metalBits[np.asarray(seamCoordinates)] = [0, 255, 0, 255]
+    # TODO: for currentLayer in range(1, 4 + 1): or layer function as variable/parameter, or ...
+    nrAttemptsForLayer = 1
+    maxNrAttemptsForLayer = NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM
+    remainingUncoveredSeamPixels = np.where(np.all(metalBits == [0, 255, 0, 255], axis=-1))
+    while nrAttemptsForLayer < maxNrAttemptsForLayer and np.any(remainingUncoveredSeamPixels):
+        nrAttemptsForLayer += 1
+        metalBitsCandidate = copy(metalBits)
+
+        # TODO: properly add to metal bits using tilesets
+        randomPixelId = random.randint(0, len(remainingUncoveredSeamPixels[0]) - 1)
+        randomPixel = remainingUncoveredSeamPixels[0][randomPixelId], remainingUncoveredSeamPixels[1][randomPixelId]
+        metalBitsCandidate[randomPixel] = [63, 0, 255, 255]
+
+        isCandidateValid = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shipImage)
+        if isCandidateValid == True:
+            metalBits = metalBitsCandidate
+            if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER:
+                gifFrame = copy(gibToPopulate['img'])
+                pasteNonTransparentBlackValuesIntoArray(metalBits, gifFrame)
+                gifFrames.append(gifFrame)
+        remainingUncoveredSeamPixels = np.where(np.all(metalBits == [0, 255, 0, 255], axis=-1))
+
+    pasteNonTransparentBlackValuesIntoArray(gibToPopulate['img'], metalBits)
+    gibToPopulate['img'] = metalBits
+
+
+def doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shipImage):
+    isCandidateValid = areAllVisiblePixelsContained(metalBitsCandidate, shipImage)
+    if isCandidateValid:
+        for otherGib in gibs:
+            if gibToPopulate['coversNeighbour'][otherGib['id']] == True:
+                if areVisiblePixelsOverlapping(metalBitsCandidate, otherGib['img']) == True:
+                    isCandidateValid = False
+                    break
+    return isCandidateValid
 
 
 def animateTopology(gifImages, parameters, gibs):
     if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
+        gibImageArray = np.zeros(gibs[0]['img'].shape, dtype=np.uint8)
         # here: decreasing z-values
         for gibToShow in gibs:
-            gibImageArray = copy(gibToShow['img'])
+            pasteNonTransparentBlackValuesIntoArray(gibToShow['img'], gibImageArray)
             for neighbouringGib in gibs:
                 neighbourId = neighbouringGib['id']
                 if gibToShow['id'] != neighbourId:
                     if gibToShow['coveredByNeighbour'][neighbourId] == True:
-                        edgeCoordinates = gibToShow['neighbourToSeam'][neighbourId]
-                        for edgePoint in edgeCoordinates:
-                            y, x = edgePoint
+                        seamCoordinates = gibToShow['neighbourToSeam'][neighbourId]
+                        for seamPoint in seamCoordinates:
+                            y, x = seamPoint
                             gibImageArray[y, x] = [0, 255, 0, 255]
                     if gibToShow['coversNeighbour'][neighbourId] == True:
-                        gibToShow['neighbourToSeam'][neighbourId]
-                        edgeCoordinates = gibToShow['neighbourToSeam'][neighbourId]
-                        for edgePoint in edgeCoordinates:
-                            y, x = edgePoint
+                        seamCoordinates = gibToShow['neighbourToSeam'][neighbourId]
+                        for seamPoint in seamCoordinates:
+                            y, x = seamPoint
                             gibImageArray[y, x] = [255, 0, 0, 255]
             gifImages.append(copy(gibImageArray))
 
@@ -117,21 +159,24 @@ def determineSeamsWithNeighbours(gibToProcess, gibs, shipImage):
     # TODO: refactor into something more efficient to improve performance
     for x in range(gibImageArray.shape[1]):
         for y in range(gibImageArray.shape[0]):
-            if gibImageArray[y, x, 3] != 0:
+            if gibImageArray[y, x, 3] == 255:
                 for xSearchOffset in range(-EDGE_SEARCH_RADIUS, EDGE_SEARCH_RADIUS + 1):
                     xSearch = x + xSearchOffset
                     for ySearchOffset in range(-EDGE_SEARCH_RADIUS, EDGE_SEARCH_RADIUS + 1):
                         ySearch = y + ySearchOffset
                         try:
-                            if gibImageArray[ySearch, xSearch, 3] == 0:
-                                if shipImage[ySearch, xSearch, 3] != 0:
+                            if gibImageArray[ySearch, xSearch, 3] < 255:
+                                if shipImage[ySearch, xSearch, 3] == 255:
                                     for gibNeighbour in gibs:
                                         if gibNeighbour['id'] != gibToProcess['id']:
-                                            if gibNeighbour['img'][ySearch, xSearch, 3] != 0:
+                                            if gibNeighbour['img'][ySearch, xSearch, 3] == 255:
                                                 gibToProcess['neighbourToSeam'][gibNeighbour['id']].append(
-                                                    [ySearch, xSearch])
+                                                    (y, x))
                         except:
                             pass
+    for neighbourId in gibToProcess['neighbourToSeam']:
+        gibToProcess['neighbourToSeam'][neighbourId] = [tuple(row) for row in
+                                                        np.unique(gibToProcess['neighbourToSeam'][neighbourId], axis=0)]
 
 
 def defineTopologyWithNeighbours(gibToProcess, gibs):

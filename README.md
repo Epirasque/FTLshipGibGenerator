@@ -223,10 +223,10 @@ In arbitrary order, *no promises if or when these will be done*:
   - [ ] tileset
   - [ ] determine general direction
     - [x] prototype
-  - [ ] constraints
+  - [x] constraints
     - [ ] don't leave metal bit origin visible anywhere
-    - [ ] don't generate outside of base ship shape
-    - [ ] don't cover gibs with lower z-value
+    - [x] don't generate outside of base ship shape
+    - [x] don't cover gibs with lower z-value
 - [ ] layer2
 - [ ] layer3
 - [ ] layer4
