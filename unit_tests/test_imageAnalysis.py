@@ -13,7 +13,7 @@ class ImageAnaylsisTest(unittest.TestCase):
         sourceImage = imageio.imread(path + '/source.png')
         targetImage = imageio.imread(path + '/target.png')
         edge, edgeCoordinates = filterColorInImage(sourceImage, [0, 255, 0])
-        self.assertTrue(imageDifferenceInPercentage(edge, targetImage) <= 5)  # add assertion here
+        self.assertTrue(imageDifferenceInPercentage(edge, targetImage) <= 2)
 
 if __name__ == '__main__':
     unittest.main()

@@ -40,7 +40,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
-        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent=5)
+        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent=2)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -78,7 +78,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
-        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent=5)
+        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent=2)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()

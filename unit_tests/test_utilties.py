@@ -38,7 +38,6 @@ def resetTestResources(standaloneFolderPath, addonFolderPath, imageIdsToKeepGibs
                     standaloneFolderPath + '/data/test_layoutB.xml')
 
 
-# TODO: consider z-coordinates
 def assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, requiredAccuracyInPercent):
     isAccurateEnough = True
     for name, filenames in ships.items():
@@ -48,9 +47,11 @@ def assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFol
         explosionNode = getExplosionNode(layout)
 
         gibs = []
-        for gibId in range(1, nrGibs + 1):
+        # load lowest z-value first
+        for gibId in range(nrGibs, 0, -1):
             gibNode = explosionNode.find('gib%u' % gibId)
             gib = {}
+            gib['id'] = gibId
             gib['x'] = int(gibNode.find('x').text)
             gib['y'] = int(gibNode.find('y').text)
             with Image.open(

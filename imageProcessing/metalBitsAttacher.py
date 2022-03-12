@@ -8,6 +8,7 @@ from imageProcessing.imageCropper import cropImage
 def attachShipInternals(gibs, shipImage, tilesets):
     uncropGibs(gibs, shipImage)
     buildSeamTopology(gibs, shipImage)
+    orderGibsByZCoordinates(gibs)
     cropAndUpdateGibs(gibs)
     return gibs
 
@@ -21,30 +22,17 @@ def buildSeamTopology(gibs, shipImage):
     centerMostGib = getCenterMostGib(gibs, shipImage)
     buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage)
 
-    # todo: iterate neighbours: add centerMostGib to their "covers"
-
     for currentZ in range(2, nrGibs + 1):
         for gib in gibs:
             if gib['z'] == None:
                 nextGib = gib
                 break
-           #     validCandidate = True
-           #     for gibCoverCheck in gibs:
-           #         if gibCoverCheck['z'] == None:
-           #             validCandidate = False
-           #             break
-           #     if validCandidate == True:
-           #         nextGib = gib
-           #         break
         buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage)
-        # nextGib['z'] = currentZ
-        # centerMostGib['neighbourToSeam'] = []
-        # centerMostGib['neighbourToSeam'].append(
-        #    'TODO: every edge, includes neighbor-information an if it should be populated')
-        # centerMostGib['covers'] = []  # this should remain empty
-        ## todo: iterate seams, determine neighbours
-        # centerMostGib['coveredBy'] = []  # -> neighbours
-    # TODO: rearrange gibs by z-value (NEED TO DO THAT! is just 'inverse' of z-value, if this is done also update covers/coveredBy IDs!), or store them according to z-value later on
+
+
+def orderGibsByZCoordinates(gibs):
+    gibs.reverse()
+
 
 def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage):
     initializeGibAttributes(currentZ, gibToProcess, nrGibs)

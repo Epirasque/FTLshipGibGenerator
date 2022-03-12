@@ -31,7 +31,7 @@ class ShipInternalsTest(unittest.TestCase):
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
-        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, 5)
+        assertShipReconstructedFromGibsIsAccurateEnough(nrGibs, ships, standaloneFolderPath, 2)
 
 
 if __name__ == '__main__':
