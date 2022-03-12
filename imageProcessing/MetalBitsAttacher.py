@@ -6,9 +6,9 @@ from PIL import Image
 from numpy.ma import copy
 
 from imageProcessing.ImageCropper import cropImage
-from imageProcessing.ImageProcessingUtilities import getDistanceBetweenPoints, pasteNonBlackValuesIntoArray
+from imageProcessing.ImageProcessingUtilities import getDistanceBetweenPoints
 
-SEARCH_RADIUS = 1
+EDGE_SEARCH_RADIUS = 1
 
 
 def attachMetalBits(gibs, shipImage, tilesets, parameters, shipImageName):
@@ -50,6 +50,7 @@ def populateSeams(gibs, shipImage, tilesets):
 
 def populateSeam(gibToPopulate, shipImage, tilesets):
     # TODO: ensure does not reach into any of coversNeighbour or outside of ship image shape -> use mask, also one for gib itself
+
     pass
 
 
@@ -117,9 +118,9 @@ def determineSeamsWithNeighbours(gibToProcess, gibs, shipImage):
     for x in range(gibImageArray.shape[1]):
         for y in range(gibImageArray.shape[0]):
             if gibImageArray[y, x, 3] != 0:
-                for xSearchOffset in range(-SEARCH_RADIUS, SEARCH_RADIUS + 1):
+                for xSearchOffset in range(-EDGE_SEARCH_RADIUS, EDGE_SEARCH_RADIUS + 1):
                     xSearch = x + xSearchOffset
-                    for ySearchOffset in range(-SEARCH_RADIUS, SEARCH_RADIUS + 1):
+                    for ySearchOffset in range(-EDGE_SEARCH_RADIUS, EDGE_SEARCH_RADIUS + 1):
                         ySearch = y + ySearchOffset
                         try:
                             if gibImageArray[ySearch, xSearch, 3] == 0:
