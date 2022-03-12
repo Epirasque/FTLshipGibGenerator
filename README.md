@@ -195,16 +195,15 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 
 In arbitrary order, *no promises if or when these will be done*:
 
+- Metal bits attached to the gibs, see progress section below
 - More tweaking of direction, velocity and angular values
-- Ship-insides attached to the gibs (metal beams and such); this will need some effort and the final quality is hard to
-  predict as of this writing, but I at least have a decent plan on how to implement this
-- Additional debris-pieces independend from the ship image (think Flak projectiles), also added to ships with already
-  existing gibs (there will definately be a way to turn that off as it does not look like standard FTL gibs anymore)
+- Additional debris-pieces independent of the ship image (think Flak projectiles), also added to ships with already
+  existing gibs (there will definitely be a way to turn that off as it does not look like standard FTL gibs anymore)
 - Resolving remaining TODOs in the code
 - Provide a compiled version that runs without installing Python
 - Avoid having longer lines sticking out of gibs (usually black lines that separate parts of the ship image)
 
-# Progress Of Ship Internals
+# Progress Of Metal Bits
 
 - [ ] tilesets
   - [ ] initializing tilesets
