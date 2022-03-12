@@ -3,7 +3,7 @@ import collections
 
 # Source for metadata semantics: https://www.ftlwiki.com/wiki/Modding_ships
 
-from flow.generatorLooper import startGeneratorLoop
+from flow.GeneratorLooper import startGeneratorLoop
 
 # note: use / instead of \ to avoid character-escaping issues
 INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.2.1'  # 'FTL-Multiverse 5.2.1'

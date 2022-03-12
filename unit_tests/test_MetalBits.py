@@ -1,12 +1,12 @@
 import collections
 import unittest
 
-from fileHandling.shipBlueprintLoader import loadShipFileNames
-from flow.generatorLooper import startGeneratorLoop
-from unit_tests.test_utilties import resetTestResources, assertShipReconstructedFromGibsIsAccurateEnough
+from fileHandling.ShipBlueprintLoader import loadShipFileNames
+from flow.GeneratorLooper import startGeneratorLoop
+from unit_tests.TestUtilities import resetTestResources, assertShipReconstructedFromGibsIsAccurateEnough
 
 
-class ShipInternalsTest(unittest.TestCase):
+class MetalBitsTest(unittest.TestCase):
     def test_metalBitsAreHiddenInitially(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'

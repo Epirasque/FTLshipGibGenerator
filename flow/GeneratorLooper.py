@@ -2,19 +2,19 @@ import shutil
 import time
 import traceback
 
-from fileHandling import metalBitsLoader
-from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.gibImageSaver import saveGibImages
-from fileHandling.shipBlueprintLoader import loadShipFileNames
-from fileHandling.shipImageLoader import loadShipBaseImage
-from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
-from flow.sameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
-from imageProcessing.segmenter import segment
-from imageProcessing.metalBitsAttacher import attachShipInternals
-from metadata.gibEntryAdder import addGibEntriesToLayout
-from metadata.gibEntryChecker import areGibsPresentInLayout
-from metadata.layoutToAppendContentConverter import convertLayoutToAppendContent
-from metadata.weaponMountGibIdUpdater import setWeaponMountGibIdsAsAppendContent
+from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
+from fileHandling.GibImageSaver import saveGibImages
+from fileHandling.MetalBitsLoader import loadTilesets
+from fileHandling.ShipBlueprintLoader import loadShipFileNames
+from fileHandling.ShipImageLoader import loadShipBaseImage
+from fileHandling.ShipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
+from flow.SameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
+from imageProcessing.MetalBitsAttacher import attachMetalBits
+from imageProcessing.Segmenter import segment
+from metadata.GibEntryAdder import addGibEntriesToLayout
+from metadata.GibEntryChecker import areGibsPresentInLayout
+from metadata.LayoutToAppendContentConverter import convertLayoutToAppendContent
+from metadata.WeaponMountGibIdUpdater import setWeaponMountGibIdsAsAppendContent
 
 
 def startGeneratorLoop(parameters):
@@ -47,7 +47,7 @@ def startGeneratorLoop(parameters):
         print("EXCEPTION when cleaning up gibCache: %s" % e)
     tilesets = {}
     if (parameters.GENERATE_SHIP_INTERNALS == True):
-        tilesets = metalBitsLoader.loadTilesets()
+        tilesets = loadTilesets()
     print("Iterating ships...")
     layoutNameToGibCache = {}
     for name, filenames in ships.items():
@@ -148,7 +148,7 @@ def generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, ti
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(parameters, shipImageName, stats)
     gibs, stats = segmentWithProfiling(parameters, baseImg, shipImageName, stats)
     if parameters.GENERATE_SHIP_INTERNALS == True:
-        gibs = attachShipInternals(gibs, baseImg, tilesets)
+        gibs = attachMetalBits(gibs, baseImg, tilesets)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:

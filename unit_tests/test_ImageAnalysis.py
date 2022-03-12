@@ -3,11 +3,11 @@ import unittest
 import imageio
 from PIL import Image
 
-from imageProcessing.imageAnalyser import filterColorInImage
-from unit_tests.test_utilties import imageDifferenceInPercentage
+from imageProcessing.ImageAnalyser import filterColorInImage
+from unit_tests.TestUtilities import imageDifferenceInPercentage
 
 
-class ImageAnaylsisTest(unittest.TestCase):
+class ImageAnalysisTest(unittest.TestCase):
     def test_findOriginOfTilesetImage(self):
         path = 'transformations/tileset_origin/'
         sourceImage = imageio.imread(path + '/source.png')

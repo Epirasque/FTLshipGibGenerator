@@ -5,9 +5,9 @@ import shutil
 import numpy as np
 from PIL import Image
 
-from fileHandling.shipImageLoader import loadShipBaseImage
-from fileHandling.shipLayoutDao import loadShipLayout
-from metadata.gibEntryChecker import getExplosionNode
+from fileHandling.ShipImageLoader import loadShipBaseImage
+from fileHandling.ShipLayoutDao import loadShipLayout
+from metadata.GibEntryChecker import getExplosionNode
 
 
 def resetTestResources(standaloneFolderPath, addonFolderPath, imageIdsToKeepGibsFor):

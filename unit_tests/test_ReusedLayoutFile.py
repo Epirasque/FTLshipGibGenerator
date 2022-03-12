@@ -7,12 +7,12 @@ import unittest
 import numpy as np
 from PIL import Image
 
-from fileHandling.shipBlueprintLoader import loadShipFileNames
-from fileHandling.shipImageLoader import loadShipBaseImage
-from fileHandling.shipLayoutDao import loadShipLayout
-from flow.generatorLooper import startGeneratorLoop
-from metadata.gibEntryChecker import getExplosionNode
-from unit_tests.test_utilties import resetTestResources, assertShipReconstructedFromGibsIsAccurateEnough
+from fileHandling.ShipBlueprintLoader import loadShipFileNames
+from fileHandling.ShipImageLoader import loadShipBaseImage
+from fileHandling.ShipLayoutDao import loadShipLayout
+from flow.GeneratorLooper import startGeneratorLoop
+from metadata.GibEntryChecker import getExplosionNode
+from unit_tests.TestUtilities import resetTestResources, assertShipReconstructedFromGibsIsAccurateEnough
 
 
 class ReusedLayoutFileTest(unittest.TestCase):

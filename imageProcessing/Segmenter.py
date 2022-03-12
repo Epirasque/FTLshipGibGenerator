@@ -4,7 +4,7 @@ import numpy as np
 
 
 # TODO: remove shipImageName as parameter
-from imageProcessing.imageCropper import cropImage
+from imageProcessing.ImageCropper import cropImage
 
 TRANSPARENCY_ALPHA_VALUE = 0
 

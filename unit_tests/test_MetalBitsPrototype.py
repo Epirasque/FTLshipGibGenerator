@@ -9,15 +9,15 @@ import numpy as np
 from PIL import Image
 from skimage.draw import line
 
-from fileHandling.shipBlueprintLoader import loadShipFileNames
-from fileHandling.shipImageLoader import loadShipBaseImage
-from fileHandling.shipLayoutDao import loadShipLayout
-from flow.generatorLooper import startGeneratorLoop
-from metadata.gibEntryChecker import getExplosionNode
-from unit_tests.test_utilties import resetTestResources
+from fileHandling.ShipBlueprintLoader import loadShipFileNames
+from fileHandling.ShipImageLoader import loadShipBaseImage
+from fileHandling.ShipLayoutDao import loadShipLayout
+from flow.GeneratorLooper import startGeneratorLoop
+from metadata.GibEntryChecker import getExplosionNode
+from unit_tests.TestUtilities import resetTestResources
 
 
-class MyTestCase(unittest.TestCase):
+class MetalBitsPrototypeTest(unittest.TestCase):
     def test_something(self):
         standaloneFolderPath = 'sample_projects/metalBits'
         addonFolderPath = 'unset'

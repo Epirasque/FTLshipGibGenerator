@@ -4,10 +4,10 @@ from copy import deepcopy
 import numpy as np
 from PIL import Image
 
-from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.shipImageLoader import loadShipBaseImage
-from imageProcessing.imageCropper import cropImage
-from metadata.gibEntryChecker import getExplosionNode
+from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
+from fileHandling.ShipImageLoader import loadShipBaseImage
+from imageProcessing.ImageCropper import cropImage
+from metadata.GibEntryChecker import getExplosionNode
 
 GIB_CACHE_FOLDER = 'gibCache'
 

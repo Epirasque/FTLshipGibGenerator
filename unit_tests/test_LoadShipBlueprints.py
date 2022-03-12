@@ -1,6 +1,6 @@
 import unittest
 
-from fileHandling.shipBlueprintLoader import loadShipFileNames
+from fileHandling.ShipBlueprintLoader import loadShipFileNames
 
 
 class LoadShipBlueprintsTest(unittest.TestCase):

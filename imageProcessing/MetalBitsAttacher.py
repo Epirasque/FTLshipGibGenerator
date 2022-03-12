@@ -1,11 +1,11 @@
 import numpy as np
 from PIL import Image
 
-from imageProcessing.imageAnalyser import getDistanceBetweenPoints
-from imageProcessing.imageCropper import cropImage
+from imageProcessing.ImageAnalyser import getDistanceBetweenPoints
+from imageProcessing.ImageCropper import cropImage
 
 
-def attachShipInternals(gibs, shipImage, tilesets):
+def attachMetalBits(gibs, shipImage, tilesets):
     uncropGibs(gibs, shipImage)
     buildSeamTopology(gibs, shipImage)
     orderGibsByZCoordinates(gibs)
