@@ -217,19 +217,22 @@ In arbitrary order, *no promises if or when these will be done*:
     - [ ] profiling
   - [ ] support different layers
   - [ ] support different themes
-- [ ] mark seams between gibs
+- [x] mark seams between gibs
   - [x] prototype
 - [ ] innermost layer1 (chunks)
   - [ ] tileset
   - [ ] determine general direction
     - [x] prototype
+  - [ ] constraints
+    - [ ] don't leave metal bit origin visible anywhere
+    - [ ] don't generate outside of base ship shape
+    - [ ] don't cover gibs with higher z-value
 - [ ] layer2
 - [ ] layer3
 - [ ] layer4
-- [ ] ensure ship internals are always hidden initially
+- [x] ensure ship internals are always hidden initially
   - [x] unit test
     - [x] update to reconstruct based on z-layers
-  - [ ] don't generate outside of base ship shape
   - [x] ensure gibs cover each other properly (edge-asymmetry/logic needed)
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and internals?
 - [ ] shading
