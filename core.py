@@ -23,7 +23,7 @@ BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER = False
 NR_GIBS = 5
 # enable for sanity checks
 QUICK_AND_DIRTY_SEGMENT = False
-# enable to attach several layers of ship internals such as metal beams etc. to the gibs; takes significantly longer
+# enable to attach several layers of metal bits to the gibs; takes significantly longer
 GENERATE_SHIP_INTERNALS = True
 
 # if enabled, all ships except SPECIFIC_SHIP_NAME are skipped

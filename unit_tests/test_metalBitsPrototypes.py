@@ -19,7 +19,7 @@ from unit_tests.test_utilties import resetTestResources
 
 class MyTestCase(unittest.TestCase):
     def test_something(self):
-        standaloneFolderPath = 'sample_projects/shipInternals'
+        standaloneFolderPath = 'sample_projects/metalBits'
         addonFolderPath = 'unset'
 
         nrGibs = 5

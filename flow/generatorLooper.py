@@ -2,7 +2,7 @@ import shutil
 import time
 import traceback
 
-from fileHandling import shipInternalsLoader
+from fileHandling import metalBitsLoader
 from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
 from fileHandling.gibImageSaver import saveGibImages
 from fileHandling.shipBlueprintLoader import loadShipFileNames
@@ -10,7 +10,7 @@ from fileHandling.shipImageLoader import loadShipBaseImage
 from fileHandling.shipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
 from flow.sameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
 from imageProcessing.segmenter import segment
-from imageProcessing.shipInternalsAttacher import attachShipInternals
+from imageProcessing.metalBitsAttacher import attachShipInternals
 from metadata.gibEntryAdder import addGibEntriesToLayout
 from metadata.gibEntryChecker import areGibsPresentInLayout
 from metadata.layoutToAppendContentConverter import convertLayoutToAppendContent
@@ -46,8 +46,8 @@ def startGeneratorLoop(parameters):
     except Exception as e:
         print("EXCEPTION when cleaning up gibCache: %s" % e)
     tilesets = {}
-    if(parameters.GENERATE_SHIP_INTERNALS == True):
-        tilesets = shipInternalsLoader.loadTilesets()
+    if (parameters.GENERATE_SHIP_INTERNALS == True):
+        tilesets = metalBitsLoader.loadTilesets()
     print("Iterating ships...")
     layoutNameToGibCache = {}
     for name, filenames in ships.items():
@@ -72,8 +72,8 @@ def startGeneratorLoop(parameters):
             stats['nrShipsWithGibsAlreadyPresent'] += 1
         else:
             stats, layoutNameToGibCache = createNewGibs(parameters, layout, layoutName,
-                                                                layoutNameToGibCache, name,
-                                                                shipImageName, ships, stats, tilesets)
+                                                        layoutNameToGibCache, name,
+                                                        shipImageName, ships, stats, tilesets)
 
         if parameters.LIMIT_ITERATIONS == True and stats['nrIterations'] >= parameters.ITERATION_LIMIT:
             break
@@ -112,7 +112,8 @@ def createNewGibs(parameters, layout, layoutName, layoutNameToGibCache, name, sh
             print("There are gib-images for base image %s, but no layout entries in %s for it." % (
                 shipImageName, layoutName))
         try:
-            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, tilesets)
+            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(parameters, layout, layoutName,
+                                                                                     shipImageName, stats, tilesets)
             layoutNameToGibCache[layoutName] = shipImageName, len(gibs), layoutWithNewGibs
         except Exception:
             print("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())

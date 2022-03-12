@@ -111,7 +111,7 @@ def cropAndUpdateGibs(gibs):
         gib['y'] = minY
         oldMass = gib['mass']
         newMass = (center['x'] - minX) * (center['y'] - minY) * 4  # TODO: reenable nrVisiblePixels
-        # assume ship internals only have half of the mass as normal gib pixels
+        # assume metal bits only have half of the mass as normal gib pixels
         gib['mass'] = round((newMass + oldMass) / 2)
 
 

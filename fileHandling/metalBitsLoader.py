@@ -5,7 +5,7 @@ TILE_WIDTH = 144
 TILE_HEIGHT = 144
 
 def loadTilesets():
-    tilesetFilePath = '../shipInternals/%s.png' % DEFAULT_TILESET
+    tilesetFilePath = '../metalBits/%s.png' % DEFAULT_TILESET
 
     tilesets = {}
     tilesets['default'] = {}

@@ -7,7 +7,7 @@ from unit_tests.test_utilties import resetTestResources, assertShipReconstructed
 
 
 class ShipInternalsTest(unittest.TestCase):
-    def test_shipInternalsAreHiddenInitially(self):
+    def test_metalBitsAreHiddenInitially(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
         addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
