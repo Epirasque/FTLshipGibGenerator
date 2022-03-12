@@ -148,7 +148,7 @@ def generateGibsForShip(parameters, layout, layoutName, shipImageName, stats, ti
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(parameters, shipImageName, stats)
     gibs, stats = segmentWithProfiling(parameters, baseImg, shipImageName, stats)
     if parameters.GENERATE_METAL_BITS == True:
-        gibs = attachMetalBits(gibs, baseImg, tilesets)
+        gibs = attachMetalBits(gibs, baseImg, tilesets, parameters, shipImageName)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:

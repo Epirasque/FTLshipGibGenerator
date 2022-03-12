@@ -1,17 +1,39 @@
+from pickletools import optimize
+
 import numpy as np
 from PIL import Image
+from imageio import get_writer
 
 from imageProcessing.ImageAnalyser import getDistanceBetweenPoints
 from imageProcessing.ImageCropper import cropImage
 
 
-def attachMetalBits(gibs, shipImage, tilesets):
+def attachMetalBits(gibs, shipImage, tilesets, parameters, shipImageName):
+    gifFrames = initialGifImageArray(parameters, shipImage)
     uncropGibs(gibs, shipImage)
-    buildSeamTopology(gibs, shipImage)
+    buildSeamTopology(gibs, shipImage, gifFrames, parameters)
     populateSeams(gibs, shipImage, tilesets)
     orderGibsByZCoordinates(gibs)
     cropAndUpdateGibs(gibs)
+    saveGif(gifFrames, shipImageName, parameters)
     return gibs
+
+
+def saveGif(gifFrames, shipImageName, parameters):
+    if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
+        filePath = '../metalBitsDebugAnimations/%s.gif' % shipImageName
+        # TODO: delete it first to avoid gifs with multiple loops?
+        with get_writer(filePath, mode='I') as writer:
+            for gifFrame in gifFrames:
+                writer.append_data(gifFrame)
+        optimize(filePath)
+
+
+def initialGifImageArray(parameters, shipImage):
+    gifFrames = []
+    if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
+        gifFrames.append(np.asarray(shipImage))
+    return gifFrames
 
 
 def populateSeams(gibs, shipImage, tilesets):
@@ -28,31 +50,38 @@ def populateSeam(gibToPopulate, shipImage, tilesets):
     pass
 
 
-def buildSeamTopology(gibs, shipImage):
+def buildSeamTopology(gibs, shipImage, gifImages, parameters):
     nrGibs = len(gibs)
     currentZ = 1
     for gib in gibs:
         # overwrite fallback defined by non-metalbit part of segmenter
         gib['z'] = None
     centerMostGib = getCenterMostGib(gibs, shipImage)
-    buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage)
+    buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage, gifImages, parameters)
 
     for currentZ in range(2, nrGibs + 1):
         for gib in gibs:
             if gib['z'] == None:
                 nextGib = gib
                 break
-        buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage)
+        buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage, gifImages, parameters)
 
 
 def orderGibsByZCoordinates(gibs):
     gibs.reverse()
 
 
-def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage):
+def animateTopology(gibToProcess, gifImages, parameters):
+    if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
+        gifImages.append(gibToProcess['img'])
+        # TODO: more...
+
+
+def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage, gifImages, parameters):
     initializeGibAttributes(currentZ, gibToProcess, nrGibs)
     determineSeamsWithNeighbours(gibToProcess, gibs, shipImage)
     defineTopologyWithNeighbours(gibToProcess, gibs, nrGibs)
+    animateTopology(gibToProcess, gifImages, parameters)
 
 
 def defineTopologyWithNeighbours(gibToProcess, gibs, nrGibs):

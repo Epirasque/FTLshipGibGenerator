@@ -25,7 +25,7 @@ class MetalBitsPrototypeTest(unittest.TestCase):
         nrGibs = 5
 
         parameters = collections.namedtuple("parameters",
-                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
+                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
         coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                     ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
                                     SAVE_STANDALONE=True, SAVE_ADDON=False,
@@ -33,6 +33,7 @@ class MetalBitsPrototypeTest(unittest.TestCase):
                                     BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                     QUICK_AND_DIRTY_SEGMENT=False,
                                     GENERATE_METAL_BITS = False, #YES! we do it manually in this test
+                                    ANIMATE_METAL_BITS_FOR_DEVELOPER = False,
                                     CHECK_SPECIFIC_SHIPS=True, SPECIFIC_SHIP_NAMES='TEST_SHIP2', LIMIT_ITERATIONS=False,
                                     ITERATION_LIMIT=0)
 
