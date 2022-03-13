@@ -221,12 +221,13 @@ In arbitrary order, *no promises if or when these will be done*:
   - [x] prototype
 - [ ] innermost layer1 (chunks)
   - [ ] tileset
-  - [ ] determine general direction
+  - [x] determine general direction
     - [x] prototype
   - [x] constraints
-    - [ ] don't leave metal bit origin visible anywhere
+    - [x] don't leave metal bit origin visible anywhere
     - [x] don't generate outside of base ship shape
     - [x] don't cover gibs with lower z-value
+  - [x] iteration
 - [ ] layer2
 - [ ] layer3
 - [ ] layer4

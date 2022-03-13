@@ -1,13 +1,14 @@
 import imageio
 from numpy.ma import copy
 
-from imageProcessing.ImageProcessingUtilities import findColorInImage
+from imageProcessing.ImageProcessingUtilities import findColorInImage, findMeanOfCoordinates
 
 LAYER1 = 'chunks'
-DEFAULT_TILESET = 'placeholder/rick'
-TILE_WIDTH = 72
-TILE_HEIGHT = 72
-CLOCKWISE_ANGLE_PER_STEP = 15  # should divide 360 without remainder
+DEFAULT_TILESET = 'placeholder/arrow'
+TILE_WIDTH = 10 #72
+TILE_HEIGHT = 10 #72
+# should divide 360 without remainder
+CLOCKWISE_ANGLE_PER_STEP = 45 #15
 NR_ANGLE_STEPS = round(360 / CLOCKWISE_ANGLE_PER_STEP)
 ORIGIN_COLOR = [0, 255, 0]
 
@@ -25,8 +26,8 @@ def addOriginPixels(tilesets):
         for angle in range(0, 360, CLOCKWISE_ANGLE_PER_STEP):
             tile = piece[angle]['img']
             coloredArea, coloredCoordinates = findColorInImage(tile, ORIGIN_COLOR)
-            piece[angle]['originArea'] = coloredArea
-            piece[angle]['originCoordinates'] = coloredCoordinates
+            originCenterPoint = findMeanOfCoordinates(coloredCoordinates)
+            piece[angle]['origin'] = coloredArea, coloredCoordinates, originCenterPoint
 
 
 def splitIntoDictionary(imageArray, nrPieces):

@@ -2,7 +2,7 @@ import unittest
 
 import imageio
 
-from imageProcessing.ImageProcessingUtilities import findColorInImage, areVisiblePixelsOverlapping, \
+from imageProcessing.ImageProcessingUtilities import findColorInImage, areAnyVisiblePixelsOverlapping, \
     areAllVisiblePixelsContained
 from unit_tests.TestUtilities import imageDifferenceInPercentage
 
@@ -19,13 +19,13 @@ class ImageAnalysisTest(unittest.TestCase):
         path = 'imageProcessing/imageOverlapTrue/'
         imageA = imageio.imread(path + '/imageA.png')
         imageB = imageio.imread(path + '/imageB.png')
-        self.assertTrue(areVisiblePixelsOverlapping(imageA, imageB))
+        self.assertTrue(areAnyVisiblePixelsOverlapping(imageA, imageB))
 
     def test_noImageOverlap(self):
         path = 'imageProcessing/imageOverlapFalse/'
         imageA = imageio.imread(path + '/imageA.png')
         imageB = imageio.imread(path + '/imageB.png')
-        self.assertFalse(areVisiblePixelsOverlapping(imageA, imageB))
+        self.assertFalse(areAnyVisiblePixelsOverlapping(imageA, imageB))
 
     def test_imageIsContained(self):
         path = 'imageProcessing/imageContainedTrue/'

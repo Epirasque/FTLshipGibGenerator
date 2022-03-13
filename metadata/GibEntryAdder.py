@@ -69,19 +69,9 @@ def addDirectionToGibEntry(gibEntry, gibVectorX, gibVectorY):
     mainDirection = -(round(
         np.arctan2(gibVectorY, gibVectorX) * 180. / np.pi) + 90)
     minDirection = mainDirection - round(DIRECTION_SPREAD / 2)
-    if minDirection > 360:
-        minDirection -= 360
-    if minDirection < 360:
-        minDirection += 360
-    if minDirection < 0:
-        minDirection += 360
     maxDirection = mainDirection + round(DIRECTION_SPREAD / 2)
-    if maxDirection > 360:
-        maxDirection -= 360
-    if maxDirection < 360:
-        maxDirection += 360
-    if maxDirection < 0:
-        maxDirection += 360
+    minDirection = minDirection % 360
+    maxDirection = maxDirection % 360
     directionEntry = ET.Element('direction')
     directionEntry.set("min", str(minDirection))
     directionEntry.set("max", str(maxDirection))
