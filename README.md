@@ -207,10 +207,10 @@ In arbitrary order, *no promises if or when these will be done*:
 # Progress Of Metal Bits
 
 - [ ] tilesets
-  - [ ] initializing tilesets
+  - [x] initializing tilesets
     - [x] load and split
-    - [ ] detect origin/edge
-    - [ ] pre-rotate in 15° steps (plus re-crop)
+    - [x] detect origin/edge
+    - [x] pre-rotate in 15° steps (plus re-crop)
   - [ ] program flow
     - [x] feature toggle
     - [x] flow to class at lowest level
