@@ -77,7 +77,6 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
     while nrAttemptsForLayer < maxNrAttemptsForLayer and np.any(remainingUncoveredSeamPixels):
         nrAttemptsForLayer += 1
-        metalBitsCandidate = copy(metalBits)
 
         # TODO: properly add to metal bits using tilesets
         attachmentPointId = random.randint(0, len(remainingUncoveredSeamPixels[0]) - 1)
