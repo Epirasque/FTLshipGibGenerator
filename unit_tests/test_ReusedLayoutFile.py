@@ -7,6 +7,7 @@ import unittest
 import numpy as np
 from PIL import Image
 
+import Core
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout
@@ -22,9 +23,9 @@ class ReusedLayoutFileTest(unittest.TestCase):
         addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
 
-        parameters = collections.namedtuple("parameters",
+        PARAMETERS = collections.namedtuple("PARAMETERS",
                                             """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
-        coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+        coreParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                     ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
                                     SAVE_STANDALONE=True, SAVE_ADDON=True,
                                     BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
@@ -62,22 +63,21 @@ class ReusedLayoutFileTest(unittest.TestCase):
         nrGibs = 2
         imageIdWithGibs = 3
 
-        parameters = collections.namedtuple("parameters",
-                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
-        coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+        PARAMETERS = Core.PARAMETERS
+        generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                     ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
                                     SAVE_STANDALONE=True, SAVE_ADDON=True,
                                     BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                     BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                     QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
-                                    ANIMATE_METAL_BITS_FOR_DEVELOPER=False, CHECK_SPECIFIC_SHIPS=False,
-                                    SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
+                                    ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                    CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
                                     ITERATION_LIMIT=0)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [imageIdWithGibs])
 
         # ACT
-        startGeneratorLoop(coreParameters)
+        startGeneratorLoop(generatorLoopParameters)
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)

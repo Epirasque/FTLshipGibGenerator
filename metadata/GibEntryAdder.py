@@ -64,7 +64,7 @@ def addAngularToGibEntry(gibEntry, relativeMassRegardlessOfNrGibs):
 
 
 def addDirectionToGibEntry(gibEntry, gibVectorX, gibVectorY):
-    # NOTE: arctan2 parameters are intentionally reversed, Y comes before X
+    # NOTE: arctan2 PARAMETERS are intentionally reversed, Y comes before X
     # NOTE: direction 0 is north, then goes counter-clockwise, not clockwise -> use minus
     mainDirection = -(round(
         np.arctan2(gibVectorY, gibVectorX) * 180. / np.pi) + 90)

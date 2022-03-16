@@ -6,7 +6,7 @@ from PIL import Image
 
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
 from fileHandling.ShipImageLoader import loadShipBaseImage
-from imageProcessing.ImageCropper import cropImage
+from imageProcessing.ImageProcessingUtilities import cropImage
 from metadata.GibEntryChecker import getExplosionNode
 
 GIB_CACHE_FOLDER = 'gibCache'

@@ -152,3 +152,16 @@ def findMeanOfCoordinates(coordinates):
 
 def getDistanceBetweenPoints(x1, y1, x2, y2):
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+
+def cropImage(image):
+    visiblePixelsY, visiblePixelsX = np.nonzero(image[:, :, 3])
+    minX = min(visiblePixelsX)
+    maxX = max(visiblePixelsX)
+    minY = min(visiblePixelsY)
+    maxY = max(visiblePixelsY)
+    croppedImage = image[minY:maxY, minX:maxX, :]
+    # TODO: consider center of gravity instead?
+    center = {}
+    center['x'] = (maxX + minX) / 2
+    center['y'] = (maxY + minY) / 2
+    return croppedImage, center, minX, minY

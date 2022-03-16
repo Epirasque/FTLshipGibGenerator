@@ -9,6 +9,7 @@ import numpy as np
 from PIL import Image
 from skimage.draw import line
 
+import Core
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout
@@ -24,28 +25,27 @@ class MetalBitsPrototypeTest(unittest.TestCase):
 
         nrGibs = 5
 
-        parameters = collections.namedtuple("parameters",
-                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
-        coreParameters = parameters(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+        PARAMETERS = Core.PARAMETERS
+        generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                     ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
                                     SAVE_STANDALONE=True, SAVE_ADDON=False,
                                     BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                     BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                     QUICK_AND_DIRTY_SEGMENT=False,
                                     GENERATE_METAL_BITS = False, #YES! we do it manually in this test
-                                    ANIMATE_METAL_BITS_FOR_DEVELOPER = False,
+                                    ANIMATE_METAL_BITS_FOR_DEVELOPER = False, ANIMATE_METAL_BITS_FPS=5.,
                                     CHECK_SPECIFIC_SHIPS=True, SPECIFIC_SHIP_NAMES='TEST_SHIP2', LIMIT_ITERATIONS=False,
                                     ITERATION_LIMIT=0)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
         # ACT
-        startGeneratorLoop(coreParameters)
+        startGeneratorLoop(generatorLoopParameters)
 
         ships = loadShipFileNames(standaloneFolderPath)
         for name, filenames in ships.items():
-            if coreParameters.CHECK_SPECIFIC_SHIPS == True:
-                if name not in coreParameters.SPECIFIC_SHIP_NAMES:
+            if generatorLoopParameters.CHECK_SPECIFIC_SHIPS == True:
+                if name not in generatorLoopParameters.SPECIFIC_SHIP_NAMES:
                     continue
             shipImageName = filenames['img']
             layoutName = filenames['layout']

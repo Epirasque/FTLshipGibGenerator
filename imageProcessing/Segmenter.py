@@ -1,12 +1,11 @@
-from skimage.segmentation import slic
-import imageio
 import numpy as np
-
+from skimage.segmentation import slic
 
 # TODO: remove shipImageName as parameter
-from imageProcessing.ImageCropper import cropImage
+from imageProcessing.ImageProcessingUtilities import cropImage
 
 TRANSPARENCY_ALPHA_VALUE = 0
+
 
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     nonTransparentMask = (shipImage[:, :, 3] != TRANSPARENCY_ALPHA_VALUE)
@@ -57,6 +56,3 @@ def turnSegmentsIntoGibs(nrGibs, segments, shipImage):
         gib['mass'] = (center['x'] - minX) * (center['y'] - minY) * 4  # TODO: reenable nrVisiblePixels
         gibs.append(gib)
     return gibs
-
-
-
