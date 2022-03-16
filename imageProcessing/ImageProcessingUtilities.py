@@ -19,16 +19,20 @@ def pasteNonTransparentValuesIntoArray(source, target):
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = source[colorMaskCoordinates[0],
                                                                   colorMaskCoordinates[1], :]
 
+
 def pasteNonTransparentValuesIntoArrayWithOffset(source, target, yOffset, xOffset):
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
     target[colorMaskCoordinates[0] + yOffset, colorMaskCoordinates[1] + xOffset, :] = source[colorMaskCoordinates[0],
-                                                                  colorMaskCoordinates[1], :]
+                                                                                      colorMaskCoordinates[1], :]
+
 
 def areAnyVisiblePixelsOverlapping(imageArrayA, imageArrayB):
     return np.any(np.any(imageArrayA != [0, 0, 0, 0], axis=-1) & np.any(imageArrayB != [0, 0, 0, 0], axis=-1))
 
+
 def getVisibleOverlappingPixels(imageArrayA, imageArrayB):
     return np.where(np.any(imageArrayA != [0, 0, 0, 0], axis=-1) & np.any(imageArrayB != [0, 0, 0, 0], axis=-1))
+
 
 def areAllVisiblePixelsContained(innerImageArray, outerImageArray):
     innerImageVisibleMask = np.any(innerImageArray != [0, 0, 0, 0], axis=-1)
@@ -45,7 +49,7 @@ def areAllCoordinatesContainedInVisibleArea(coordinates, outerImageArray):
                 return False
         return True
         # TODO: performance refactor!
-        #return np.all(np.any(outerImageArray[coordinates] != [0, 0, 0, 0], axis=-1))
+        # return np.all(np.any(outerImageArray[coordinates] != [0, 0, 0, 0], axis=-1))
     except IndexError:
         # outside of image can be assumed to be in a transparent part
         return False
@@ -78,13 +82,16 @@ def vectorToAngleWithNorthBeingZero(outwardVector):
 
 
 def determineOutwardDirectionAtPoint(imageArray, edgeCoordinates, pointOfDetection, nearbyEdgePixelScanRadius,
-                                     scanForTransparencyDistance):
+                                     maximumScanForTransparencyDistance):
     edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX = findEdgePixelsInSearchRadius(edgeCoordinates, pointOfDetection,
                                                                                       nearbyEdgePixelScanRadius)
     slope, yOffset = fitLineToCoordinates(edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX)
     vectorA, vectorB = determineYXorthogonalVectorsForSlope(slope)
-    isDetectionSuccessful, outwardVector = determineOutwardVector(pointOfDetection, vectorA, vectorB, imageArray,
-                                                                  scanForTransparencyDistance)
+    for scanForTransparencyDistance in range(1, maximumScanForTransparencyDistance + 1):
+        isDetectionSuccessful, outwardVector = determineOutwardVector(pointOfDetection, vectorA, vectorB, imageArray,
+                                                                      scanForTransparencyDistance)
+        if isDetectionSuccessful == True:
+            break
     outwardAngle = vectorToAngleWithNorthBeingZero(outwardVector)
     return isDetectionSuccessful, outwardAngle, outwardVector
 
@@ -99,10 +106,8 @@ def determineOutwardVector(pointOfDetection, vectorA, vectorB, imageArray, scanF
     isBtowardsTransparency = imageArray[scanY_B, scanX_B][3] < 255
     isDetectionSuccessful = True
     if isAtowardsTransparency and isBtowardsTransparency:
-        print("Warning: both normals point outwards, checking an antenna-shaped edge?")
         isDetectionSuccessful = False
     elif ~isAtowardsTransparency and ~isBtowardsTransparency:
-        print("Error: neither normal points outwards!")
         isDetectionSuccessful = False
     if isAtowardsTransparency:
         outwardVector = vectorA

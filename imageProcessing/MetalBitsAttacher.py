@@ -14,11 +14,12 @@ REMAINING_UNCOVERED_SEAM_PIXEL_COLOR = [253, 254, 255, 255]
 BLOCKED_SEAM_PIXELS_COLOR = [63, 63, 63, 255]
 ATTACHMENT_POINT_COLOR = [255, 0, 255, 255]
 
+# TODO: should it depends on nr. of seam pixels?
 NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM = 20  # 50
 NR_MAX_DISTANCE_MOVING_TILE_INWARDS = 5  # 20
 SEAM_DETECTION_SEARCH_RADIUS = 1
 NEARBY_EDGE_PIXEL_SCAN_RADIUS = 8  # 8
-SCAN_FOR_TRANSPARENCY_DISTANCE = 2  # 2
+MAXIMUM_SCAN_FOR_TRANSPARENCY_DISTANCE = 5  # 2
 
 
 def attachMetalBits(gibs, shipImage, tilesets, parameters, shipImageName):
@@ -84,7 +85,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                                                                                                 seamCoordinates,
                                                                                                 attachmentPoint,
                                                                                                 NEARBY_EDGE_PIXEL_SCAN_RADIUS,
-                                                                                                SCAN_FOR_TRANSPARENCY_DISTANCE)
+                                                                                                MAXIMUM_SCAN_FOR_TRANSPARENCY_DISTANCE)
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
             gifFrame = copy(metalBits)
             pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
