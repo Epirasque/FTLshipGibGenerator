@@ -12,6 +12,7 @@ from imageProcessing.ImageProcessingUtilities import *
 
 REMAINING_UNCOVERED_SEAM_PIXEL_COLOR = [253, 254, 255, 255]
 BLOCKED_SEAM_PIXELS_COLOR = [63, 63, 63, 255]
+ATTACHMENT_POINT_COLOR = [255, 0, 255, 255]
 
 NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM = 20  # 50
 NR_MAX_DISTANCE_MOVING_TILE_INWARDS = 5  # 20
@@ -104,7 +105,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                 gifFrame[lineY_A, lineX_A] = [0, 127, 255, 255]
             else:
                 gifFrame[lineY_A, lineX_A] = [255, 127, 0, 255]
-
+            gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
             gifFrames.append(gifFrame)
 
         if isDetectionSuccessful == False:
@@ -122,6 +123,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
 
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
             gifFrame = copy(alreadyCoveredArea)
+            gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
             gifFrames.append(gifFrame)
 
         isCandidateOriginCoveredByGib = False
@@ -145,6 +147,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                         gifFrame[offsetCoordinate[0], offsetCoordinate[1]] = [0, 0, 255, 255]
                     except IndexError:
                         pass
+                gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
                 gifFrames.append(gifFrame)
 
             isCandidateOriginCoveredByGib = areAllCoordinatesContainedInVisibleArea(offsetCoordinates,
@@ -165,6 +168,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
             gifFrame = copy(originalGibImageArray)
             pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
             # TODO: try: gifFrame[np.any(metalBits != [0, 0, 0, 0], axis=-1)] = [0, 0, 255, 255]
+            gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
             gifFrames.append(gifFrame)
 
         isCandidateValid = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shipImage)
