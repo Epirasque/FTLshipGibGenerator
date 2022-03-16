@@ -210,7 +210,7 @@ In arbitrary order, *no promises if or when these will be done*:
   - [x] initializing tilesets
     - [x] load and split
     - [x] detect origin/edge
-    - [x] pre-rotate in 15° steps (plus re-crop)
+    - [x] support pre-rotation
   - [ ] program flow
     - [x] feature toggle
     - [x] flow to class at lowest level
