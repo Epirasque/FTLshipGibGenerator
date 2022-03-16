@@ -27,6 +27,8 @@ def pasteNonTransparentValuesIntoArrayWithOffset(source, target, yOffset, xOffse
 def areAnyVisiblePixelsOverlapping(imageArrayA, imageArrayB):
     return np.any(np.any(imageArrayA != [0, 0, 0, 0], axis=-1) & np.any(imageArrayB != [0, 0, 0, 0], axis=-1))
 
+def getVisibleOverlappingPixels(imageArrayA, imageArrayB):
+    return np.where(np.any(imageArrayA != [0, 0, 0, 0], axis=-1) & np.any(imageArrayB != [0, 0, 0, 0], axis=-1))
 
 def areAllVisiblePixelsContained(innerImageArray, outerImageArray):
     innerImageVisibleMask = np.any(innerImageArray != [0, 0, 0, 0], axis=-1)

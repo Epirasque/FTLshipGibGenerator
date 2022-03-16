@@ -2,21 +2,19 @@ import os
 import random
 
 import imageio
-import numpy as np
 from PIL import Image
 from numpy.ma import copy
 from skimage.draw import line
 
 from fileHandling.MetalBitsLoader import LAYER1, CLOCKWISE_ANGLE_PER_STEP
 from imageProcessing.ImageCropper import cropImage
-from imageProcessing.ImageProcessingUtilities import getDistanceBetweenPoints, areAllVisiblePixelsContained, \
-    areAnyVisiblePixelsOverlapping, pasteNonTransparentValuesIntoArray, determineOutwardDirectionAtPoint, \
-    areAllCoordinatesContainedInVisibleArea, findEdgePixelsInSearchRadius, pasteNonTransparentValuesIntoArrayWithOffset
+from imageProcessing.ImageProcessingUtilities import *
 
 REMAINING_UNCOVERED_SEAM_PIXEL_COLOR = [253, 254, 255, 255]
+COVERED_SEAM_PIXELS_COLOR = [63, 63, 63, 255]
 
-NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM = 20 #50
-NR_MAX_DISTANCE_MOVING_TILE_INWARDS = 5 #20
+NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM = 20  # 50
+NR_MAX_DISTANCE_MOVING_TILE_INWARDS = 5  # 20
 SEAM_DETECTION_SEARCH_RADIUS = 1
 NEARBY_EDGE_PIXEL_SCAN_RADIUS = 8  # 8
 SCAN_FOR_TRANSPARENCY_DISTANCE = 2  # 2
@@ -60,8 +58,7 @@ def populateSeams(gibs, shipImage, tilesets, gifFrames, parameters):
 
 
 def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, parameters):
-    # TODO: ensure does not reach into any of coversNeighbour or outside of ship image shape -> use mask, also one for gib itself
-    originalGibImage = copy(gibToPopulate['img'])
+    originalGibImageArray = copy(gibToPopulate['img'])
     seamCoordinates = copy(gibToPopulate['neighbourToSeam'][neighbourId])
     metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
     tilesToUse = tilesets['default'][LAYER1]
@@ -69,8 +66,8 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     # TODO: use seamCoordinates directly?
     for coordinates in seamCoordinates:
         metalBits[coordinates[0], coordinates[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
-
     # metalBits[np.asarray(seamCoordinates)] = [0, 255, 0, 255]
+    seamImageArray = copy(metalBits)
     # TODO: for currentLayer in range(1, 4 + 1): or layer function as variable/parameter, or ...
     nrAttemptsForLayer = 1
     maxNrAttemptsForLayer = NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM
@@ -78,20 +75,18 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     while nrAttemptsForLayer < maxNrAttemptsForLayer and np.any(remainingUncoveredSeamPixels):
         nrAttemptsForLayer += 1
 
-        # TODO: properly add to metal bits using tilesets
         attachmentPointId = random.randint(0, len(remainingUncoveredSeamPixels[0]) - 1)
         attachmentPoint = remainingUncoveredSeamPixels[0][attachmentPointId], remainingUncoveredSeamPixels[1][
             attachmentPointId]
 
-        # TODO: include in debug animation, similar to prototype
-        isDetectionSuccessful, outwardAngle, outwardVectorYX = determineOutwardDirectionAtPoint(originalGibImage,
+        isDetectionSuccessful, outwardAngle, outwardVectorYX = determineOutwardDirectionAtPoint(originalGibImageArray,
                                                                                                 seamCoordinates,
                                                                                                 attachmentPoint,
                                                                                                 NEARBY_EDGE_PIXEL_SCAN_RADIUS,
                                                                                                 SCAN_FOR_TRANSPARENCY_DISTANCE)
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
             gifFrame = copy(metalBits)
-            pasteNonTransparentValuesIntoArray(originalGibImage, gifFrame)
+            pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
             edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX = findEdgePixelsInSearchRadius(seamCoordinates,
                                                                                               attachmentPoint,
                                                                                               NEARBY_EDGE_PIXEL_SCAN_RADIUS)
@@ -119,7 +114,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         tileImageArray = tilesToUse[tileId][tileAngleId]['img']
         tileOriginArea, tileOriginCoordinates, tileOriginCenterPoint = tilesToUse[tileId][tileAngleId]['origin']
 
-        alreadyCoveredArea = copy(originalGibImage)
+        alreadyCoveredArea = copy(originalGibImageArray)
         pasteNonTransparentValuesIntoArray(metalBits, alreadyCoveredArea)
 
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
@@ -158,10 +153,11 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         pasteNonTransparentValuesIntoArrayWithOffset(tileImageArray, metalBitsCandidate,
                                                      inwardsSearchY - tileOriginCenterPoint[0],
                                                      inwardsSearchX - tileOriginCenterPoint[1])
+        seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidate, seamImageArray)
         pasteNonTransparentValuesIntoArray(metalBits, metalBitsCandidate)
 
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-            gifFrame = copy(originalGibImage)
+            gifFrame = copy(originalGibImageArray)
             pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
             # TODO: try: gifFrame[np.any(metalBits != [0, 0, 0, 0], axis=-1)] = [0, 0, 255, 255]
             gifFrames.append(gifFrame)
@@ -171,16 +167,17 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
             continue
 
         metalBits = metalBitsCandidate
+        metalBits[seamPixelsCoveredByCandidate] = COVERED_SEAM_PIXELS_COLOR
         remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER:
             gifFrame = copy(metalBits)
-            pasteNonTransparentValuesIntoArray(originalGibImage, gifFrame)
+            pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
             gifFrames.append(gifFrame)
             gifFrameNextSeamPixels = copy(gifFrame)
             gifFrameNextSeamPixels[remainingUncoveredSeamPixels] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
             gifFrames.append(gifFrameNextSeamPixels)
 
-    pasteNonTransparentValuesIntoArray(originalGibImage, metalBits)
+    pasteNonTransparentValuesIntoArray(originalGibImageArray, metalBits)
     gibToPopulate['img'] = metalBits
 
 
