@@ -11,7 +11,7 @@ from imageProcessing.ImageCropper import cropImage
 from imageProcessing.ImageProcessingUtilities import *
 
 REMAINING_UNCOVERED_SEAM_PIXEL_COLOR = [253, 254, 255, 255]
-COVERED_SEAM_PIXELS_COLOR = [63, 63, 63, 255]
+BLOCKED_SEAM_PIXELS_COLOR = [63, 63, 63, 255]
 
 NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM = 20  # 50
 NR_MAX_DISTANCE_MOVING_TILE_INWARDS = 5  # 20
@@ -104,9 +104,12 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                 gifFrame[lineY_A, lineX_A] = [0, 127, 255, 255]
             else:
                 gifFrame[lineY_A, lineX_A] = [255, 127, 0, 255]
+
             gifFrames.append(gifFrame)
 
         if isDetectionSuccessful == False:
+            metalBits[attachmentPoint] = BLOCKED_SEAM_PIXELS_COLOR
+            remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
             continue
 
         tileId = random.randint(0, nrTilesToUse - 1)
@@ -147,6 +150,8 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
             isCandidateOriginCoveredByGib = areAllCoordinatesContainedInVisibleArea(offsetCoordinates,
                                                                                     alreadyCoveredArea)
         if isCandidateOriginCoveredByGib == False:
+            metalBits[attachmentPoint] = BLOCKED_SEAM_PIXELS_COLOR
+            remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
             continue
 
         metalBitsCandidate = np.zeros(metalBits.shape, dtype=np.uint8)
@@ -164,10 +169,12 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
 
         isCandidateValid = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shipImage)
         if isCandidateValid == False:
+            metalBits[attachmentPoint] = BLOCKED_SEAM_PIXELS_COLOR
+            remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
             continue
 
         metalBits = metalBitsCandidate
-        metalBits[seamPixelsCoveredByCandidate] = COVERED_SEAM_PIXELS_COLOR
+        metalBits[seamPixelsCoveredByCandidate] = BLOCKED_SEAM_PIXELS_COLOR
         remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER:
             gifFrame = copy(metalBits)
