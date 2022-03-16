@@ -154,10 +154,11 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         if isCandidateOriginCoveredByGib == False:
             continue
 
-        metalBitsCandidate = copy(metalBits)
+        metalBitsCandidate = np.zeros(metalBits.shape, dtype=np.uint8)
         pasteNonTransparentValuesIntoArrayWithOffset(tileImageArray, metalBitsCandidate,
                                                      inwardsSearchY - tileOriginCenterPoint[0],
                                                      inwardsSearchX - tileOriginCenterPoint[1])
+        pasteNonTransparentValuesIntoArray(metalBits, metalBitsCandidate)
 
         if parameters.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
             gifFrame = copy(originalGibImage)
