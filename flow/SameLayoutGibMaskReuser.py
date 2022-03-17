@@ -14,13 +14,14 @@ GIB_CACHE_FOLDER = 'gibCache'
 
 # TODO: fix redundant append gib overwrites in addon mode
 # TODO: add profiling
-def generateGibsBasedOnSameLayoutGibMask(layout, layoutName, name, nrGibs, shipImageName, ships, standaloneFolderPath,
+def generateGibsBasedOnSameLayoutGibMask(layout, layoutName, name, nrGibs, shipImageName, ships, standaloneFolderPath, targetFolderPath,
                                          layoutNameToGibCache):
     print('Gibs in layout %s but not in image %s for %s' % (layoutName, shipImageName, name))
     foundGibsSameLayout = False
     newGibs = []
     gibsForMask = []
     newBaseImage, newShipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
+    folderPath = targetFolderPath + '/img/' + newShipImageSubfolder
     if layoutName in layoutNameToGibCache:
         print('Found gibs already generated in this run')
         shipImageNameInCache, nrGibs, layout = layoutNameToGibCache[layoutName]
@@ -32,10 +33,9 @@ def generateGibsBasedOnSameLayoutGibMask(layout, layoutName, name, nrGibs, shipI
             searchShipName = searchFilenames['img']
             searchLayoutName = searchFilenames['layout']
             if searchName != name and layoutName == searchLayoutName:
-                if areGibsPresentAsImageFiles(searchShipName, newShipImageSubfolder):
+                if areGibsPresentAsImageFiles(searchShipName, targetFolderPath):
                     print('Found identical layout with existing gibs for image %s' % searchShipName)
-                    basePath = standaloneFolderPath + '/img/' + newShipImageSubfolder
-                    gibsForMask = loadGibs(layout, nrGibs, basePath, searchShipName)
+                    gibsForMask = loadGibs(layout, nrGibs, folderPath, searchShipName)
                     if len(gibsForMask) > 0:
                         foundGibsSameLayout = True
                 else:
@@ -54,7 +54,7 @@ def generateGibsBasedOnSameLayoutGibMask(layout, layoutName, name, nrGibs, shipI
             newGib['y'] = gibForMask['y']
             newGib['img'], center, minX, minY = cropImage(uncroppedNewGib)
             newGibs.append(newGib)
-    return foundGibsSameLayout, newGibs, newShipImageSubfolder
+    return foundGibsSameLayout, newGibs, folderPath
 
 
 # TODO: extract as class, add profiling

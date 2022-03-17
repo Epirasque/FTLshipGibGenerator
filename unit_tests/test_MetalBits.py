@@ -17,7 +17,7 @@ class MetalBitsTest(unittest.TestCase):
         PARAMETERS = Core.PARAMETERS
         generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                     ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                    SAVE_STANDALONE=True, SAVE_ADDON=False,
+                                    OUTPUT_MODE=Core.STANDALONE_MODE,
                                     BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                     BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                     QUICK_AND_DIRTY_SEGMENT=False, GENERATE_METAL_BITS=True,

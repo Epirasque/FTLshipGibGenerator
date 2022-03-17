@@ -192,8 +192,6 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 # Known Issues
 
 - One known case of `tile cannot extend outside image` when generating
-- There is a layout re-usage issue (e.g. rebel elite destroyer) that screws up gib coordinates, it occurs when running
-  addon mode without standalone mode
 
 # What Is Planned For The Future?
 

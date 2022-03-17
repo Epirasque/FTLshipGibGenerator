@@ -16,6 +16,9 @@ from metadata.GibEntryChecker import areGibsPresentInLayout
 from metadata.LayoutToAppendContentConverter import convertLayoutToAppendContent
 from metadata.WeaponMountGibIdUpdater import setWeaponMountGibIdsAsAppendContent
 
+STANDALONE_MODE = 'standalone'
+ADDON_MODE = 'addon'
+
 
 def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
@@ -96,16 +99,19 @@ def startGeneratorLoop(PARAMETERS):
 def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, shipImageName, ships, stats, tilesets):
     foundGibsSameLayout = False
     gibs = []
-    shipImageSubfolder = 'not set'
+    folderPath = 'not set'
+    if layoutName in layoutNameToGibCache:
+        print('Found layout already filled in this run')
+        shipImageNameInCache, nrGibs, layout = layoutNameToGibCache[layoutName]
     if areGibsPresentInLayout(layout) == True:
-        foundGibsSameLayout, gibs, shipImageSubfolder = attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout,
-                                                                                                 layoutName,
-                                                                                                 layoutNameToGibCache,
-                                                                                                 name, shipImageName,
-                                                                                                 ships, stats)
+        foundGibsSameLayout, gibs, folderPath = attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout,
+                                                                                         layoutName,
+                                                                                         layoutNameToGibCache,
+                                                                                         name, shipImageName,
+                                                                                         ships, stats)
     if foundGibsSameLayout == True:
         print("Succeeded in generating gibs with mask of gibs from same layout")
-        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, shipImageSubfolder, stats)
+        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, folderPath, stats)
     else:
         if areGibsPresentAsImageFiles(shipImageName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH) == True:
             stats['nrShipsWithIncompleteGibSetup'] += 1
@@ -127,21 +133,32 @@ def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout, layoutName,
     stats['nrShipsWithIncompleteGibSetup'] += 1  # TODO: separate profiling / stat case
     print("There are gibs in layout %s, but no images %s_gibN for it." % (layoutName, shipImageName))
     gibs = []
-    shipImageSubfolder = 'not set'
+    folderPath = 'not set'
     foundGibsSameLayout = False
     try:
         print('Trying to find gibs already existing for the layout before this run...')
-        foundGibsSameLayout, gibs, shipImageSubfolder = generateGibsBasedOnSameLayoutGibMask(layout,
-                                                                                             layoutName,
-                                                                                             name, PARAMETERS.NR_GIBS,
-                                                                                             shipImageName,
-                                                                                             ships,
-                                                                                             PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
-                                                                                             layoutNameToGibCache)
+        targetFolderPath = determineTargetFolderPath(PARAMETERS)
+        foundGibsSameLayout, gibs, folderPath = generateGibsBasedOnSameLayoutGibMask(layout,
+                                                                                     layoutName,
+                                                                                     name, PARAMETERS.NR_GIBS,
+                                                                                     shipImageName,
+                                                                                     ships,
+                                                                                     PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
+                                                                                     targetFolderPath,
+                                                                                     layoutNameToGibCache)
     except Exception:
         print("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
         stats['nrErrorsUnknownCause'] += 1
-    return foundGibsSameLayout, gibs, shipImageSubfolder
+    return foundGibsSameLayout, gibs, folderPath
+
+
+def determineTargetFolderPath(PARAMETERS):
+    targetFolderPath = 'unset'
+    if PARAMETERS.OUTPUT_MODE == STANDALONE_MODE:
+        targetFolderPath = PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH
+    if PARAMETERS.OUTPUT_MODE == ADDON_MODE:
+        targetFolderPath = PARAMETERS.ADDON_OUTPUT_FOLDERPATH
+    return targetFolderPath
 
 
 def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, tilesets):
@@ -152,7 +169,9 @@ def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, ti
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:
-        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, shipImageSubfolder, stats)
+        targetFolderPath = determineTargetFolderPath(PARAMETERS)
+        targetFolderPath += '\\img\\' + shipImageSubfolder
+        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, targetFolderPath, stats)
         layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats)
         appendContentString, nrWeaponMountsWithoutGibId, stats = setWeaponMountGibIdsWithProfiling(gibs,
                                                                                                    layoutWithNewGibs,
@@ -173,10 +192,10 @@ def hasShipGibs(PARAMETERS, layout, shipImageName):
 
 def saveShipLayoutWithProfiling(PARAMETERS, layoutName, layoutWithNewGibs, appendContentString, stats):
     start = time.time()
-    if PARAMETERS.SAVE_STANDALONE == True:
+    if PARAMETERS.OUTPUT_MODE == STANDALONE_MODE:
         saveShipLayoutStandalone(layoutWithNewGibs, layoutName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
                                  developerBackup=PARAMETERS.BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER)
-    if PARAMETERS.SAVE_ADDON == True:
+    if PARAMETERS.OUTPUT_MODE == ADDON_MODE:
         saveShipLayoutAsAppendFile(appendContentString, layoutName, PARAMETERS.ADDON_OUTPUT_FOLDERPATH,
                                    developerBackup=False)
     stats['totalSaveShipLayoutDuration'] += time.time() - start
@@ -200,13 +219,13 @@ def setWeaponMountGibIdsWithProfiling(gibs, layoutWithNewGibs, appendContentStri
     return appendContentString, nrWeaponMountsWithoutGibId, stats
 
 
-def saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, shipImageSubfolder, stats):
+def saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, folderPath, stats):
     start = time.time()
-    if PARAMETERS.SAVE_STANDALONE == True:
-        saveGibImages(gibs, shipImageName, shipImageSubfolder, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
+    if PARAMETERS.OUTPUT_MODE == STANDALONE_MODE:
+        saveGibImages(gibs, shipImageName, folderPath,
                       developerBackup=PARAMETERS.BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER)
-    if PARAMETERS.SAVE_ADDON == True:
-        saveGibImages(gibs, shipImageName, shipImageSubfolder, PARAMETERS.ADDON_OUTPUT_FOLDERPATH,
+    if PARAMETERS.OUTPUT_MODE == ADDON_MODE:
+        saveGibImages(gibs, shipImageName, folderPath,
                       developerBackup=False)
     stats['totalSaveGibImagesDuration'] += time.time() - start
     return stats

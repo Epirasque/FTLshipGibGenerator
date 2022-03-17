@@ -1,7 +1,7 @@
 import collections
 import sys
 
-from flow.GeneratorLooper import startGeneratorLoop
+from flow.GeneratorLooper import *
 
 # Source for metadata semantics: https://www.ftlwiki.com/wiki/Modding_ships
 
@@ -10,10 +10,14 @@ INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.2.2 hotfix1'  # 'FTL-
 ADDON_OUTPUT_FOLDERPATH = 'MV Addon GenGibs v0.9.4'  # e.g. 'MV Addon GenGibs v0.9.3'
 # tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug in MV, has no layout file
 SHIPS_TO_IGNORE = ['PLAYER_SHIP_TUTORIAL', 'MU_COALITION_CONSTRUCTION']
+
+# configure whether the output is meant for standalone or as an addon by setting OUTPUT_MODE to one of them
+# KEEP A BACKUP READY! it is best practice to restore the backup before generating new gibs, .bat files can help a lot for that
+OUTPUT_MODE = STANDALONE_MODE
+# OUTPUT_MODE = ADDON_MODE
 # configure whether the output is meant for standalone or as an addon.
 # KEEP A BACKUP READY! it is best practice to restore the backup before generating new gibs, .bat files can help a lot for that
-SAVE_STANDALONE = False
-SAVE_ADDON = True
+
 # if enabled, save a separate copy of the output in gibs and/or layouts folders;
 # these have to exist as subfolders of glaive and they are NOT cleaned up automatically
 BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER = False
@@ -32,15 +36,16 @@ ANIMATE_METAL_BITS_FPS = 5.
 
 # if enabled, all ships except SPECIFIC_SHIP_NAME are skipped
 CHECK_SPECIFIC_SHIPS = False
-SPECIFIC_SHIP_NAMES = ['MU_REBEL_BATTLESHIP', 'MU_REBEL_BATTLESHIP_ELITE', 'MU_REBEL_BATTLESHIP_SELITE', 'MU_REBEL_BATTLESHIP_SELITEA']
+SPECIFIC_SHIP_NAMES = ['MU_REBEL_BATTLESHIP', 'MU_REBEL_BATTLESHIP_ELITE', 'MU_REBEL_BATTLESHIP_SELITE',
+                       'MU_REBEL_BATTLESHIP_SELITEA']
 # if enabled, only ITERATION_LIMIT amount of ships will be processed
 LIMIT_ITERATIONS = False
 ITERATION_LIMIT = 3
 
 PARAMETERS = collections.namedtuple("PARAMETERS",
-                                    """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER ANIMATE_METAL_BITS_FPS CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
+                                    """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE OUTPUT_MODE BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER ANIMATE_METAL_BITS_FPS CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
 coreParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH, ADDON_OUTPUT_FOLDERPATH, SHIPS_TO_IGNORE,
-                            SAVE_STANDALONE, SAVE_ADDON, BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER,
+                            OUTPUT_MODE, BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER,
                             BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER, NR_GIBS, QUICK_AND_DIRTY_SEGMENT,
                             GENERATE_METAL_BITS, ANIMATE_METAL_BITS_FOR_DEVELOPER, ANIMATE_METAL_BITS_FPS,
                             CHECK_SPECIFIC_SHIPS, SPECIFIC_SHIP_NAMES, LIMIT_ITERATIONS, ITERATION_LIMIT)

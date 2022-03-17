@@ -4,11 +4,11 @@ import os
 GIB_CACHE_FOLDER = 'gibCache'
 
 
-def saveGibImages(gibs, shipImageName, shipImageSubfolder, folderPath, developerBackup):
+def saveGibImages(gibs, shipImageName, folderPath, developerBackup):
     for gib in gibs:
         gibId = gib['id']
         imageio.imwrite(
-            folderPath + '\\img\\' + shipImageSubfolder + '\\' + shipImageName + '_gib' + str(gibId) + '.png',
+            folderPath + '\\' + shipImageName + '_gib' + str(gibId) + '.png',
             gib['img'])
         if developerBackup == True:
             imageio.imsave('gibs/' + shipImageName + '_gib' + str(gibId) + '.png', gib['img'])

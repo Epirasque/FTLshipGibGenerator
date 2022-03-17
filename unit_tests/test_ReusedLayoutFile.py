@@ -23,7 +23,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         PARAMETERS = Core.PARAMETERS
         generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                          ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                         SAVE_STANDALONE=True, SAVE_ADDON=False,
+                                         OUTPUT_MODE=Core.STANDALONE_MODE,
                                          BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                          BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                          QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
@@ -51,7 +51,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         PARAMETERS = Core.PARAMETERS
         generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                          ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                         SAVE_STANDALONE=False, SAVE_ADDON=True,
+                                         OUTPUT_MODE=Core.ADDON_MODE,
                                          BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                          BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                          QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
@@ -90,7 +90,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         PARAMETERS = Core.PARAMETERS
         generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                              ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                             SAVE_STANDALONE=True, SAVE_ADDON=False,
+                                             OUTPUT_MODE=Core.STANDALONE_MODE,
                                              BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                              BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                              QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
@@ -119,7 +119,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         PARAMETERS = Core.PARAMETERS
         generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                              ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                             SAVE_STANDALONE=False, SAVE_ADDON=True,
+                                             OUTPUT_MODE=Core.ADDON_MODE,
                                              BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                              BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                              QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
