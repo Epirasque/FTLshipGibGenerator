@@ -1,4 +1,3 @@
-import collections
 import copy
 import unittest
 
@@ -21,22 +20,22 @@ class ReusedLayoutFileTest(unittest.TestCase):
         addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
 
-        PARAMETERS = collections.namedtuple("PARAMETERS",
-                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
-        coreParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
-                                    ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                    SAVE_STANDALONE=True, SAVE_ADDON=False,
-                                    BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
-                                    BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                    QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
-                                    ANIMATE_METAL_BITS_FOR_DEVELOPER=False, CHECK_SPECIFIC_SHIPS=False,
-                                    SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
-                                    ITERATION_LIMIT=0)
+        PARAMETERS = Core.PARAMETERS
+        generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                         ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                         SAVE_STANDALONE=True, SAVE_ADDON=False,
+                                         BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                         BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
+                                         ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                         CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                         LIMIT_ITERATIONS=False,
+                                         ITERATION_LIMIT=0)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
         # ACT
-        startGeneratorLoop(coreParameters)
+        startGeneratorLoop(generatorParameters)
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
@@ -49,27 +48,26 @@ class ReusedLayoutFileTest(unittest.TestCase):
         addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
 
-        PARAMETERS = collections.namedtuple("PARAMETERS",
-                                            """INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH ADDON_OUTPUT_FOLDERPATH SHIPS_TO_IGNORE SAVE_STANDALONE SAVE_ADDON BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER NR_GIBS QUICK_AND_DIRTY_SEGMENT GENERATE_METAL_BITS ANIMATE_METAL_BITS_FOR_DEVELOPER CHECK_SPECIFIC_SHIPS SPECIFIC_SHIP_NAMES LIMIT_ITERATIONS ITERATION_LIMIT""")
-        coreParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
-                                    ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                    SAVE_STANDALONE=False, SAVE_ADDON=True,
-                                    BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
-                                    BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                    QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
-                                    ANIMATE_METAL_BITS_FOR_DEVELOPER=False, CHECK_SPECIFIC_SHIPS=False,
-                                    SPECIFIC_SHIP_NAMES='unset', LIMIT_ITERATIONS=False,
-                                    ITERATION_LIMIT=0)
+        PARAMETERS = Core.PARAMETERS
+        generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                         ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                         SAVE_STANDALONE=False, SAVE_ADDON=True,
+                                         BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                         BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
+                                         ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                         CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                         LIMIT_ITERATIONS=False, ITERATION_LIMIT=0)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
         # ACT
-        startGeneratorLoop(coreParameters)
+        startGeneratorLoop(generatorParameters)
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
-        self.assertShipReconstructedFromGibsIsAccurateEnoughForStandalone(nrGibs, ships, standaloneFolderPath,
-                                                                          requiredAccuracyInPercent=2)
+        self.assertShipReconstructedFromGibsIsAccurateEnoughForAddon(nrGibs, ships, standaloneFolderPath,
+                                                                     addonFolderPath, requiredAccuracyInPercent=2)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -121,7 +119,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         PARAMETERS = Core.PARAMETERS
         generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                              ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                             SAVE_STANDALONE=True, SAVE_ADDON=False,
+                                             SAVE_STANDALONE=False, SAVE_ADDON=True,
                                              BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                              BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
                                              QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
@@ -137,8 +135,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
-        self.assertShipReconstructedFromGibsIsAccurateEnoughForStandalone(nrGibs, ships, standaloneFolderPath,
-                                                                          requiredAccuracyInPercent=2)
+        self.assertShipReconstructedFromGibsIsAccurateEnoughForAddon(nrGibs, ships, standaloneFolderPath,
+                                                                     addonFolderPath, requiredAccuracyInPercent=2)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
