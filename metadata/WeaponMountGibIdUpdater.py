@@ -8,11 +8,12 @@ def setWeaponMountGibIdsAsAppendContent(gibs, layoutWithNewGibs):
 
     weaponMountsNode = getWeaponMountsNode(layoutWithNewGibs)
 
-    for mount in weaponMountsNode:
-        weaponMountAppendString, nrWeaponMountsWithoutGibId = generateAppendStringForWeaponMount(gibs,
-                                                                                                 mount,
-                                                                                                 nrWeaponMountsWithoutGibId)
-        weaponString += weaponMountAppendString
+    if weaponMountsNode != None:
+        for mount in weaponMountsNode:
+            weaponMountAppendString, nrWeaponMountsWithoutGibId = generateAppendStringForWeaponMount(gibs,
+                                                                                                     mount,
+                                                                                                     nrWeaponMountsWithoutGibId)
+            weaponString += weaponMountAppendString
 
     return weaponString, nrWeaponMountsWithoutGibId
 

@@ -26,7 +26,9 @@ run the main method without any additional arguments.
 
 ## Recommended Workflow
 
-The generator will ignore ships which already have gibs (regardless if they were drawn manually or generated). This means you might want to always apply it to an 'ungenerated' version of your addon because once generated they will not be overwritten anymore even if you run a new version of the generator. 
+The generator will ignore ships which already have gibs (regardless if they were drawn manually or generated). This
+means you might want to always apply it to an 'ungenerated' version of your addon because once generated they will not
+be overwritten anymore even if you run a new version of the generator.
 
 Have two copies of your unpacked addon folder:
 
@@ -152,9 +154,9 @@ image (while there are ways to counting the individual pixels relatively fast, i
 The velocity (speed in the given direction) of a gib consists of a minimum and a maximum value. Whenever the ship is
 destroyed, FTL will pick a random value within that range.
 
-The maximum velocity is computed by 2 times the distance from the ship center to the center of the gib, divided by the mass of
-the gib. The idea is that a gib in the center will move slower than a gib on the edge. Additionally, bigger gibs will
-move more slowly than smaller gibs.
+The maximum velocity is computed by 2 times the distance from the ship center to the center of the gib, divided by the
+mass of the gib. The idea is that a gib in the center will move slower than a gib on the edge. Additionally, bigger gibs
+will move more slowly than smaller gibs.
 
 The distance from center to center is normalized, meaning it is divided by (half) of the overall ship image diagonal so
 that bigger ships don't have surprisingly faster gibs in their outer area compared to smaller ships. The mass of the gib
@@ -190,19 +192,59 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 # Known Issues
 
 - One known case of `tile cannot extend outside image` when generating
+- There is a layout re-usage issue (e.g. rebel elite destroyer) that screws up gib coordinates, it occurs when running
+  addon mode without standalone mode
 
 # What Is Planned For The Future?
 
 In arbitrary order, *no promises if or when these will be done*:
 
+- Metal bits attached to the gibs, see progress section below
 - More tweaking of direction, velocity and angular values
-- Ship-insides attached to the gibs (metal beams and such); this will need some effort and the final quality is hard to
-  predict as of this writing, but I at least have a decent plan on how to implement this
-- Additional debris-pieces independend from the ship image (think Flak projectiles), also added to ships with already
-  existing gibs (there will definately be a way to turn that off as it does not look like standard FTL gibs anymore)
+- Additional debris-pieces independent of the ship image (think Flak projectiles), also added to ships with already
+  existing gibs (there will definitely be a way to turn that off as it does not look like standard FTL gibs anymore)
 - Resolving remaining TODOs in the code
 - Provide a compiled version that runs without installing Python
 - Avoid having longer lines sticking out of gibs (usually black lines that separate parts of the ship image)
+
+# Progress Of Metal Bits
+
+- [ ] tilesets
+    - [x] initializing tilesets
+        - [x] load and split
+        - [x] detect origin/edge
+        - [x] support pre-rotation
+    - [ ] program flow
+        - [x] feature toggle
+        - [x] flow to class at lowest level
+        - [ ] profiling
+    - [ ] support different layers
+    - [ ] support different themes
+- [x] mark seams between gibs
+    - [x] prototype
+- [ ] innermost layer1 (chunks)
+    - [ ] tileset
+    - [x] determine general direction
+        - [x] prototype
+    - [x] constraints
+        - [x] don't leave metal bit origin visible anywhere
+        - [x] don't generate outside of base ship shape
+        - [x] don't cover gibs with lower z-value
+    - [x] iteration
+- [ ] layer2
+- [ ] layer3
+- [ ] layer4
+- [x] ensure metal bits are always hidden initially
+    - [x] unit test
+        - [x] update to reconstruct based on z-layers
+    - [x] ensure gibs cover each other properly (edge-asymmetry/logic needed)
+- [ ] QoL
+    - [x] feature toggle
+    - [x] save generation process as gif for debugging
+    - [ ] performance improvements
+- [ ] deal with re-use layout mechanism: issue differentiating core gib and internals?
+- [ ] shading
+- [ ] tweak until it looks great
 
 # How Can I Contact The Author Or Otherwise Get Involved?
 

@@ -1,11 +1,11 @@
-from skimage.segmentation import slic
-import imageio
 import numpy as np
-
+from skimage.segmentation import slic
 
 # TODO: remove shipImageName as parameter
+from imageProcessing.ImageProcessingUtilities import cropImage
 
 TRANSPARENCY_ALPHA_VALUE = 0
+
 
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     nonTransparentMask = (shipImage[:, :, 3] != TRANSPARENCY_ALPHA_VALUE)
@@ -43,11 +43,12 @@ def turnSegmentsIntoGibs(nrGibs, segments, shipImage):
         matchingSegmentIndex = (segments == gibId)
         gibImage = np.zeros(shipImage.shape, dtype=np.uint8)
         gibImage[matchingSegmentIndex] = shipImage[matchingSegmentIndex]
-        croppedGibImage, center, minX, minY = crop(gibImage)
+        croppedGibImage, center, minX, minY = cropImage(gibImage)
         # TODO: reenable, but its slow nrVisiblePixels = sum(matchingSegmentIndex.flatten() == True)
 
         gib = {}
         gib['id'] = gibId
+        gib['z'] = gibId
         gib['img'] = croppedGibImage
         gib['center'] = center
         gib['x'] = minX
@@ -55,17 +56,3 @@ def turnSegmentsIntoGibs(nrGibs, segments, shipImage):
         gib['mass'] = (center['x'] - minX) * (center['y'] - minY) * 4  # TODO: reenable nrVisiblePixels
         gibs.append(gib)
     return gibs
-
-
-def crop(image):
-    visiblePixelsY, visiblePixelsX = np.nonzero(image[:, :, 3])
-    minX = min(visiblePixelsX)
-    maxX = max(visiblePixelsX)
-    minY = min(visiblePixelsY)
-    maxY = max(visiblePixelsY)
-    croppedImage = image[minY:maxY, minX:maxX, :]
-    # TODO: consider center of gravity instead?
-    center = {}
-    center['x'] = (maxX + minX) / 2
-    center['y'] = (maxY + minY) / 2
-    return croppedImage, center, minX, minY

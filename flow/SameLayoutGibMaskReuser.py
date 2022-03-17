@@ -4,10 +4,10 @@ from copy import deepcopy
 import numpy as np
 from PIL import Image
 
-from fileHandling.gibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.shipImageLoader import loadShipBaseImage
-from imageProcessing.segmenter import crop
-from metadata.gibEntryChecker import getExplosionNode
+from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
+from fileHandling.ShipImageLoader import loadShipBaseImage
+from imageProcessing.ImageProcessingUtilities import cropImage
+from metadata.GibEntryChecker import getExplosionNode
 
 GIB_CACHE_FOLDER = 'gibCache'
 
@@ -52,9 +52,10 @@ def generateGibsBasedOnSameLayoutGibMask(layout, layoutName, name, nrGibs, shipI
             newGib['id'] = gibForMask['id']
             newGib['x'] = gibForMask['x']
             newGib['y'] = gibForMask['y']
-            newGib['img'], center, minX, minY = crop(uncroppedNewGib)
+            newGib['img'], center, minX, minY = cropImage(uncroppedNewGib)
             newGibs.append(newGib)
     return foundGibsSameLayout, newGibs, newShipImageSubfolder
+
 
 # TODO: extract as class, add profiling
 def loadGibs(layout, nrGibs, basePath, shipName):
