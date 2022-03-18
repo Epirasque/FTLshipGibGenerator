@@ -11,7 +11,7 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     nonTransparentMask = (shipImage[:, :, 3] != TRANSPARENCY_ALPHA_VALUE)
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
-    compactnessToUse = 0.2  # TODO: start with 0. ?
+    compactnessToUse = 0.3  # TODO: start with 0. ?
     compactnessGainPerAttempt = 0.1
     nrMaximumSegmentationAttempts = 13
     if segmentQuickAndDirty == True:
