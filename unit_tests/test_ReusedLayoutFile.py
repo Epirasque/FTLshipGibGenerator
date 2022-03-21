@@ -179,9 +179,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
             gib = {}
             gib['x'] = int(gibNode.find('x').text)
             gib['y'] = int(gibNode.find('y').text)
-            with Image.open(
-                    standaloneFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png') as gibImage:
-                gib['img'] = copy.deepcopy(gibImage)
+            gib['img'] = np.asarray(Image.open(
+                standaloneFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'), dtype=np.uint8)
             gibs.append(gib)
         return gibs
 
@@ -242,7 +241,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         uncroppedGibs = copy.deepcopy(gibs)
         uncropGibs(uncroppedGibs, shipImage)
         for gibA in uncroppedGibs:
-            #signed integer needed for abs
+            # signed integer needed for abs
             imageArrayA = gibA['img']
             for gibB in uncroppedGibs:
                 imageArrayB = gibB['img']
@@ -252,11 +251,11 @@ class ReusedLayoutFileTest(unittest.TestCase):
                         for x in range(shipImage.shape[1]):
                             # TODO: RESUME HERE: then put gibs without metal bits in layout cache to get test green
                             if imageArrayA[y, x][3] == 255 and imageArrayB[y, x][3] == 255:
-                                #if abs(imageArrayA[y,x][0] - imageArrayB[y,x][0]) <= 0:
+                                # if abs(imageArrayA[y,x][0] - imageArrayB[y,x][0]) <= 0:
                                 if imageArrayA[y, x][0] == imageArrayB[y, x][0]:
                                     if imageArrayA[y, x][1] == imageArrayB[y, x][1]:
                                         if imageArrayA[y, x][2] == imageArrayB[y, x][2]:
-                                            nrIdenticalPixels +=1
+                                            nrIdenticalPixels += 1
                     percentage = 100. * nrIdenticalPixels / (shipImage.shape[0] * shipImage.shape[1])
                     print("Deviating pixels for gib-pair: %u of %u (%.2f%%)" % (
                         nrIdenticalPixels, shipImage.shape[0] * shipImage.shape[1], percentage))
