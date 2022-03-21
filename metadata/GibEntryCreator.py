@@ -4,8 +4,8 @@ import numpy as np
 
 LOWER_BOUND_VELOCITY = .1
 UPPER_BOUND_VELOCITY = 1.5
-DIRECTION_SPREAD = 16
-MAXIMUM_ANGULAR_SPREAD = 1.4
+TOTAL_DIRECTION_SPREAD_IN_DEGREES = 16
+MAXIMUM_ANGULAR_SPREAD_IN_DEGREES = 1.4
 
 
 def createGibEntry(baseHeight, baseWidth, biggestPossibleShipRadius, gib, nrGibs, shipPixelsIncludingTransparentOnes):
@@ -37,8 +37,8 @@ def addCoordinatesToGibEntry(gibEntry, gib):
 
 def addAngularToGibEntry(gibEntry, relativeMassRegardlessOfNrGibs):
     angularEntry = ET.Element('angular')
-    angularEntry.set("min", str(- MAXIMUM_ANGULAR_SPREAD * relativeMassRegardlessOfNrGibs / 2))
-    angularEntry.set("max", str(MAXIMUM_ANGULAR_SPREAD * relativeMassRegardlessOfNrGibs / 2))
+    angularEntry.set("min", str(- MAXIMUM_ANGULAR_SPREAD_IN_DEGREES * relativeMassRegardlessOfNrGibs / 2))
+    angularEntry.set("max", str(MAXIMUM_ANGULAR_SPREAD_IN_DEGREES * relativeMassRegardlessOfNrGibs / 2))
     gibEntry.append(angularEntry)
 
 
@@ -47,10 +47,13 @@ def addDirectionToGibEntry(gibEntry, gibVectorX, gibVectorY):
     # NOTE: direction 0 is north, then goes counter-clockwise, not clockwise -> use minus
     mainDirection = -(round(
         np.arctan2(gibVectorY, gibVectorX) * 180. / np.pi) + 90)
-    minDirection = mainDirection - round(DIRECTION_SPREAD / 2)
-    maxDirection = mainDirection + round(DIRECTION_SPREAD / 2)
+    minDirection = mainDirection - round(TOTAL_DIRECTION_SPREAD_IN_DEGREES / 2)
+    maxDirection = mainDirection + round(TOTAL_DIRECTION_SPREAD_IN_DEGREES / 2)
     minDirection = minDirection % 360
     maxDirection = maxDirection % 360
+    # this can happen when 'overflowing' north due to spread
+    if minDirection > maxDirection:
+        minDirection -= 360
     directionEntry = ET.Element('direction')
     directionEntry.set("min", str(minDirection))
     directionEntry.set("max", str(maxDirection))

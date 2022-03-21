@@ -177,7 +177,7 @@ The direction of a gib consists of a minimum and a maximum value. Whenever the s
 value within that range.
 
 The direction is derived from the vector pointing from the center of the ship to the center of the gib, meaning all gibs
-fly away from the center of the ship. Additionally, a spread of 32° is applied meaning the minimum value is 20° smaller
+fly away from the center of the ship. Additionally, a spread of 32° is applied meaning the minimum value is 16° smaller
 and the maximum value is 16° bigger than the calculated direction.
 
 #### Gib Angular
@@ -197,7 +197,6 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 # Known Issues
 
 - One known case of `tile cannot extend outside image` when generating
-- Gib parts sometimes seemingly fly in an odd direction (top center gib flying toward bottom)
 
 # What Is Planned For The Future?
 
