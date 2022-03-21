@@ -236,6 +236,7 @@ In arbitrary order, *no promises if or when these will be done*:
         - [x] don't generate outside of base ship shape
         - [x] don't cover gibs with lower z-value
     - [x] iteration
+    - [ ] proper seam-travel strategy
 - [ ] layer2
 - [ ] layer3
 - [ ] layer4
@@ -247,6 +248,7 @@ In arbitrary order, *no promises if or when these will be done*:
     - [x] feature toggle
     - [x] save generation process as gif for debugging
     - [ ] performance improvements
+        - [ ] remember gib-neighbour-status on seam-pixel-basis to avoid many rejected candidates
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
