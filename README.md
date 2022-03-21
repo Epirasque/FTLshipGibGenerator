@@ -1,4 +1,4 @@
-# GLAIVE v0.9.3: Pre-Generate Ship Debris For Faster Than Light (FTL) Mods
+# GLAIVE v0.9.4: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
 
 # What Does It Do? (TL;DR)
 
@@ -125,7 +125,9 @@ how it works detail, read up on the [K-Means clustering algorithm](https://en.wi
 To explain it for people allergic to math: a parameter `k` is chosen to determine how many clusters should be formed. In
 our case, `k` is the desired number of gibs per ship and the clusters each consist of multiple pixels of the `_base`
 ship image. The clusters start at random points of the image and the algorithm tries to converge in a way that forms
-these clusters as compact (spherical) as possible. SLIC uses K-Means, but it does not only cluster accross space but
+these clusters as compact (spherical) as possible. 
+
+SLIC uses K-Means, but it does not only cluster accross space but
 also accross the color space. The `compactness` parameter weights these two aspects against each other. A
 high `compactness` value tries to form clusters as spherical as possible, whereas a low `compactness` value puts more
 emphasis on grouping pixels together that are of similar color. In our case, this usually results in gibs that are
@@ -135,7 +137,7 @@ reasonably blob-ish while occasionally extending along more natural edges in the
 
 As a pre-processing step, all transparent pixels are filtered out to avoid having clusters starting on them.
 
-The Generator tries to find a solution with a `compactness` parameter that is as low as possible in order to make the
+The Generator tries to find a solution with a `compactness` parameter that is quite small in order to make the
 gibs look more interesting.
 
 The Generators applies the SLIC algorithm until the output consists of an amount of segments that is equal to `NR_GIBS`.
@@ -172,8 +174,8 @@ The direction of a gib consists of a minimum and a maximum value. Whenever the s
 value within that range.
 
 The direction is derived from the vector pointing from the center of the ship to the center of the gib, meaning all gibs
-fly away from the center of the ship. Additionally, a spread of 40° is applied meaning the minimum value is 20° smaller
-and the maximum value is 20° bigger than the calculated direction.
+fly away from the center of the ship. Additionally, a spread of 32° is applied meaning the minimum value is 20° smaller
+and the maximum value is 16° bigger than the calculated direction.
 
 #### Gib Angular
 
@@ -192,6 +194,7 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 # Known Issues
 
 - One known case of `tile cannot extend outside image` when generating
+- Gib parts sometimes seemingly fly in an odd direction (top center gib flying toward bottom)
 
 # What Is Planned For The Future?
 
