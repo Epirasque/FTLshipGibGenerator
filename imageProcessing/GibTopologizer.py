@@ -1,5 +1,4 @@
 import numpy as np
-from numpy.ma import copy
 
 from imageProcessing.ImageProcessingUtilities import pasteNonTransparentValuesIntoArray, getDistanceBetweenPoints
 from imageProcessing.MetalBitsConstants import SEAM_DETECTION_SEARCH_RADIUS
@@ -54,7 +53,7 @@ def animateTopology(gifImages, PARAMETERS, gibs):
                         for seamPoint in seamCoordinates:
                             y, x = seamPoint
                             gibImageArray[y, x] = [255, 0, 0, 255]
-            gifImages.append(copy(gibImageArray))
+            gifImages.append(np.ma.copy(gibImageArray))
 
 
 def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage):

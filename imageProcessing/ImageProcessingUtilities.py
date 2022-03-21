@@ -153,6 +153,11 @@ def findMeanOfCoordinates(coordinates):
 def getDistanceBetweenPoints(x1, y1, x2, y2):
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
+def imageDifferenceInPercentage(imageA, imageB):
+    differentTransparencyPixels = abs(imageA - imageB)[:, :, 3] > 0
+    percentage = 100. * differentTransparencyPixels.sum() / (imageA.shape[0] * imageA.shape[1])
+    return percentage
+
 def cropImage(image):
     visiblePixelsY, visiblePixelsX = np.nonzero(image[:, :, 3])
     minX = min(visiblePixelsX)
@@ -165,8 +170,3 @@ def cropImage(image):
     center['x'] = (maxX + minX) / 2
     center['y'] = (maxY + minY) / 2
     return croppedImage, center, minX, minY
-
-def imageDifferenceInPercentage(imageA, imageB):
-    differentTransparencyPixels = abs(imageA - imageB)[:, :, 3] > 0
-    percentage = 100. * differentTransparencyPixels.sum() / (imageA.shape[0] * imageA.shape[1])
-    return percentage

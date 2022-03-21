@@ -1,4 +1,5 @@
 import random
+from copy import copy, deepcopy
 
 from skimage.draw import line
 
@@ -18,8 +19,8 @@ def populateSeams(gibs, shipImage, tilesets, gifFrames, PARAMETERS):
 
 
 def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, PARAMETERS):
-    originalGibImageArray = copy(gibToPopulate['img'])
-    seamCoordinates = copy(gibToPopulate['neighbourToSeam'][neighbourId])
+    originalGibImageArray = deepcopy(gibToPopulate['img'])
+    seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
     tilesToUse = tilesets['default'][LAYER1]
     nrTilesToUse = len(tilesToUse)
@@ -27,7 +28,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     for coordinates in seamCoordinates:
         metalBits[coordinates[0], coordinates[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
     # metalBits[np.asarray(seamCoordinates)] = [0, 255, 0, 255]
-    seamImageArray = copy(metalBits)
+    seamImageArray = deepcopy(metalBits)
     # TODO: for currentLayer in range(1, 4 + 1): or layer function as variable/parameter, or ...
     nrAttemptsForLayer = 1
     maxNrAttemptsForLayer = NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM
@@ -105,7 +106,7 @@ def determineCandidateTileWithCoveredOrigin(PARAMETERS, attachmentPoint, gifFram
                                             originalGibImageArray, outwardAngle, outwardVectorYX, tilesToUse):
     tileImageArray, tileOriginCenterPoint, tileOriginCoordinates = determineTileToAttach(nrTilesToUse, outwardAngle,
                                                                                          tilesToUse)
-    alreadyCoveredArea = copy(originalGibImageArray)
+    alreadyCoveredArea = deepcopy(originalGibImageArray)
     pasteNonTransparentValuesIntoArray(metalBits, alreadyCoveredArea)
     animateAlreadyCoveredArea(PARAMETERS, alreadyCoveredArea, attachmentPoint, gifFrames)
     isCandidateOriginCoveredByGib, inwardsSearchX, inwardsSearchY = searchInwardUntilOriginIsCoveredByGib(PARAMETERS,
@@ -135,10 +136,10 @@ def determineAttachmentPointWithOrientation(PARAMETERS, gifFrames, metalBits, or
 def animateGibResultAndSeamPreview(PARAMETERS, gifFrames, metalBits, originalGibImageArray,
                                    remainingUncoveredSeamPixels):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER:
-        gifFrame = copy(metalBits)
+        gifFrame = deepcopy(metalBits)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
         gifFrames.append(gifFrame)
-        gifFrameNextSeamPixels = copy(gifFrame)
+        gifFrameNextSeamPixels = deepcopy(gifFrame)
         gifFrameNextSeamPixels[remainingUncoveredSeamPixels] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
         gifFrames.append(gifFrameNextSeamPixels)
 
@@ -146,7 +147,7 @@ def animateGibResultAndSeamPreview(PARAMETERS, gifFrames, metalBits, originalGib
 def animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, metalBitsCandidate,
                                        originalGibImageArray):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        gifFrame = copy(originalGibImageArray)
+        gifFrame = deepcopy(originalGibImageArray)
         pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
         # TODO: try: gifFrame[np.any(metalBits != [0, 0, 0, 0], axis=-1)] = [0, 0, 255, 255]
         gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
@@ -175,13 +176,14 @@ def searchInwardUntilOriginIsCoveredByGib(PARAMETERS, alreadyCoveredArea, attach
         inwardsSearchY = round(attachmentPoint[0] - outwardVectorYX[0] * inwardsOffset)
         inwardsSearchX = round(attachmentPoint[1] - outwardVectorYX[1] * inwardsOffset)
         # TODO: use np.where?
-        offsetCoordinates = copy(tileOriginCoordinates)
-        for coordinate in offsetCoordinates:
-            coordinate[0] += inwardsSearchY - tileOriginCenterPoint[0]
-            coordinate[1] += inwardsSearchX - tileOriginCenterPoint[1]
+        offsetCoordinates = []
+        for coordinate in tileOriginCoordinates:
+            coordinateY = coordinate[0] + inwardsSearchY - tileOriginCenterPoint[0]
+            coordinateX = coordinate[1] + inwardsSearchX - tileOriginCenterPoint[1]
+            offsetCoordinates.append((coordinateY, coordinateX))
 
         if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-            gifFrame = copy(alreadyCoveredArea)
+            gifFrame = deepcopy(alreadyCoveredArea)
             for offsetCoordinate in offsetCoordinates:
                 try:
                     gifFrame[offsetCoordinate[0], offsetCoordinate[1]] = [0, 0, 255, 255]
@@ -197,7 +199,7 @@ def searchInwardUntilOriginIsCoveredByGib(PARAMETERS, alreadyCoveredArea, attach
 
 def animateAlreadyCoveredArea(PARAMETERS, alreadyCoveredArea, attachmentPoint, gifFrames):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        gifFrame = copy(alreadyCoveredArea)
+        gifFrame = deepcopy(alreadyCoveredArea)
         gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
         gifFrames.append(gifFrame)
 
@@ -220,7 +222,7 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
                                           originalGibImageArray, outwardVectorYX, remainingUncoveredSeamPixels,
                                           seamCoordinates):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        gifFrame = copy(metalBits)
+        gifFrame = deepcopy(metalBits)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
         edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX = findEdgePixelsInSearchRadius(seamCoordinates,
                                                                                           attachmentPoint,

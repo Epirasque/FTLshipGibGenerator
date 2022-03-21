@@ -1,5 +1,5 @@
-import copy
 import unittest
+from copy import deepcopy
 
 import numpy as np
 from PIL import Image
@@ -9,12 +9,14 @@ from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout
 from flow.GeneratorLooper import startGeneratorLoop
+from flow.SameLayoutGibMaskReuser import GIB_CACHE_FOLDER
 from imageProcessing.MetalBitsAttacher import uncropGibs
 from metadata.GibEntryChecker import getExplosionNode
 from unit_tests.TestUtilities import resetTestResources
 
 
 class ReusedLayoutFileTest(unittest.TestCase):
+    # TODO: RESUME HERE: metal gibs can alter layout coordinates -> use disk cache to separately stored metal bits for gibs (maybe including gib if necessary); probably uncropped
     def test_properGibsForReusedLayoutFileForStandaloneWithoutAnyGibs(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
@@ -41,7 +43,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
-                                                                          requiredAccuracyInPercent=2)
+                                                                          requiredRestorationAccuracyInPercent=2,
+                                                                          maximumSharedGibPixelsInPercent=0.01)
 
     def test_properGibsForReusedLayoutFileForAddonWithoutAnyGibs(self):
         # ARRANGE
@@ -68,7 +71,9 @@ class ReusedLayoutFileTest(unittest.TestCase):
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
-                                                                     addonFolderPath, requiredAccuracyInPercent=2)
+                                                                     addonFolderPath,
+                                                                     requiredRestorationAccuracyInPercent=2,
+                                                                     maximumSharedGibPixelsInPercent=0.01)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -108,7 +113,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
-                                                                          requiredAccuracyInPercent=2)
+                                                                          requiredRestorationAccuracyInPercent=2,
+                                                                          maximumSharedGibPixelsInPercent=0.01)
 
     def test_properGibsForReusedLayoutFileForAddonWithSomeGibs(self):
         # ARRANGE
@@ -137,7 +143,9 @@ class ReusedLayoutFileTest(unittest.TestCase):
         # ASSERT
         ships = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
-                                                                     addonFolderPath, requiredAccuracyInPercent=2)
+                                                                     addonFolderPath,
+                                                                     requiredRestorationAccuracyInPercent=2,
+                                                                     maximumSharedGibPixelsInPercent=0.01)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -151,7 +159,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
             self.assertEqual(4, content.count('<mod:findLike type="mount">'))
 
     def assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(self, nrGibs, ships, standaloneFolderPath,
-                                                                     requiredAccuracyInPercent):
+                                                                     requiredRestorationAccuracyInPercent,
+                                                                     maximumSharedGibPixelsInPercent):
         for name, filenames in ships.items():
             shipImageName = filenames['img']
             layoutName = filenames['layout']
@@ -161,14 +170,14 @@ class ReusedLayoutFileTest(unittest.TestCase):
             highlightingImage, percentage, reconstructedFromGibs = self.reconstructFromGibs(gibs, layoutName, shipImage,
                                                                                             shipImageName)
 
-            if percentage >= requiredAccuracyInPercent:
+            if percentage >= requiredRestorationAccuracyInPercent:
                 Image.fromarray(highlightingImage).save('delta.png')
                 reconstructedFromGibs.save('reconstructed.png')
                 Image.fromarray(shipImage).save('original.png')
 
-            self.assertTrue(percentage <= requiredAccuracyInPercent)
+            self.assertTrue(percentage <= requiredRestorationAccuracyInPercent)
 
-            self.assertGibsDoNotShareTooManyIdenticalPixels(gibs, shipImage, requiredAccuracyInPercent)
+            self.assertGibsDoNotShareTooManyIdenticalPixels(gibs, shipImage, maximumSharedGibPixelsInPercent)
 
     def loadGibsForStandalone(self, layoutName, nrGibs, shipImageName, standaloneFolderPath):
         layout = loadShipLayout(layoutName, standaloneFolderPath)
@@ -199,7 +208,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
         return highlightingImage, percentage, reconstructedFromGibs
 
     def assertShipReconstructedFromGibsForAddonIsAccurateEnough(self, nrGibs, ships, standaloneFolderPath,
-                                                                addonFolderPath, requiredAccuracyInPercent):
+                                                                addonFolderPath, requiredRestorationAccuracyInPercent,
+                                                                maximumSharedGibPixelsInPercent):
         for name, filenames in ships.items():
             shipImageName = filenames['img']
             layoutName = filenames['layout']
@@ -208,14 +218,14 @@ class ReusedLayoutFileTest(unittest.TestCase):
             highlightingImage, percentage, reconstructedFromGibs = self.reconstructFromGibs(gibs, layoutName, shipImage,
                                                                                             shipImageName)
 
-            if percentage >= requiredAccuracyInPercent:
+            if percentage >= requiredRestorationAccuracyInPercent:
                 Image.fromarray(highlightingImage).save('delta.png')
                 reconstructedFromGibs.save('reconstructed.png')
                 Image.fromarray(shipImage).save('original.png')
 
-            self.assertTrue(percentage <= requiredAccuracyInPercent)
+            self.assertTrue(percentage <= requiredRestorationAccuracyInPercent)
 
-            self.assertGibsDoNotShareTooManyIdenticalPixels(gibs, shipImage, requiredAccuracyInPercent)
+            self.assertGibsDoNotShareTooManyIdenticalPixels(gibs, shipImage, maximumSharedGibPixelsInPercent)
 
     def loadsGibsForAddon(self, addonFolderPath, layoutName, nrGibs, shipImageName):
         appendLayoutFilepath = addonFolderPath + '/data/' + layoutName + '.xml.append'
@@ -226,8 +236,14 @@ class ReusedLayoutFileTest(unittest.TestCase):
             for gibId in range(1, nrGibs + 1):
                 if '<mod-overwrite:gib%u>' % gibId in line:
                     gib = {}
-                    gib['img'] = np.asarray(Image.open(
-                        addonFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'), dtype=np.uint8)
+                    try:
+                        gib['img'] = np.asarray(Image.open(
+                            GIB_CACHE_FOLDER + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'),
+                            dtype=np.uint8)
+                    except:
+                        gib['img'] = np.asarray(Image.open(
+                            addonFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'),
+                            dtype=np.uint8)
             if '<x>' in line:
                 gib['x'] = int(
                     line.replace('<x>', '').replace('</x>', '').replace('\t', '').replace('\n', '').strip())
@@ -238,7 +254,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         return gibs
 
     def assertGibsDoNotShareTooManyIdenticalPixels(self, gibs, shipImage, allowedOverlapPercentage):
-        uncroppedGibs = copy.deepcopy(gibs)
+        uncroppedGibs = deepcopy(gibs)
         uncropGibs(uncroppedGibs, shipImage)
         for gibA in uncroppedGibs:
             # signed integer needed for abs
@@ -249,7 +265,6 @@ class ReusedLayoutFileTest(unittest.TestCase):
                     nrIdenticalPixels = 0
                     for y in range(shipImage.shape[0]):
                         for x in range(shipImage.shape[1]):
-                            # TODO: RESUME HERE: then put gibs without metal bits in layout cache to get test green
                             if imageArrayA[y, x][3] == 255 and imageArrayB[y, x][3] == 255:
                                 # if abs(imageArrayA[y,x][0] - imageArrayB[y,x][0]) <= 0:
                                 if imageArrayA[y, x][0] == imageArrayB[y, x][0]:
@@ -259,6 +274,9 @@ class ReusedLayoutFileTest(unittest.TestCase):
                     percentage = 100. * nrIdenticalPixels / (shipImage.shape[0] * shipImage.shape[1])
                     print("Deviating pixels for gib-pair: %u of %u (%.2f%%)" % (
                         nrIdenticalPixels, shipImage.shape[0] * shipImage.shape[1], percentage))
+                    if percentage >= allowedOverlapPercentage:
+                        Image.fromarray(imageArrayA).save('gibA.png')
+                        Image.fromarray(imageArrayB).save('gibB.png')
                     self.assertTrue(percentage <= allowedOverlapPercentage)
 
 

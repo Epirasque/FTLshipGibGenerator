@@ -12,6 +12,11 @@ def saveGibImages(gibs, shipImageName, folderPath, developerBackup):
             gib['img'])
         if developerBackup == True:
             imageio.imsave('gibs/' + shipImageName + '_gib' + str(gibId) + '.png', gib['img'])
-        if not os.path.exists(GIB_CACHE_FOLDER): # TODO: refactor to avoid redundant saves
+
+
+def saveGibImagesToDiskCache(gibsWithoutMetalBits, shipImageName):
+    for gib in gibsWithoutMetalBits:
+        gibId = gib['id']
+        if not os.path.exists(GIB_CACHE_FOLDER):  # TODO: refactor to avoid redundant saves
             os.makedirs(GIB_CACHE_FOLDER)
         imageio.imsave(GIB_CACHE_FOLDER + '/' + shipImageName + '_gib' + str(gibId) + '.png', gib['img'])

@@ -1,5 +1,6 @@
+import numpy as np
+
 import imageio
-from numpy.ma import copy
 
 from imageProcessing.ImageProcessingUtilities import findColorInImage, findMeanOfCoordinates
 
@@ -44,7 +45,7 @@ def splitIntoDictionary(imageArray, nrPieces):
             tile = imageArray[yMin:yMax, xMin:xMax]
             angle = angleStep * CLOCKWISE_ANGLE_PER_STEP
             angleDict[angle] = {}
-            angleDict[angle]['img'] = copy(tile)
+            angleDict[angle]['img'] = np.ma.copy(tile)
         tilesets['default'][LAYER1].append(angleDict)
     return tilesets
 

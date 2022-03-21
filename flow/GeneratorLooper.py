@@ -1,9 +1,13 @@
+import datetime
 import shutil
 import time
 import traceback
+from copy import deepcopy
+
+from numpy.ma import copy
 
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.GibImageSaver import saveGibImages
+from fileHandling.GibImageSaver import saveGibImages, saveGibImagesToDiskCache
 from fileHandling.MetalBitsLoader import loadTilesets
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
@@ -22,7 +26,7 @@ ADDON_MODE = 'addon'
 
 def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
-    print("Starting Gib generation at %s, with PARAMETERS:" % globalStart)
+    print("Starting Gib generation at %s, with PARAMETERS:" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     print(PARAMETERS)
     print("Loading ship file names...")
     ships = loadShipFileNames(PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
@@ -104,14 +108,15 @@ def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, sh
         print('Found layout already filled in this run')
         shipImageNameInCache, nrGibs, layout = layoutNameToGibCache[layoutName]
     if areGibsPresentInLayout(layout) == True:
-        foundGibsSameLayout, gibs, folderPath = attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout,
-                                                                                         layoutName,
-                                                                                         layoutNameToGibCache,
-                                                                                         name, shipImageName,
-                                                                                         ships, stats)
+        foundGibsSameLayout, gibs, newGibsWithoutMetalBits, folderPath = attemptGeneratingGibsFromIdenticalLayout(
+            PARAMETERS, tilesets, layout,
+            layoutName,
+            layoutNameToGibCache,
+            name, shipImageName,
+            ships, stats)
     if foundGibsSameLayout == True:
         print("Succeeded in generating gibs with mask of gibs from same layout")
-        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, folderPath, stats)
+        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, newGibsWithoutMetalBits, shipImageName, folderPath, stats)
     else:
         if areGibsPresentAsImageFiles(shipImageName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH) == True:
             stats['nrShipsWithIncompleteGibSetup'] += 1
@@ -127,29 +132,31 @@ def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, sh
     return stats, layoutNameToGibCache
 
 
-def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout, layoutName,
+def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, tilesets, layout, layoutName,
                                              layoutNameToGibCache, name, shipImageName,
                                              ships, stats):
     stats['nrShipsWithIncompleteGibSetup'] += 1  # TODO: separate profiling / stat case
     print("There are gibs in layout %s, but no images %s_gibN for it." % (layoutName, shipImageName))
-    gibs = []
+    newGibsWithMetalBits = []
+    newGibsWithoutMetalBits = []
     folderPath = 'not set'
     foundGibsSameLayout = False
     try:
         print('Trying to find gibs already existing for the layout before this run...')
         targetFolderPath = determineTargetFolderPath(PARAMETERS)
-        foundGibsSameLayout, gibs, folderPath = generateGibsBasedOnSameLayoutGibMask(layout,
-                                                                                     layoutName,
-                                                                                     name, PARAMETERS.NR_GIBS,
-                                                                                     shipImageName,
-                                                                                     ships,
-                                                                                     PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
-                                                                                     targetFolderPath,
-                                                                                     layoutNameToGibCache)
+        foundGibsSameLayout, newGibsWithMetalBits, newGibsWithoutMetalBits, folderPath = generateGibsBasedOnSameLayoutGibMask(
+            PARAMETERS, tilesets, layout,
+            layoutName,
+            name, PARAMETERS.NR_GIBS,
+            shipImageName,
+            ships,
+            PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
+            targetFolderPath,
+            layoutNameToGibCache)
     except Exception:
         print("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
         stats['nrErrorsUnknownCause'] += 1
-    return foundGibsSameLayout, gibs, folderPath
+    return foundGibsSameLayout, newGibsWithMetalBits, newGibsWithoutMetalBits, folderPath
 
 
 def determineTargetFolderPath(PARAMETERS):
@@ -164,6 +171,7 @@ def determineTargetFolderPath(PARAMETERS):
 def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, tilesets):
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(PARAMETERS, shipImageName, stats)
     gibs, stats = segmentWithProfiling(PARAMETERS, baseImg, shipImageName, stats)
+    gibsWithoutMetalBits = deepcopy(gibs)
     if PARAMETERS.GENERATE_METAL_BITS == True:
         gibs = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
     if len(gibs) == 0:
@@ -171,7 +179,8 @@ def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, ti
     else:
         targetFolderPath = determineTargetFolderPath(PARAMETERS)
         targetFolderPath += '\\img\\' + shipImageSubfolder
-        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, targetFolderPath, stats)
+        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, gibsWithoutMetalBits, shipImageName, targetFolderPath,
+                                           stats)
         layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats)
         appendContentString, nrWeaponMountsWithoutGibId, stats = setWeaponMountGibIdsWithProfiling(gibs,
                                                                                                    layoutWithNewGibs,
@@ -219,7 +228,7 @@ def setWeaponMountGibIdsWithProfiling(gibs, layoutWithNewGibs, appendContentStri
     return appendContentString, nrWeaponMountsWithoutGibId, stats
 
 
-def saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, folderPath, stats):
+def saveGibImagesWithProfiling(PARAMETERS, gibs, gibsWithoutMetalBits, shipImageName, folderPath, stats):
     start = time.time()
     if PARAMETERS.OUTPUT_MODE == STANDALONE_MODE:
         saveGibImages(gibs, shipImageName, folderPath,
@@ -227,6 +236,7 @@ def saveGibImagesWithProfiling(PARAMETERS, gibs, shipImageName, folderPath, stat
     if PARAMETERS.OUTPUT_MODE == ADDON_MODE:
         saveGibImages(gibs, shipImageName, folderPath,
                       developerBackup=False)
+    saveGibImagesToDiskCache(gibsWithoutMetalBits, shipImageName)
     stats['totalSaveGibImagesDuration'] += time.time() - start
     return stats
 
