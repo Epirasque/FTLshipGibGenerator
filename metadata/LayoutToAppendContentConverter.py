@@ -1,5 +1,3 @@
-import xml.etree.ElementTree as ET
-
 # note: overwrite might leave some previous ones remaining e.g. when nr_gibs=3 but that should not be an issue right?
 
 ASSUMED_MAXIMUM_NUMBER_OF_GIBS_IN_LAYOUTS = 10

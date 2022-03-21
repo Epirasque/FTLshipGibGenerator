@@ -1,5 +1,3 @@
-import xml.etree.ElementTree as ET
-
 ASSUMED_MAXIMUM_NUMBER_OF_GIBS_IN_LAYOUTS = 10
 
 

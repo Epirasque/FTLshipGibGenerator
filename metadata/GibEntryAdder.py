@@ -11,6 +11,7 @@ def addGibEntriesToLayout(layout, gibs):
 
 
 def addGibEntries(explosionNode, gibs, imgNode):
+    # TODO: work with cropped shipimage-shape instead?
     baseWidth = int(imgNode.attrib['w'])
     baseHeight = int(imgNode.attrib['h'])
     shipPixelsIncludingTransparentOnes = baseWidth * baseHeight
