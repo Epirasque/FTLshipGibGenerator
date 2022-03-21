@@ -37,8 +37,8 @@ def addCoordinatesToGibEntry(gibEntry, gib):
 
 def addAngularToGibEntry(gibEntry, relativeMassRegardlessOfNrGibs):
     angularEntry = ET.Element('angular')
-    angularEntry.set("min", str(- MAXIMUM_ANGULAR_SPREAD_IN_DEGREES * relativeMassRegardlessOfNrGibs / 2))
-    angularEntry.set("max", str(MAXIMUM_ANGULAR_SPREAD_IN_DEGREES * relativeMassRegardlessOfNrGibs / 2))
+    angularEntry.set("min", str(- MAXIMUM_ANGULAR_SPREAD_IN_DEGREES / (relativeMassRegardlessOfNrGibs * 2)))
+    angularEntry.set("max", str(MAXIMUM_ANGULAR_SPREAD_IN_DEGREES / (relativeMassRegardlessOfNrGibs * 2)))
     gibEntry.append(angularEntry)
 
 

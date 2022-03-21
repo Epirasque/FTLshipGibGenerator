@@ -185,7 +185,8 @@ and the maximum value is 8° bigger than the calculated direction.
 The angular (rotation speed) of a gib consists of a minimum and a maximum value. Whenever the ship is destroyed, FTL
 will pick a random value within that range.
 
-The angular value is simply determined as a random value in a spread of 1.4, meaning it reaches from -0.7 to +0.7.
+The angular value is simply determined as a random value in a spread of 1.4, reaching from -0.7 to +0.7, then divided 
+by the normalized mass of the gib to give smaller gibs more spin than bigger ones. 
 
 #### Gib IDs For Weapon Mounts
 
