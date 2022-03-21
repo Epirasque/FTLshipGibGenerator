@@ -246,7 +246,10 @@ In arbitrary order, *no promises if or when these will be done*:
     - [x] feature toggle
     - [x] save generation process as gif for debugging
     - [ ] performance improvements
-- [ ] deal with re-use layout mechanism: issue differentiating core gib and internals?
+- [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
+    - [x] write unit test: no identical (including color!) pixels shared between gibs
+    - [x] avoid caching attached metal bits on gibs
+    - [ ] prevent skewed coordinates by caching unique metal bits per layout
 - [ ] shading
 - [ ] tweak until it looks great
 
