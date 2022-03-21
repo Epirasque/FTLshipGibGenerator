@@ -1,4 +1,4 @@
-# GLAIVE v0.9.4: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
+# GLAIVE v0.9.5: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
 
 # What Does It Do? (TL;DR)
 
@@ -142,8 +142,11 @@ gibs look more interesting.
 
 The Generators applies the SLIC algorithm until the output consists of an amount of segments that is equal to `NR_GIBS`.
 If this number is not reached, it retries running the algorithm with a higher `compactness` value until it does, or
-until it a certain number of attempts is reached. If the latter is the case it will continue with the last result it has
-computed, which means fewer segments than was actually defined in `NR_GIBS`.
+until it a certain number of attempts is reached. There is also a rare edge-case that causes a retry, this will happen 
+if an attempt to reassemble the original image by putting together the segments deviates from the original image by a 
+certain percentage. 
+If the maximum number of retries is reached, the generator will continue with the last result it has
+computed, which means fewer segments than was actually defined in `NR_GIBS`. 
 
 The resulting segments are cropped and stored as gibs. Each gib also remembers its relative coordinates (before
 cropping) as well as its ID, center and mass. The mass is currently approximated as the width and height of the gib

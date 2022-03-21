@@ -165,3 +165,8 @@ def cropImage(image):
     center['x'] = (maxX + minX) / 2
     center['y'] = (maxY + minY) / 2
     return croppedImage, center, minX, minY
+
+def imageDifferenceInPercentage(imageA, imageB):
+    differentTransparencyPixels = abs(imageA - imageB)[:, :, 3] > 0
+    percentage = 100. * differentTransparencyPixels.sum() / (imageA.shape[0] * imageA.shape[1])
+    return percentage
