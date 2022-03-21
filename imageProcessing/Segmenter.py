@@ -29,8 +29,13 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
         segments = slic(shipImage, n_segments=nrGibs, compactness=compactnessToUse, max_num_iter=100,
                         mask=nonTransparentMask)
         nrSuccessfulGibs = segments.max()
-        percentage = determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, nrSuccessfulGibs,
-                                                                                       shipImage)
+        if nrSuccessfulGibs == nrGibs:
+            percentage = determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, nrSuccessfulGibs,
+                                                                                           shipImage)
+            if percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
+                print(
+                    "Retrying due to gibs not combining into base image for %s, pixel deviation is at %u%%, which is above allowed threshold of %u%%" % (
+                    shipImageName, percentage, MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
     if nrSuccessfulGibs == 0:
         print("FAILED to generate any gibs for %s" % shipImageName)
         return []
