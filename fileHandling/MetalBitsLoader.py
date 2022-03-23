@@ -1,8 +1,12 @@
+import logging
+
 import numpy as np
 
 import imageio
 
 from imageProcessing.ImageProcessingUtilities import findColorInImage, findMeanOfCoordinates
+
+logger = logging.getLogger('GLAIVE.' + __name__)
 
 LAYER1 = 'chunks'
 DEFAULT_TILESET = 'placeholder/arrow'
@@ -53,12 +57,12 @@ def splitIntoDictionary(imageArray, nrPieces):
 def verifyTilesetDimensions(imageArray, tilesetFilePath):
     ymax, xmax = imageArray.shape[0], imageArray.shape[1]
     if (ymax / TILE_HEIGHT != NR_ANGLE_STEPS):
-        print('ERROR when reading tileset %s, tileset height does not match expected %u' % (
+        logger.critical('ERROR when reading tileset %s, tileset height does not match expected %u' % (
             tilesetFilePath, TILE_HEIGHT * (360 / CLOCKWISE_ANGLE_PER_STEP)))
         exit(1)
     nrPieces = xmax / TILE_WIDTH
     if nrPieces != round(nrPieces):
-        print('ERROR when reading tileset %s, tileset width is not multiple of %u' % (tilesetFilePath, TILE_WIDTH))
+        logger.critical('ERROR when reading tileset %s, tileset width is not multiple of %u' % (tilesetFilePath, TILE_WIDTH))
         exit(1)
     return round(nrPieces)
 

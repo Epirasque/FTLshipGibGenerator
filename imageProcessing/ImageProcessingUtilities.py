@@ -1,4 +1,8 @@
+import logging
+
 import numpy as np
+
+logger = logging.getLogger('GLAIVE.' + __name__)
 
 
 # takes numpy array and RGB color of the filter in form of an array
@@ -59,7 +63,7 @@ def fitLineToCoordinates(edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX):
     try:
         slope, yOffset = np.polyfit(edgeCoordinatesInRadiusX, edgeCoordinatesInRadiusY, deg=1)
     except:
-        print("ERROR: Failed to detect line among edge pixels within search radius")
+        logger.warning("ERROR: Failed to detect line among edge pixels within search radius")
     return slope, yOffset
 
 

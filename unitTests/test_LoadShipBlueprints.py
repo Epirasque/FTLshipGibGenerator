@@ -1,9 +1,13 @@
 import unittest
 
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
+from unitTests.TestUtilities import initializeLoggingForTest
 
 
 class LoadShipBlueprintsTest(unittest.TestCase):
+    def setUp(self) -> None:
+        initializeLoggingForTest(self)
+
     def test_loadShipBlueprintsWithXmlAndFtlTagsWithoutErrors(self):
         ships = loadShipFileNames('sample_projects/XML_and_FTL_tags')
         self.assertCorrectShipNames(ships)

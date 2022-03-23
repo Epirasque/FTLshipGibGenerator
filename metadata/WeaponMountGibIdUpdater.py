@@ -1,3 +1,8 @@
+import logging
+
+logger = logging.getLogger('GLAIVE.' + __name__)
+
+
 SEARCH_RADIUS_REPORT_THRESHOLD = 10
 MAX_SEARCH_RADIUS = 500  # biggest known: 140, results in 2 bugged ships
 
@@ -23,7 +28,7 @@ def generateAppendStringForWeaponMount(gibs, mount, nrWeaponMountsWithoutGibId):
     exactMountY = int(mount.attrib['y'])
     mountGibId = findGibIdForWeaponMountCoordinates(exactMountX, exactMountY, gibs)
     if mountGibId == -1:
-        print("Weapon mount x=%d, y=%d could not be associated with a gibId" % (exactMountX, exactMountY))
+        logger.warning("Weapon mount x=%d, y=%d could not be associated with a gibId" % (exactMountX, exactMountY))
         nrWeaponMountsWithoutGibId += 1
     mount.set('gib', str(mountGibId))
     weaponString = ''
@@ -41,7 +46,7 @@ def findGibIdForWeaponMountCoordinates(exactMountX, exactMountY, gibs):
     for additionalSearchRadius in range(0, MAX_SEARCH_RADIUS + 1):
         if mountGibId != -1:
             if additionalSearchRadius >= SEARCH_RADIUS_REPORT_THRESHOLD:
-                print("Found gib association for weapon mount at search radius %d" % additionalSearchRadius)
+                logger.debug("Found gib association for weapon mount at search radius %d" % additionalSearchRadius)
             break
         mountGibId = findGibIdForWeaponMountInSearchRadius(additionalSearchRadius, exactMountX, exactMountY, gibs,
                                                            mountGibId)

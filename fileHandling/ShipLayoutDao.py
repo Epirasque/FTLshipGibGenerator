@@ -1,7 +1,9 @@
+import logging
 import re
 import xml.etree.ElementTree as ET
 import os
 
+logger = logging.getLogger('GLAIVE.' + __name__)
 
 def loadShipLayout(shipLayoutName, sourceFolderpath):
     try:
@@ -11,7 +13,7 @@ def loadShipLayout(shipLayoutName, sourceFolderpath):
         return ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", rawXml) + "</root>")
         # return ET.parse(sourceFolderpath + '\\data\\' + shipLayoutName + '.xml')
     except FileNotFoundError:
-        print('No layout XML file found for shipBlueprint layout attribute: %s' % shipLayoutName)
+        logger.error('No layout XML file found for shipBlueprint layout attribute: %s' % shipLayoutName)
 
 
 def saveShipLayoutStandalone(layout, shipLayoutName, sourceFolderpath, developerBackup):

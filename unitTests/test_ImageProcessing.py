@@ -4,10 +4,13 @@ import imageio
 
 from imageProcessing.ImageProcessingUtilities import findColorInImage, areAnyVisiblePixelsOverlapping, \
     areAllVisiblePixelsContained
-from unit_tests.TestUtilities import imageDifferenceInPercentage
+from unitTests.TestUtilities import imageDifferenceInPercentage, initializeLoggingForTest
 
 
 class ImageAnalysisTest(unittest.TestCase):
+    def setUp(self) -> None:
+        initializeLoggingForTest(self)
+
     def test_findOriginOfTilesetImage(self):
         path = 'imageProcessing/tileset_origin/'
         sourceImage = imageio.imread(path + '/source.png')

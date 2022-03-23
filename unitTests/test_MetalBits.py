@@ -4,10 +4,14 @@ import unittest
 import Core
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from flow.GeneratorLooper import startGeneratorLoop
-from unit_tests.TestUtilities import resetTestResources, assertShipReconstructedFromGibsIsAccurateEnough
+from unitTests.TestUtilities import resetTestResources, assertShipReconstructedFromGibsIsAccurateEnough, \
+    initializeLoggingForTest
 
 
 class MetalBitsTest(unittest.TestCase):
+    def setUp(self) -> None:
+        initializeLoggingForTest(self)
+
     def test_metalBitsAreHiddenInitially(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/metalBits'

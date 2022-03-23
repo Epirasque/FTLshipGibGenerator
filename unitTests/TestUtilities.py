@@ -1,14 +1,23 @@
 import copy
+import logging.config
 import os
 import shutil
 
 import numpy as np
+import yaml
 from PIL import Image
 
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout
 from metadata.GibEntryChecker import getExplosionNode
 
+
+def initializeLoggingForTest(test):
+    with open('loggingForTests.yaml') as configFile:
+        configDict = yaml.load(configFile, Loader=yaml.FullLoader)
+    logging.config.dictConfig(configDict)
+    logger = logging.getLogger('GLAIVE')
+    logger.info('RUNNING TEST ' + str(test))
 
 def resetTestResources(standaloneFolderPath, addonFolderPath, imageIdsToKeepGibsFor):
     for imageId in range(1, 4 + 1):

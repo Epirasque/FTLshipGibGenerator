@@ -1,4 +1,9 @@
+import logging
+
 import imageio
+
+logger = logging.getLogger('GLAIVE.' + __name__)
+
 
 BASE_SUFFIX = '_base'
 
@@ -11,4 +16,4 @@ def loadShipBaseImage(shipImageName, sourceFolderpath):
         try:
             return imageio.imread(sourceFolderpath + '\\img\\ship\\' + shipImageName + BASE_SUFFIX + '.png'), "ship"
         except FileNotFoundError:
-            print('No image found for shipBlueprint img attribute: %s' % shipImageName)
+            logger.error('No image found for shipBlueprint img attribute: %s' % shipImageName)

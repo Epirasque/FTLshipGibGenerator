@@ -12,10 +12,13 @@ from flow.GeneratorLooper import startGeneratorLoop
 from flow.SameLayoutGibMaskReuser import GIB_CACHE_FOLDER
 from imageProcessing.MetalBitsAttacher import uncropGibs
 from metadata.GibEntryChecker import getExplosionNode
-from unit_tests.TestUtilities import resetTestResources
+from unitTests.TestUtilities import resetTestResources, initializeLoggingForTest
 
 
 class ReusedLayoutFileTest(unittest.TestCase):
+    def setUp(self) -> None:
+        initializeLoggingForTest(self)
+
     # TODO: RESUME HERE: metal gibs can alter layout coordinates -> use disk cache to separately stored metal bits for gibs (maybe including gib if necessary); probably uncropped
     def test_properGibsForReusedLayoutFileForStandaloneWithoutAnyGibs(self):
         # ARRANGE

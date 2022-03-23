@@ -1,4 +1,5 @@
 import copy
+import logging
 from copy import deepcopy
 
 import numpy as np
@@ -10,6 +11,9 @@ from imageProcessing.ImageProcessingUtilities import cropImage
 from imageProcessing.MetalBitsAttacher import attachMetalBits
 from metadata.GibEntryChecker import getExplosionNode
 
+logger = logging.getLogger('GLAIVE.' + __name__)
+
+
 GIB_CACHE_FOLDER = 'gibCache'
 
 
@@ -17,14 +21,14 @@ GIB_CACHE_FOLDER = 'gibCache'
 # TODO: add profiling
 def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, tilesets, layout, layoutName, name, nrGibs, shipImageName, ships, standaloneFolderPath, targetFolderPath,
                                          layoutNameToGibCache):
-    print('Gibs in layout %s but not in image %s for %s' % (layoutName, shipImageName, name))
+    logger.debug('Gibs in layout %s but not in image %s for %s' % (layoutName, shipImageName, name))
     foundGibsSameLayout = False
     newGibsWithoutMetalBits = []
     gibsForMask = []
     newBaseImage, newShipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
     folderPath = targetFolderPath + '/img/' + newShipImageSubfolder
     if layoutName in layoutNameToGibCache:
-        print('Found gibs already generated in this run')
+        logger.debug('Found gibs already generated in this run')
         shipImageNameInCache, nrGibs, layout = layoutNameToGibCache[layoutName]
         gibsForMask = loadGibs(layout, nrGibs, GIB_CACHE_FOLDER, shipImageNameInCache)
         if len(gibsForMask) == nrGibs:
@@ -35,12 +39,12 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, tilesets, layout, layoutNam
             searchLayoutName = searchFilenames['layout']
             if searchName != name and layoutName == searchLayoutName:
                 if areGibsPresentAsImageFiles(searchShipName, targetFolderPath):
-                    print('Found identical layout with existing gibs for image %s' % searchShipName)
+                    logger.debug('Found identical layout with existing gibs for image %s' % searchShipName)
                     gibsForMask = loadGibs(layout, nrGibs, folderPath, searchShipName)
                     if len(gibsForMask) > 0:
                         foundGibsSameLayout = True
                 else:
-                    print('Skipping identical layout for image %s as it has no gibs either' % searchShipName)
+                    logger.debug('Skipping identical layout for image %s as it has no gibs either' % searchShipName)
     if foundGibsSameLayout == True:
         for gibForMask in gibsForMask:  # TODO: test case for deviating number of maskgibs
             uncroppedSearchGibImg = Image.fromarray(np.zeros(newBaseImage.shape, dtype=np.uint8))

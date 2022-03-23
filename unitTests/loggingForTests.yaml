@@ -1,0 +1,27 @@
+version: 1
+formatters:
+  consoleFormatter:
+    format: '%(asctime)s - %(levelname)-8s - %(message)s    -    -    -    << %(name)s >>'
+  fileFormatter:
+    format: '%(asctime)s - %(levelname)-8s - %(message)s    -    -    -    << %(name)s >>'
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: DEBUG
+    formatter: consoleFormatter
+    stream: ext://sys.stdout
+  fileHandler:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: fileFormatter
+    filename: GLAIVE_UNIT_TESTS.log
+    encoding: utf8
+    mode: a
+loggers:
+  GLAIVE:
+    level: DEBUG
+    handlers: [console, fileHandler]
+    propagate: no
+root:
+  level: WARNING
+  handlers: [console, fileHandler]

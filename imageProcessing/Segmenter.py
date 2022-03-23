@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from PIL import Image
 from skimage.segmentation import slic
@@ -6,8 +8,9 @@ from skimage.segmentation import slic
 from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceInPercentage
 
 TRANSPARENCY_ALPHA_VALUE = 0
-MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 1
+MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 4
 
+logger = logging.getLogger('GLAIVE.' + __name__)
 
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     nonTransparentMask = (shipImage[:, :, 3] != TRANSPARENCY_ALPHA_VALUE)
@@ -33,21 +36,21 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
             percentage = determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, nrSuccessfulGibs,
                                                                                            shipImage)
             if percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
-                print(
+                logger.warning(
                     "Retrying due to gibs not combining into base image for %s, pixel deviation is at %u%%, which is above allowed threshold of %u%%" % (
                     shipImageName, percentage, MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
     if nrSuccessfulGibs == 0:
-        print("FAILED to generate any gibs for %s" % shipImageName)
+        logger.error("FAILED to generate any gibs for %s" % shipImageName)
         return []
     if percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
-        print("Reconstructing ship from gibs for %s deviates by %u%% pixels, which is above allowed threshold of %u" % (
+        logger.error("Reconstructing ship from gibs for %s deviates by %u%% pixels, which is above allowed threshold of %u" % (
             shipImageName, percentage, MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
     if nrSuccessfulGibs < nrGibs:
         # TODO: consider it a failure instead?
-        print("Did not generate all gibs for %s, ended up with %u of %u" % (shipImageName, nrSuccessfulGibs, nrGibs))
+        logger.error("Did not generate all gibs for %s, ended up with %u of %u" % (shipImageName, nrSuccessfulGibs, nrGibs))
         nrGibs = nrSuccessfulGibs
     if nrSegmentationAttempts > 1:
-        print("Segmented with %u attempts with compactness of %f " % (nrSegmentationAttempts, compactnessToUse))
+        logger.debug("Segmented with %u attempts with compactness of %f " % (nrSegmentationAttempts, compactnessToUse))
     return turnSegmentsIntoGibs(nrGibs, segments, shipImage)
 
 

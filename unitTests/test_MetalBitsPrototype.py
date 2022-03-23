@@ -1,4 +1,3 @@
-import collections
 import copy
 import os
 import random
@@ -15,10 +14,13 @@ from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout
 from flow.GeneratorLooper import startGeneratorLoop
 from metadata.GibEntryChecker import getExplosionNode
-from unit_tests.TestUtilities import resetTestResources
+from unitTests.TestUtilities import resetTestResources, initializeLoggingForTest
 
 
 class MetalBitsPrototypeTest(unittest.TestCase):
+    def setUp(self) -> None:
+        initializeLoggingForTest(self)
+
     def test_something(self):
         standaloneFolderPath = 'sample_projects/metalBits'
         addonFolderPath = 'unset'
@@ -27,15 +29,16 @@ class MetalBitsPrototypeTest(unittest.TestCase):
 
         PARAMETERS = Core.PARAMETERS
         generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
-                                    ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                    OUTPUT_MODE=Core.STANDALONE_MODE,
-                                    BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
-                                    BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                    QUICK_AND_DIRTY_SEGMENT=False,
-                                    GENERATE_METAL_BITS = False, #YES! we do it manually in this test
-                                    ANIMATE_METAL_BITS_FOR_DEVELOPER = False, ANIMATE_METAL_BITS_FPS=5.,
-                                    CHECK_SPECIFIC_SHIPS=True, SPECIFIC_SHIP_NAMES='TEST_SHIP2', LIMIT_ITERATIONS=False,
-                                    ITERATION_LIMIT=0)
+                                             ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                             OUTPUT_MODE=Core.STANDALONE_MODE,
+                                             BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                             BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                             QUICK_AND_DIRTY_SEGMENT=False,
+                                             GENERATE_METAL_BITS=False,  # YES! we do it manually in this test
+                                             ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                             CHECK_SPECIFIC_SHIPS=True, SPECIFIC_SHIP_NAMES='TEST_SHIP2',
+                                             LIMIT_ITERATIONS=False,
+                                             ITERATION_LIMIT=0)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
@@ -91,7 +94,7 @@ class MetalBitsPrototypeTest(unittest.TestCase):
                                                 array[y, x, 3] = 255
                                     except:
                                         pass
-                #Image.fromarray(array).show()
+                # Image.fromarray(array).show()
 
                 nonEdgeMask = np.where(np.any(array != [255, 1, 2, 255], axis=-1))
                 # straight forward inversion with ~ does not seem to work
@@ -153,7 +156,7 @@ class MetalBitsPrototypeTest(unittest.TestCase):
                 # TODO avoid out of bounds (workaround: uncropped gib which is fine; should be basis later on anyway)
                 array[lineY_A, lineX_A] = [1, 2, 255, 255]
 
-                #Image.fromarray(array).show()
+                # Image.fromarray(array).show()
                 pass
                 break
             break
