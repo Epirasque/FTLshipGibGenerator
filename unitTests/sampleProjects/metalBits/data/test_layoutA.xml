@@ -1,0 +1,10 @@
+<?xml version='1.0' encoding='utf-8'?>
+
+
+<img x="-70" y="-80" w="300" h="400" />
+<offsets>
+	<floor x="150" y="150" />
+	<cloak x="150" y="15" />
+</offsets>
+
+<explosion><gib1><velocity min="0.1" max="0.20528076139247695" /><direction min="25" max="41" /><angular min="-0.5346572465151804" max="0.5346572465151804" /><x>26</x><y>84</y></gib1><gib2><velocity min="0.2712530863702896" max="0.9041769545676321" /><direction min="276" max="292" /><angular min="-0.6645306752106325" max="0.6645306752106325" /><x>225</x><y>82</y></gib2><gib3><velocity min="0.44999999999999996" max="1.5" /><direction min="295" max="311" /><angular min="-0.9861469828598262" max="0.9861469828598262" /><x>282</x><y>2</y></gib3><gib4><velocity min="0.35496055074326166" max="1.1832018358108722" /><direction min="21" max="37" /><angular min="-0.9288952781156696" max="0.9288952781156696" /><x>12</x><y>2</y></gib4><gib5><velocity min="0.1" max="0.31354625174374495" /><direction min="255" max="271" /><angular min="-0.6539254992020552" max="0.6539254992020552" /><x>133</x><y>115</y></gib5></explosion>

@@ -14,7 +14,7 @@ class MetalBitsTest(unittest.TestCase):
 
     def test_metalBitsAreHiddenInitially(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/metalBits'
+        standaloneFolderPath = 'sampleProjects/metalBits'
         addonFolderPath = 'unset'
         nrGibs = 5
 

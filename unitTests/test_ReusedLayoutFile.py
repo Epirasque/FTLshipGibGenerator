@@ -21,8 +21,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForStandaloneWithoutAnyGibsWithoutMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
 
         PARAMETERS = Core.PARAMETERS
@@ -50,8 +50,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForStandaloneWithoutAnyGibsWithMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
 
         PARAMETERS = Core.PARAMETERS
@@ -79,8 +79,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForAddonWithoutAnyGibsWithoutMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
 
         PARAMETERS = Core.PARAMETERS
@@ -119,8 +119,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForAddonWithoutAnyGibsWithMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithoutAnyGibsAsAddon'
         nrGibs = 2
 
         PARAMETERS = Core.PARAMETERS
@@ -159,8 +159,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForStandaloneWithSomeGibsWithoutMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibsAsAddon'
         nrGibs = 2
         imageIdWithGibs = 3
 
@@ -189,8 +189,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForStandaloneWithSomeGibsWithMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibsAsAddon'
         nrGibs = 2
         imageIdWithGibs = 3
 
@@ -219,8 +219,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForAddonWithSomeGibsWithoutMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibsAsAddon'
         nrGibs = 2
         imageIdWithGibs = 3
 
@@ -256,8 +256,8 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def test_properGibsForReusedLayoutFileForAddonWithSomeGibsWithMetalBits(self):
         # ARRANGE
-        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
+        standaloneFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibs'
+        addonFolderPath = 'sampleProjects/multiUsedLayoutWithFewerGibsAsAddon'
         nrGibs = 2
         imageIdWithGibs = 3
 

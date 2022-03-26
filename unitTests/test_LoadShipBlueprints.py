@@ -9,19 +9,19 @@ class LoadShipBlueprintsTest(unittest.TestCase):
         initializeLoggingForTest(self)
 
     def test_loadShipBlueprintsWithXmlAndFtlTagsWithoutErrors(self):
-        ships = loadShipFileNames('sample_projects/XML_and_FTL_tags')
+        ships = loadShipFileNames('sampleProjects/XML_and_FTL_tags')
         self.assertCorrectShipNames(ships)
 
     def test_loadShipBlueprintsWithXmlTagsWithoutErrors(self):
-        ships = loadShipFileNames('sample_projects/XML_tags')
+        ships = loadShipFileNames('sampleProjects/XML_tags')
         self.assertCorrectShipNames(ships)
 
     def test_loadShipBlueprintsWithFtlTagsWithoutErrors(self):
-        ships = loadShipFileNames('sample_projects/FTL_tags')
+        ships = loadShipFileNames('sampleProjects/FTL_tags')
         self.assertCorrectShipNames(ships)
 
     def test_loadShipBlueprintsWithNoTagsWithoutErrors(self):
-        ships = loadShipFileNames('sample_projects/no_tags')
+        ships = loadShipFileNames('sampleProjects/no_tags')
         self.assertCorrectShipNames(ships)
 
     def assertCorrectShipNames(self, ships):
