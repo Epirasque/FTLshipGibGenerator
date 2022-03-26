@@ -8,8 +8,8 @@ from flow.GeneratorLooper import *
 # Source for metadata semantics: https://www.ftlwiki.com/wiki/Modding_ships
 
 # note: use / instead of \ to avoid character-escaping issues
-INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.2.2 hotfix1'  # 'FTL-Multiverse 5.2.2 hotfix1'
-ADDON_OUTPUT_FOLDERPATH = 'MV Addon GenGibs v0.9.5'  # e.g. 'MV Addon GenGibs v0.9.3'
+INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = 'FTL-Multiverse 5.2.2 hotfix1'  # e.g. 'FTL-Multiverse 5.2.2 hotfix1'
+ADDON_OUTPUT_FOLDERPATH = 'MV Addon GenGibs v0.9.6'  # e.g. 'MV Addon GenGibs v0.9.6'
 # tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug in MV, has no layout file
 SHIPS_TO_IGNORE = ['PLAYER_SHIP_TUTORIAL', 'MU_COALITION_CONSTRUCTION']
 
