@@ -10,18 +10,25 @@ handlers:
     level: DEBUG
     formatter: consoleFormatter
     stream: ext://sys.stdout
-  fileHandler:
+  replacingFileHandler:
+    class: logging.FileHandler
+    level: DEBUG
+    formatter: fileFormatter
+    filename: GLAIVE_LAST_RUN.log
+    encoding: utf8
+    mode: w
+  appendingFileHandler:
     class: logging.FileHandler
     level: DEBUG
     formatter: fileFormatter
     filename: GLAIVE.log
     encoding: utf8
-    mode: w
+    mode: a
 loggers:
   GLAIVE:
     level: DEBUG
-    handlers: [console, fileHandler]
+    handlers: [console, replacingFileHandler, appendingFileHandler]
     propagate: no
 root:
   level: WARNING
-  handlers: [console, fileHandler]
+  handlers: [console, replacingFileHandler, appendingFileHandler]
