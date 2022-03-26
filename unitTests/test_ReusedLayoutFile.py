@@ -9,7 +9,7 @@ from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout
 from flow.GeneratorLooper import startGeneratorLoop
-from flow.SameLayoutGibMaskReuser import GIB_CACHE_FOLDER
+from flow.SameLayoutGibMaskReuser import GIB_CACHE_FOLDER, loadGibs
 from imageProcessing.MetalBitsAttacher import uncropGibs
 from metadata.GibEntryChecker import getExplosionNode
 from unitTests.TestUtilities import resetTestResources, initializeLoggingForTest
@@ -19,8 +19,36 @@ class ReusedLayoutFileTest(unittest.TestCase):
     def setUp(self) -> None:
         initializeLoggingForTest(self)
 
-    # TODO: RESUME HERE: metal gibs can alter layout coordinates -> use disk cache to separately stored metal bits for gibs (maybe including gib if necessary); probably uncropped
-    def test_properGibsForReusedLayoutFileForStandaloneWithoutAnyGibs(self):
+    def test_properGibsForReusedLayoutFileForStandaloneWithoutAnyGibsWithoutMetalBits(self):
+        # ARRANGE
+        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        nrGibs = 2
+
+        PARAMETERS = Core.PARAMETERS
+        generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                         ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                         OUTPUT_MODE=Core.STANDALONE_MODE,
+                                         BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                         BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
+                                         ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                         CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                         LIMIT_ITERATIONS=False,
+                                         ITERATION_LIMIT=0)
+
+        resetTestResources(standaloneFolderPath, addonFolderPath, [])
+
+        # ACT
+        startGeneratorLoop(generatorParameters)
+
+        # ASSERT
+        ships = loadShipFileNames(standaloneFolderPath)
+        self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
+                                                                          requiredRestorationAccuracyInPercent=2,
+                                                                          maximumSharedGibPixelsInPercent=0.01)
+
+    def test_properGibsForReusedLayoutFileForStandaloneWithoutAnyGibsWithMetalBits(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
         addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
@@ -47,9 +75,9 @@ class ReusedLayoutFileTest(unittest.TestCase):
         ships = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                           requiredRestorationAccuracyInPercent=2,
-                                                                          maximumSharedGibPixelsInPercent=0.01)
+                                                                          maximumSharedGibPixelsInPercent=1.)
 
-    def test_properGibsForReusedLayoutFileForAddonWithoutAnyGibs(self):
+    def test_properGibsForReusedLayoutFileForAddonWithoutAnyGibsWithoutMetalBits(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
         addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
@@ -61,7 +89,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
                                          OUTPUT_MODE=Core.ADDON_MODE,
                                          BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
                                          BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=True,
+                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
                                          ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
                                          CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
                                          LIMIT_ITERATIONS=False, ITERATION_LIMIT=0)
@@ -89,10 +117,50 @@ class ReusedLayoutFileTest(unittest.TestCase):
                 self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
             self.assertEqual(4, content.count('<mod:findLike type="mount">'))
 
-    def test_properGibsForReusedLayoutFileForStandaloneWithSomeGibs(self):
+    def test_properGibsForReusedLayoutFileForAddonWithoutAnyGibsWithMetalBits(self):
+        # ARRANGE
+        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibs'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        nrGibs = 2
+
+        PARAMETERS = Core.PARAMETERS
+        generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                         ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                         OUTPUT_MODE=Core.ADDON_MODE,
+                                         BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                         BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=True,
+                                         ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                         CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                         LIMIT_ITERATIONS=False, ITERATION_LIMIT=0)
+
+        resetTestResources(standaloneFolderPath, addonFolderPath, [])
+
+        # ACT
+        startGeneratorLoop(generatorParameters)
+
+        # ASSERT
+        ships = loadShipFileNames(standaloneFolderPath)
+        self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
+                                                                     addonFolderPath,
+                                                                     requiredRestorationAccuracyInPercent=2,
+                                                                     maximumSharedGibPixelsInPercent=1.)
+
+        with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
+            content = layoutA.read()
+            for gibId in range(1, nrGibs + 1):
+                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
+            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
+        with open(addonFolderPath + '/data/test_layoutB.xml.append') as layoutA:
+            content = layoutA.read()
+            for gibId in range(1, nrGibs + 1):
+                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
+            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
+
+    def test_properGibsForReusedLayoutFileForStandaloneWithSomeGibsWithoutMetalBits(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
         nrGibs = 2
         imageIdWithGibs = 3
 
@@ -100,8 +168,38 @@ class ReusedLayoutFileTest(unittest.TestCase):
         generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
                                              ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
                                              OUTPUT_MODE=Core.STANDALONE_MODE,
-                                             BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
-                                             BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                             BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=True,
+                                             BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=True, NR_GIBS=nrGibs,
+                                             QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
+                                             ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                             CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                             LIMIT_ITERATIONS=False,
+                                             ITERATION_LIMIT=0)
+
+        resetTestResources(standaloneFolderPath, addonFolderPath, [imageIdWithGibs])
+
+        # ACT
+        startGeneratorLoop(generatorLoopParameters)
+
+        # ASSERT
+        ships = loadShipFileNames(standaloneFolderPath)
+        self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
+                                                                          requiredRestorationAccuracyInPercent=2,
+                                                                          maximumSharedGibPixelsInPercent=1.)
+
+    def test_properGibsForReusedLayoutFileForStandaloneWithSomeGibsWithMetalBits(self):
+        # ARRANGE
+        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
+        nrGibs = 2
+        imageIdWithGibs = 3
+
+        PARAMETERS = Core.PARAMETERS
+        generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                             ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                             OUTPUT_MODE=Core.STANDALONE_MODE,
+                                             BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=True,
+                                             BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=True, NR_GIBS=nrGibs,
                                              QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=True,
                                              ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
                                              CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
@@ -117,12 +215,49 @@ class ReusedLayoutFileTest(unittest.TestCase):
         ships = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                           requiredRestorationAccuracyInPercent=2,
-                                                                          maximumSharedGibPixelsInPercent=0.01)
+                                                                          maximumSharedGibPixelsInPercent=1.)
 
-    def test_properGibsForReusedLayoutFileForAddonWithSomeGibs(self):
+    def test_properGibsForReusedLayoutFileForAddonWithSomeGibsWithoutMetalBits(self):
         # ARRANGE
         standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
-        addonFolderPath = 'sample_projects/multiUsedLayoutWithoutAnyGibsAsAddon'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
+        nrGibs = 2
+        imageIdWithGibs = 3
+
+        PARAMETERS = Core.PARAMETERS
+        generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                             ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                             OUTPUT_MODE=Core.ADDON_MODE,
+                                             BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER=False,
+                                             BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                             QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
+                                             ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                             CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                             LIMIT_ITERATIONS=False,
+                                             ITERATION_LIMIT=0)
+
+        resetTestResources(standaloneFolderPath, addonFolderPath, [imageIdWithGibs])
+
+        # ACT
+        startGeneratorLoop(generatorLoopParameters)
+
+        # ASSERT
+        ships = loadShipFileNames(standaloneFolderPath)
+        self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
+                                                                     addonFolderPath,
+                                                                     requiredRestorationAccuracyInPercent=2,
+                                                                     maximumSharedGibPixelsInPercent=1.)
+
+        with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
+            content = layoutA.read()
+            for gibId in range(1, nrGibs + 1):
+                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
+            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
+
+    def test_properGibsForReusedLayoutFileForAddonWithSomeGibsWithMetalBits(self):
+        # ARRANGE
+        standaloneFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibs'
+        addonFolderPath = 'sample_projects/multiUsedLayoutWithFewerGibsAsAddon'
         nrGibs = 2
         imageIdWithGibs = 3
 
@@ -148,14 +283,9 @@ class ReusedLayoutFileTest(unittest.TestCase):
         self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                      addonFolderPath,
                                                                      requiredRestorationAccuracyInPercent=2,
-                                                                     maximumSharedGibPixelsInPercent=0.01)
+                                                                     maximumSharedGibPixelsInPercent=1.)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
-            content = layoutA.read()
-            for gibId in range(1, nrGibs + 1):
-                self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
-            self.assertEqual(4, content.count('<mod:findLike type="mount">'))
-        with open(addonFolderPath + '/data/test_layoutB.xml.append') as layoutA:
             content = layoutA.read()
             for gibId in range(1, nrGibs + 1):
                 self.assertEqual(1, content.count('<mod-overwrite:gib%u>' % gibId))
@@ -216,7 +346,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         for name, filenames in ships.items():
             shipImageName = filenames['img']
             layoutName = filenames['layout']
-            gibs = self.loadsGibsForAddon(addonFolderPath, layoutName, nrGibs, shipImageName)
+            gibs = self.loadGibsForAddon(standaloneFolderPath, addonFolderPath, layoutName, nrGibs, shipImageName)
             shipImage, shipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
             highlightingImage, percentage, reconstructedFromGibs = self.reconstructFromGibs(gibs, layoutName, shipImage,
                                                                                             shipImageName)
@@ -230,30 +360,47 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
             self.assertGibsDoNotShareTooManyIdenticalPixels(gibs, shipImage, maximumSharedGibPixelsInPercent)
 
-    def loadsGibsForAddon(self, addonFolderPath, layoutName, nrGibs, shipImageName):
-        appendLayoutFilepath = addonFolderPath + '/data/' + layoutName + '.xml.append'
-        with open(appendLayoutFilepath) as appendFile:
-            lines = appendFile.readlines()
-        gibs = []
-        for line in lines:
-            for gibId in range(1, nrGibs + 1):
-                if '<mod-overwrite:gib%u>' % gibId in line:
-                    gib = {}
-                    try:
-                        gib['img'] = np.asarray(Image.open(
-                            GIB_CACHE_FOLDER + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'),
-                            dtype=np.uint8)
-                    except:
-                        gib['img'] = np.asarray(Image.open(
-                            addonFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'),
-                            dtype=np.uint8)
-            if '<x>' in line:
-                gib['x'] = int(
-                    line.replace('<x>', '').replace('</x>', '').replace('\t', '').replace('\n', '').strip())
-            if '<y>' in line:
-                gib['y'] = int(
-                    line.replace('<y>', '').replace('</y>', '').replace('\t', '').replace('\n', '').strip())
-                gibs.append(gib)
+    def loadGibsForAddon(self, inputPath, addonFolderPath, layoutName, nrGibs, shipImageName):
+        try:
+            appendLayoutFilepath = addonFolderPath + '/data/' + layoutName + '.xml.append'
+            with open(appendLayoutFilepath) as appendFile:
+                lines = appendFile.readlines()
+            gibs = []
+            for line in lines:
+                for gibId in range(1, nrGibs + 1):
+                    if '<mod-overwrite:gib%u>' % gibId in line:
+                        gib = {}
+                        try:
+                            gib['img'] = np.asarray(Image.open(
+                                GIB_CACHE_FOLDER + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'),
+                                dtype=np.uint8)
+                        except:
+                            try:
+                                gib['img'] = np.asarray(Image.open(
+                                    addonFolderPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'),
+                                    dtype=np.uint8)
+                            except:
+                                gib['img'] = np.asarray(Image.open(
+                                    inputPath + '/img/ship/' + shipImageName + '_gib' + str(gibId) + '.png'),
+                                    dtype=np.uint8)
+                if '<x>' in line:
+                    gib['x'] = int(
+                        line.replace('<x>', '').replace('</x>', '').replace('\t', '').replace('\n', '').strip())
+                if '<y>' in line:
+                    gib['y'] = int(
+                        line.replace('<y>', '').replace('</y>', '').replace('\t', '').replace('\n', '').strip())
+                    gibs.append(gib)
+        except:
+            layout = loadShipLayout(layoutName, inputPath)
+            try:
+                gibs = loadGibs(layout, nrGibs, GIB_CACHE_FOLDER + '/img/ship/', shipImageName)
+            except:
+                try:
+                    gibs = loadGibs(layout, nrGibs, addonFolderPath + '/img/ship/', shipImageName)
+                except:
+                    gibs = loadGibs(layout, nrGibs, inputPath + '/img/ship/', shipImageName)
+            for gib in gibs:
+                gib['img'] = np.asarray(gib['img'])
         return gibs
 
     def assertGibsDoNotShareTooManyIdenticalPixels(self, gibs, shipImage, allowedOverlapPercentage):

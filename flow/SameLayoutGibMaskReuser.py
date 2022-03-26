@@ -6,7 +6,7 @@ import numpy as np
 from PIL import Image
 
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.ShipImageLoader import loadShipBaseImage
+from fileHandling.ShipImageLoader import loadShipBaseImage, VISIBLE_ALPHA_THRESHOLD
 from imageProcessing.ImageProcessingUtilities import cropImage
 from imageProcessing.MetalBitsAttacher import attachMetalBits
 from metadata.GibEntryChecker import getExplosionNode
@@ -24,6 +24,7 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, tilesets, layout, layoutNam
     logger.debug('Gibs in layout %s but not in image %s for %s' % (layoutName, shipImageName, name))
     foundGibsSameLayout = False
     newGibsWithoutMetalBits = []
+    newGibsWithMetalBits = []
     gibsForMask = []
     newBaseImage, newShipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
     folderPath = targetFolderPath + '/img/' + newShipImageSubfolder
@@ -44,12 +45,19 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, tilesets, layout, layoutNam
                     if len(gibsForMask) > 0:
                         foundGibsSameLayout = True
                 else:
-                    logger.debug('Skipping identical layout for image %s as it has no gibs either' % searchShipName)
+                    if areGibsPresentAsImageFiles(searchShipName, standaloneFolderPath):
+                        logger.debug('Found identical layout with existing gibs for image %s' % searchShipName)
+                        gibsForMask = loadGibs(layout, nrGibs, standaloneFolderPath + '/img/' + newShipImageSubfolder, searchShipName)
+                        if len(gibsForMask) > 0:
+                            foundGibsSameLayout = True
+                    else:
+                        logger.debug('Skipping identical layout for image %s as it has no gibs either' % searchShipName)
     if foundGibsSameLayout == True:
         for gibForMask in gibsForMask:  # TODO: test case for deviating number of maskgibs
             uncroppedSearchGibImg = Image.fromarray(np.zeros(newBaseImage.shape, dtype=np.uint8))
+            # TODO: DONT OVERWRITE GIB IN ADDONLAYOUT!
             uncroppedSearchGibImg.paste(gibForMask['img'], (gibForMask['x'], gibForMask['y']), gibForMask['img'])
-            searchGibTransparentMask = np.asarray(uncroppedSearchGibImg)[:, :, 3] == 0
+            searchGibTransparentMask = np.asarray(uncroppedSearchGibImg)[:, :, 3] < VISIBLE_ALPHA_THRESHOLD
             uncroppedNewGib = deepcopy(newBaseImage)
             uncroppedNewGib[searchGibTransparentMask] = (0, 0, 0, 0)
 
@@ -59,12 +67,15 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, tilesets, layout, layoutNam
             newGib['y'] = gibForMask['y']
             newGib['img'], center, minX, minY = cropImage(uncroppedNewGib)
             newGib['center'] = center
+            # TODO: treat deviation?
             #newGib['x'] = minX
             #newGib['y'] = minY
             newGib['mass'] = (center['x'] - newGib['x']) * (center['y'] - newGib['y']) * 4  # TODO: reenable nrVisiblePixels
             newGibsWithoutMetalBits.append(newGib)
         if PARAMETERS.GENERATE_METAL_BITS == True:
             newGibsWithMetalBits = attachMetalBits(newGibsWithoutMetalBits, newBaseImage, tilesets, PARAMETERS, shipImageName)
+        else:
+            newGibsWithMetalBits = deepcopy(newGibsWithoutMetalBits)
     return foundGibsSameLayout, newGibsWithMetalBits, newGibsWithoutMetalBits, folderPath
 
 

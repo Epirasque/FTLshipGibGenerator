@@ -11,4 +11,6 @@
 	<mount x="120" y="220" rotate="false" mirror="true" gib="-1" slide="up" />
 	<mount x="220" y="220" rotate="false" mirror="false" gib="-1" slide="up" />
 </weaponMounts>
-<explosion/>
+<explosion><gib1><velocity min="0.11400133851698455" max="0.38000446172328184" /><direction min="186" max="202" /><angular min="-0.892609649122807" max="0.892609649122807" />
+<x>38</x><y>155</y></gib1><gib2><velocity min="0.1931104258106691" max="0.643701419368897" /><direction min="190" max="206" /><angular min="-0.5701841104662797" max="0.5701841104662797" />
+<x>138</x><y>236</y></gib2></explosion>
