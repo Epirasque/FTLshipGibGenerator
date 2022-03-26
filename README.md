@@ -246,11 +246,12 @@ In arbitrary order, *no promises if or when these will be done*:
     - [x] unit test
         - [x] update to reconstruct based on z-layers
     - [x] ensure gibs cover each other properly (edge-asymmetry/logic needed)
-- [ ] QoL
+- [x] QoL
     - [x] feature toggle
     - [x] save generation process as gif for debugging
-    - [ ] performance improvements
-        - [ ] remember gib-neighbour-status on seam-pixel-basis to avoid many rejected candidates
+    - [x] performance improvements
+      - [x] dynamic transparency detection offset
+      - [x] fix gib topology resulting in unintended neighbour-blocking
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
