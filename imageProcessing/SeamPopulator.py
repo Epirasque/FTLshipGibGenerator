@@ -238,9 +238,15 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
                                 attachmentPoint[1] + round(outwardVectorYX[1] * 50))
         # TODO avoid out of bounds (workaround: uncropped gib which is fine; should be basis later on anyway)
         if isDetectionSuccessful == True:
-            gifFrame[lineY_A, lineX_A] = [0, 127, 255, 255]
+            try:
+                gifFrame[lineY_A, lineX_A] = [0, 127, 255, 255]
+            except IndexError:
+                logger.warning('Could not render line for gifFrame')
         else:
-            gifFrame[lineY_A, lineX_A] = [255, 127, 0, 255]
+            try:
+                gifFrame[lineY_A, lineX_A] = [255, 127, 0, 255]
+            except IndexError:
+                logger.warning('Could not render line for gifFrame')
         gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
         gifFrames.append(gifFrame)
 
