@@ -136,11 +136,13 @@ reasonably blob-ish while occasionally extending along more natural edges in the
 #### How SLIC Is Used In The Generator
 
 As a pre-processing step, all transparent pixels are filtered out to avoid having clusters starting on them.
+Any pixel with a high transparency (alpha < 64) will be considered invisible to eliminate glow surrounding the ships 
+whereas all other pixels are set to maximum visibility due to technical reasons. 
 
 The Generator tries to find a solution with a `compactness` parameter that is quite small in order to make the
 gibs look more interesting.
 
-The Generators applies the SLIC algorithm until the output consists of an amount of segments that is equal to `NR_GIBS`.
+The Generator applies the SLIC algorithm until the output consists of an amount of segments that is equal to `NR_GIBS`.
 If this number is not reached, it retries running the algorithm with a higher `compactness` value until it does, or
 until it a certain number of attempts is reached. There is also a rare edge-case that causes a retry, this will happen 
 if an attempt to reassemble the original image by putting together the segments deviates from the original image by a 
@@ -252,7 +254,7 @@ In arbitrary order, *no promises if or when these will be done*:
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
-    - [ ] prevent skewed coordinates by caching unique metal bits per layout
+    - [ ] prevent skewed coordinates by caching unique metal bits per layout (should not be necessay; verify)
 - [ ] shading
 - [ ] tweak until it looks great
 

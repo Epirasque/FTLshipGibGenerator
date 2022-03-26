@@ -7,23 +7,26 @@ from skimage.segmentation import slic
 # TODO: remove shipImageName as parameter
 from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceInPercentage
 
-TRANSPARENCY_ALPHA_VALUE = 0
-MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 4
+# glow around ships should not be part of the gibs
+VISIBLE_ALPHA_VALUE = 255
+MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 1.
 
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
-    nonTransparentMask = (shipImage[:, :, 3] != TRANSPARENCY_ALPHA_VALUE)
+    nonTransparentMask = (shipImage[:, :, 3] == VISIBLE_ALPHA_VALUE)
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
-    compactnessToUse = 0.3  # TODO: start with 0. ?
-    compactnessGainPerAttempt = 0.1
-    nrMaximumSegmentationAttempts = 13
-    percentage = 100
+    compactnessToUse = 0.3
+    compactnessGainPerAttempt = 0.05
+    compactnessThreshold = 2.5
+    percentage = 100.
     if segmentQuickAndDirty == True:
         compactnessToUse = 1.
-        nrMaximumSegmentationAttempts = 1
-    while nrSuccessfulGibs < nrGibs and nrSegmentationAttempts < nrMaximumSegmentationAttempts and percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:  # TODO: proper nr attempts approach
+        compactnessGainPerAttempt = 0.5
+    # compensate for first increment
+    compactnessToUse -= compactnessGainPerAttempt
+    while (nrSuccessfulGibs < nrGibs or percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE) and compactnessToUse < compactnessThreshold:  # TODO: proper nr attempts approach
         nrSegmentationAttempts += 1
         compactnessToUse += compactnessGainPerAttempt  # TODO: make configurable
         # TODO: parameter for max iterations of kmeans
@@ -37,13 +40,13 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
                                                                                            shipImage)
             if percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
                 logger.warning(
-                    "Retrying due to gibs not combining into base image for %s, pixel deviation is at %u%%, which is above allowed threshold of %u%%" % (
+                    "Retrying due to gibs not combining into base image for %s, pixel deviation is at %.2f%%, which is above allowed threshold of %.2f%%" % (
                     shipImageName, percentage, MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
     if nrSuccessfulGibs == 0:
         logger.error("FAILED to generate any gibs for %s" % shipImageName)
         return []
     if percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
-        logger.error("Reconstructing ship from gibs for %s deviates by %u%% pixels, which is above allowed threshold of %u" % (
+        logger.error("Reconstructing ship from gibs for %s deviates by %.2f%% pixels, which is above allowed threshold of %.2f%%" % (
             shipImageName, percentage, MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
     if nrSuccessfulGibs < nrGibs:
         # TODO: consider it a failure instead?
