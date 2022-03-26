@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 import numpy as np
 
@@ -168,7 +169,7 @@ def cropImage(image):
     maxX = max(visiblePixelsX)
     minY = min(visiblePixelsY)
     maxY = max(visiblePixelsY)
-    croppedImage = image[minY:maxY, minX:maxX, :]
+    croppedImage = deepcopy(image[minY:maxY, minX:maxX, :])
     # TODO: consider center of gravity instead?
     center = {}
     center['x'] = (maxX + minX) / 2
