@@ -1,4 +1,4 @@
-# GLAIVE v0.9.5: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
+# G.L.A.I.V.E. v0.9.5: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
 
 # What Does It Do? (TL;DR)
 
@@ -257,6 +257,11 @@ In arbitrary order, *no promises if or when these will be done*:
     - [ ] prevent skewed coordinates by caching unique metal bits per layout (should not be necessay; verify)
 - [ ] shading
 - [ ] tweak until it looks great
+
+# What does G.L.A.I.V.E. stand for?
+
+Gibs Leveraging Artificial Intelligence & Voodoo Enchantments. K-Means is an unsupervised machine learning algorithm. Some people consider machine learning to be artificial intelligence, strictly speaking it is not. There are also a ton of crazy little headache-inducing edge cases and tricks involved that I don't want to bother explaining in the README, so let's just call it Voodoo Enchantments. 
+Coincidentally (yea, right...), the Glaive beam in FTL is able to destroy many ships in a single blow when cutting across their hull, only their gibs remain...
 
 # How Can I Contact The Author Or Otherwise Get Involved?
 
