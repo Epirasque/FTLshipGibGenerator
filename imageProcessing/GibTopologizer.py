@@ -1,3 +1,5 @@
+from copy import deepcopy
+
 import numpy as np
 
 from imageProcessing.ImageProcessingUtilities import pasteNonTransparentValuesIntoArray, getDistanceBetweenPoints
@@ -24,13 +26,30 @@ def buildSeamTopology(gibs, shipImage):
 def orderGibsByZCoordinates(gibs):
     newGibs = []
     nextId = 1
+    newIdsToOldIds = {}
+    # TODO: also adjust neighbour-ids!
     for z in range(len(gibs), 0, -1):
         for gib in gibs:
             if gib['z'] == z:
+                newIdsToOldIds[nextId] = deepcopy(gib['id'])
                 gib['id'] = nextId
                 nextId += 1
-                newGibs.append(gib)
+                newGibs.append(deepcopy(gib))
                 break
+    for newGib in newGibs:
+        coveredByNeighhbourWithOldIds = deepcopy(newGib['coveredByNeighbour'])
+        coversNeighhbourWithOldIds = deepcopy(newGib['coversNeighbour'])
+        neighbourToSeamWithOldIds = deepcopy(newGib['neighbourToSeam'])
+        newGib['coveredByNeighbour'] = {}
+        newGib['coversNeighbour'] = {}
+        newGib['neighbourToSeam'] = {}
+        for newNeighbourGib in newGibs:
+            newNeighbourId = newNeighbourGib['id']
+            oldNeighbourId = newIdsToOldIds[newNeighbourId]
+            newGib['coveredByNeighbour'][newNeighbourId] = coveredByNeighhbourWithOldIds[oldNeighbourId]
+            newGib['coversNeighbour'][newNeighbourId] = coversNeighhbourWithOldIds[oldNeighbourId]
+            newGib['neighbourToSeam'][newNeighbourId] = neighbourToSeamWithOldIds[oldNeighbourId]
+
     return newGibs
 
 

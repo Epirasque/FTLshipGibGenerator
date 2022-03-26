@@ -1,10 +1,8 @@
 import random
-from copy import copy, deepcopy
 
 from skimage.draw import line
 
 from fileHandling.MetalBitsLoader import LAYER1, CLOCKWISE_ANGLE_PER_STEP
-from imageProcessing.GibTopologizer import *
 from imageProcessing.ImageProcessingUtilities import *
 from imageProcessing.MetalBitsConstants import *
 
@@ -87,6 +85,21 @@ def approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate, originalGibImage
     return metalBits, remainingUncoveredSeamPixels
 
 
+def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCandidateValid, blockingNeighbourId,
+                         shipImage):
+    if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True and isCandidateValid == False:
+        if blockingNeighbourId == 'entireShip':
+            blockingImage = deepcopy(shipImage)
+        else:
+            for gib in gibs:
+                if gib['id'] == blockingNeighbourId:
+                    blockingImage = deepcopy(gib['img'])
+        blockingImage[np.any(blockingImage != [0, 0, 0, 0], axis=-1)] = [255, 0, 0, 0]
+        gifFrame = deepcopy(blockingImage)
+        pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
+        gifFrames.append(gifFrame)
+
+
 def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gifFrames, inwardsSearchX, inwardsSearchY,
                             metalBits, originalGibImageArray, seamImageArray, shipImage, tileImageArray,
                             tileOriginCenterPoint):
@@ -98,7 +111,10 @@ def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gi
                                                                                                  tileOriginCenterPoint)
     animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, metalBitsCandidate,
                                        originalGibImageArray)
-    isCandidateValid = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shipImage)
+    isCandidateValid, blockingNeighbourId = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate,
+                                                                            shipImage)
+    animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCandidateValid, blockingNeighbourId,
+                         shipImage)
     return isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate
 
 
@@ -194,6 +210,21 @@ def searchInwardUntilOriginIsCoveredByGib(PARAMETERS, alreadyCoveredArea, attach
 
         isCandidateOriginCoveredByGib = areAllCoordinatesContainedInVisibleArea(offsetCoordinates,
                                                                                 alreadyCoveredArea)
+
+    if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
+        gifFrame = deepcopy(alreadyCoveredArea)
+        if isCandidateOriginCoveredByGib == True:
+            color = [0, 255, 0, 255]
+        else:
+            color = [255, 0, 0, 255]
+        for offsetCoordinate in offsetCoordinates:
+            try:
+                gifFrame[offsetCoordinate[0], offsetCoordinate[1]] = color
+            except IndexError:
+                pass
+        gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
+        gifFrames.append(gifFrame)
+
     return isCandidateOriginCoveredByGib, inwardsSearchX, inwardsSearchY
 
 
@@ -231,7 +262,7 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
         # for coordinates in seamCoordinates:
         #    gifFrame[coordinates[0], coordinates[1]] = [63, 63, 63, 255]
         gifFrame[remainingUncoveredSeamPixels] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
-        gifFrame[edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX] = [255, 0, 0, 255]
+        gifFrame[edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX] = [255, 255, 0, 255]
 
         lineY_A, lineX_A = line(attachmentPoint[0], attachmentPoint[1],
                                 attachmentPoint[0] + round(outwardVectorYX[0] * 50),
@@ -260,10 +291,16 @@ def determineAttachmentPoint(remainingUncoveredSeamPixels):
 
 def doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shipImage):
     isCandidateValid = areAllVisiblePixelsContained(metalBitsCandidate, shipImage)
+    blockingNeighbourId = 'entireShip'
     if isCandidateValid:
         for otherGib in gibs:
-            if gibToPopulate['coversNeighbour'][otherGib['id']] == True:
-                if areAnyVisiblePixelsOverlapping(metalBitsCandidate, otherGib['img']) == True:
-                    isCandidateValid = False
-                    break
-    return isCandidateValid
+            otherGibId = otherGib['id']
+            if gibToPopulate['coversNeighbour'][otherGibId] == True:
+                if otherGibId != gibToPopulate['id']:
+                    if areAnyVisiblePixelsOverlapping(metalBitsCandidate, otherGib['img']) == True:
+                        isCandidateValid = False
+                        blockingNeighbourId = otherGibId
+                        break
+                else:
+                    logger.critical('Gib should not be covering itself?!')
+    return isCandidateValid, blockingNeighbourId
