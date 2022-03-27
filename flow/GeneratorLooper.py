@@ -3,6 +3,7 @@ import logging
 import shutil
 import time
 import traceback
+import tracemalloc
 from copy import deepcopy
 
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
@@ -11,6 +12,7 @@ from fileHandling.MetalBitsLoader import loadTilesets
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
+from flow.MemoryManagement import logHighestMemoryUsage, cleanUpMemory
 from flow.SameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
 from imageProcessing.MetalBitsAttacher import attachMetalBits
 from imageProcessing.Segmenter import segment
@@ -29,6 +31,7 @@ def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
     logger.info("Starting Gib generation at %s, with PARAMETERS:" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     logger.info(PARAMETERS)
+    tracemalloc.start()
     logger.info("Loading ship file names...")
     ships = loadShipFileNames(PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
     stats = {'nrShips': len(ships),
@@ -59,6 +62,7 @@ def startGeneratorLoop(PARAMETERS):
     logger.info("Iterating ships...")
     layoutNameToGibCache = {}
     for shipName, filenames in ships.items():
+        cleanUpMemory()
         if PARAMETERS.CHECK_SPECIFIC_SHIPS == True:
             if shipName not in PARAMETERS.SPECIFIC_SHIP_NAMES:
                 continue
@@ -269,6 +273,8 @@ def printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats):
                 stats['nrShipsWithIncompleteGibSetup'],
                 stats['nrErrorsInsource'], stats['nrErrorsInSegmentation'], stats['nrErrorsInWeaponMounts'],
                 stats['nrErrorsUnknownCause'], shipName, layoutName + '.xml', shipImageName + '_base.png'))
+    if (stats['nrIterations'] % 1) == 0:
+        logHighestMemoryUsage()
     if (stats['nrIterations'] % 5) == 0:  # note that this is BEFORE the current iteration has finished!
         totalDuration = stats['totalLoadShipBaseImageDuration'] + stats['totalSegmentDuration'] + stats[
             'totalSaveGibImagesDuration'] + stats['totalAddGibEntriesToLayoutDuration'] + stats[
@@ -288,3 +294,5 @@ def printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats):
                     totalSegmentDurationPercentage, totalSaveGibImagesDurationPercentage,
                     totalAddGibEntriesToLayoutDurationPercentage, totalSetWeaponMountGibIdsDurationPercentage,
                     totalSaveShipLayoutDurationPercentage))
+
+

@@ -3,21 +3,29 @@ import random
 from skimage.draw import line
 
 from fileHandling.MetalBitsLoader import LAYER1, CLOCKWISE_ANGLE_PER_STEP
+from flow.GeneratorLooper import logHighestMemoryUsage
+from flow.MemoryManagement import cleanUpMemory
+from imageProcessing.DebugAnimator import saveGif
 from imageProcessing.ImageProcessingUtilities import *
 from imageProcessing.MetalBitsConstants import *
 
 
-def populateSeams(gibs, shipImage, tilesets, gifFrames, PARAMETERS):
+def populateSeams(gibs, shipImageName, shipImage, tilesets, PARAMETERS):
     for gibToPopulate in gibs:
+        gibToPopulateId = gibToPopulate['id']
         for neighbouringGib in gibs:
             neighbourId = neighbouringGib['id']
-            if gibToPopulate['id'] != neighbourId:
+            if gibToPopulateId != neighbourId:
                 if gibToPopulate['coveredByNeighbour'][neighbourId] == True:
+                    gifFrames = []
                     populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, PARAMETERS)
+                    saveGif(gifFrames, '%s_gib%uto%u' % (shipImageName, gibToPopulateId, neighbourId), PARAMETERS)
 
 
 def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, PARAMETERS):
-    originalGibImageArray = deepcopy(gibToPopulate['img'])
+    cleanUpMemory()
+    gibImage = gibToPopulate['img']
+    originalGibImageArray = np.ma.copy(gibImage)
     seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
     tilesToUse = tilesets['default'][LAYER1]
@@ -26,13 +34,13 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     for coordinates in seamCoordinates:
         metalBits[coordinates[0], coordinates[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
     # metalBits[np.asarray(seamCoordinates)] = [0, 255, 0, 255]
-    seamImageArray = deepcopy(metalBits)
+    seamImageArray = np.ma.copy(metalBits)
     # TODO: for currentLayer in range(1, 4 + 1): or layer function as variable/parameter, or ...
     nrAttemptsForLayer = 1
-    maxNrAttemptsForLayer = NR_MAX_ATTEMPTS_PER_LAYER_TO_POPULATE_SINGLE_SEAM
     remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
-    while nrAttemptsForLayer < maxNrAttemptsForLayer and np.any(remainingUncoveredSeamPixels):
+    while np.any(remainingUncoveredSeamPixels):
         nrAttemptsForLayer += 1
+        cleanUpMemory()
         metalBits, remainingUncoveredSeamPixels = attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames,
                                                                         metalBits, nrTilesToUse, originalGibImageArray,
                                                                         remainingUncoveredSeamPixels, seamCoordinates,
@@ -89,13 +97,14 @@ def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCand
                          shipImage):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True and isCandidateValid == False:
         if blockingNeighbourId == 'entireShip':
-            blockingImage = deepcopy(shipImage)
+            blockingImage = np.ma.copy(shipImage)
         else:
             for gib in gibs:
                 if gib['id'] == blockingNeighbourId:
-                    blockingImage = deepcopy(gib['img'])
+                    gibImage = gib['img']
+                    blockingImage = np.ma.copy(gibImage)
         blockingImage[np.any(blockingImage != [0, 0, 0, 0], axis=-1)] = [255, 0, 0, 0]
-        gifFrame = deepcopy(blockingImage)
+        gifFrame = np.ma.copy(blockingImage)
         pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
         gifFrames.append(gifFrame)
 
@@ -122,7 +131,7 @@ def determineCandidateTileWithCoveredOrigin(PARAMETERS, attachmentPoint, gifFram
                                             originalGibImageArray, outwardAngle, outwardVectorYX, tilesToUse):
     tileImageArray, tileOriginCenterPoint, tileOriginCoordinates = determineTileToAttach(nrTilesToUse, outwardAngle,
                                                                                          tilesToUse)
-    alreadyCoveredArea = deepcopy(originalGibImageArray)
+    alreadyCoveredArea = np.ma.copy(originalGibImageArray)
     pasteNonTransparentValuesIntoArray(metalBits, alreadyCoveredArea)
     animateAlreadyCoveredArea(PARAMETERS, alreadyCoveredArea, attachmentPoint, gifFrames)
     isCandidateOriginCoveredByGib, inwardsSearchX, inwardsSearchY = searchInwardUntilOriginIsCoveredByGib(PARAMETERS,
@@ -152,10 +161,10 @@ def determineAttachmentPointWithOrientation(PARAMETERS, gifFrames, metalBits, or
 def animateGibResultAndSeamPreview(PARAMETERS, gifFrames, metalBits, originalGibImageArray,
                                    remainingUncoveredSeamPixels):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER:
-        gifFrame = deepcopy(metalBits)
+        gifFrame = np.ma.copy(metalBits)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
         gifFrames.append(gifFrame)
-        gifFrameNextSeamPixels = deepcopy(gifFrame)
+        gifFrameNextSeamPixels = np.ma.copy(gifFrame)
         gifFrameNextSeamPixels[remainingUncoveredSeamPixels] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
         gifFrames.append(gifFrameNextSeamPixels)
 
@@ -163,8 +172,11 @@ def animateGibResultAndSeamPreview(PARAMETERS, gifFrames, metalBits, originalGib
 def animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, metalBitsCandidate,
                                        originalGibImageArray):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        gifFrame = deepcopy(originalGibImageArray)
-        pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
+        gifFrame = np.ma.copy(originalGibImageArray)
+        try:
+            pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
+        except:
+            pass
         # TODO: try: gifFrame[np.any(metalBits != [0, 0, 0, 0], axis=-1)] = [0, 0, 255, 255]
         gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
         gifFrames.append(gifFrame)
@@ -199,7 +211,7 @@ def searchInwardUntilOriginIsCoveredByGib(PARAMETERS, alreadyCoveredArea, attach
             offsetCoordinates.append((coordinateY, coordinateX))
 
         if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-            gifFrame = deepcopy(alreadyCoveredArea)
+            gifFrame = np.ma.copy(alreadyCoveredArea)
             for offsetCoordinate in offsetCoordinates:
                 try:
                     gifFrame[offsetCoordinate[0], offsetCoordinate[1]] = [0, 0, 255, 255]
@@ -210,9 +222,10 @@ def searchInwardUntilOriginIsCoveredByGib(PARAMETERS, alreadyCoveredArea, attach
 
         isCandidateOriginCoveredByGib = areAllCoordinatesContainedInVisibleArea(offsetCoordinates,
                                                                                 alreadyCoveredArea)
+        logHighestMemoryUsage()
 
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        gifFrame = deepcopy(alreadyCoveredArea)
+        gifFrame = np.ma.copy(alreadyCoveredArea)
         if isCandidateOriginCoveredByGib == True:
             color = [0, 255, 0, 255]
         else:
@@ -230,7 +243,7 @@ def searchInwardUntilOriginIsCoveredByGib(PARAMETERS, alreadyCoveredArea, attach
 
 def animateAlreadyCoveredArea(PARAMETERS, alreadyCoveredArea, attachmentPoint, gifFrames):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        gifFrame = deepcopy(alreadyCoveredArea)
+        gifFrame = np.ma.copy(alreadyCoveredArea)
         gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
         gifFrames.append(gifFrame)
 
@@ -253,7 +266,7 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
                                           originalGibImageArray, outwardVectorYX, remainingUncoveredSeamPixels,
                                           seamCoordinates):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        gifFrame = deepcopy(metalBits)
+        gifFrame = np.ma.copy(metalBits)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
         edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX = findEdgePixelsInSearchRadius(seamCoordinates,
                                                                                           attachmentPoint,

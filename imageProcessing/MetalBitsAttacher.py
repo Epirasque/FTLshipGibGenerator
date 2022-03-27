@@ -1,35 +1,24 @@
-import os
-
-import imageio
 from PIL import Image
 
+from imageProcessing.DebugAnimator import saveGif
 from imageProcessing.GibTopologizer import *
 from imageProcessing.ImageProcessingUtilities import *
 from imageProcessing.SeamPopulator import populateSeams
 
 
 def attachMetalBits(gibs, shipImage, tilesets, PARAMETERS, shipImageName):
-    gifFrames = initialGifImageArray(PARAMETERS, shipImage)
+    gifFrames = initializeGifFramesWithShipImage(shipImage, PARAMETERS)
     uncropGibs(gibs, shipImage)
     buildSeamTopology(gibs, shipImage)
     gibs = orderGibsByZCoordinates(gibs)
     animateTopology(gifFrames, PARAMETERS, gibs)
-    populateSeams(gibs, shipImage, tilesets, gifFrames, PARAMETERS)
+    saveGif(gifFrames, shipImageName + "_topology", PARAMETERS)
+    populateSeams(gibs, shipImageName, shipImage, tilesets, PARAMETERS)
     cropAndUpdateGibs(gibs)
-    saveGif(gifFrames, shipImageName, PARAMETERS)
     return gibs
 
 
-def saveGif(gifFrames, shipImageName, PARAMETERS):
-    if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
-        filePath = '../metalBitsDebugAnimations/%s.gif' % shipImageName
-        if os.path.exists(filePath):
-            os.remove(filePath)
-        imageio.mimwrite(filePath, gifFrames, format='GIF', fps=PARAMETERS.ANIMATE_METAL_BITS_FPS)
-        # TODO: smaller filesize using pygifsicle.optimize(filePath)
-
-
-def initialGifImageArray(PARAMETERS, shipImage):
+def initializeGifFramesWithShipImage(shipImage, PARAMETERS):
     gifFrames = []
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
         gifFrames.append(np.asarray(shipImage, dtype=np.uint8))

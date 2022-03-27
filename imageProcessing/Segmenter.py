@@ -5,6 +5,7 @@ from PIL import Image
 from skimage.segmentation import slic
 
 # TODO: remove shipImageName as parameter
+from flow.MemoryManagement import cleanUpMemory
 from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceInPercentage
 
 # glow around ships should not be part of the gibs
@@ -29,6 +30,7 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     while (nrSuccessfulGibs < nrGibs or percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE) and compactnessToUse < compactnessThreshold:  # TODO: proper nr attempts approach
         nrSegmentationAttempts += 1
         compactnessToUse += compactnessGainPerAttempt  # TODO: make configurable
+        cleanUpMemory()
         # TODO: parameter for max iterations of kmeans
         # TODO: upon failure, retry with less/more gibs
         # TODO: try additional parameters e.g. channel-axis
