@@ -264,12 +264,13 @@ In arbitrary order, *no promises if or when these will be done*:
 Gibs Leveraging Artificial Intelligence & Voodoo Enchantments. K-Means is an unsupervised machine learning algorithm. Some people consider machine learning to be artificial intelligence, strictly speaking it is not. There are also a ton of crazy little headache-inducing edge cases and tricks involved that I don't want to bother explaining in the README, so let's just call it Voodoo Enchantments. 
 Coincidentally (yea, right...), the Glaive beam in FTL is able to destroy many ships in a single blow when cutting across their hull, only their gibs remain...
 
-# How Can I Contact The Author Or Otherwise Get Involved?
+# How Can I Contact The Authors Or Otherwise Get Involved?
 
-Write to Epirasque in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb), I'm looking forward to
-your feedback and suggestions. My timezone is GMT+1.
+Epirasque: developer, GMT+1.
+robinthedragon2: drawing tilesets for metal bits
+You can find us in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb)
 
-If you have something that should be discussed with more people (e.g. if you have strong feelings about how the gibs'
+If you have a topic that should be discussed with more people (e.g. if you have strong feelings about how the gibs'
 physics should behave) then please use the [the-shipyard channel](https://discord.gg/Q9FaGZQw) for now.
 
 # Special Thanks

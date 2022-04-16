@@ -9,9 +9,9 @@ from imageProcessing.ImageProcessingUtilities import findColorInImage, findMeanO
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 LAYER1 = 'layer1'
-DEFAULT_TILESET = 'default/10x10_metal_bits_1'
-TILE_WIDTH = 10  # 72
-TILE_HEIGHT = 10  # 72
+DEFAULT_TILESET = 'default/25x21_metal_bit'#'default/10x10_metal_bits_1'
+TILE_WIDTH = 25#10  # 72
+TILE_HEIGHT = 21#10  # 72
 # should divide 360 without remainder
 CLOCKWISE_ANGLE_PER_STEP = 45  # 15
 NR_ANGLE_STEPS = round(360 / CLOCKWISE_ANGLE_PER_STEP)
