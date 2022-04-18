@@ -11,12 +11,14 @@ from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceI
 # glow around ships should not be part of the gibs
 VISIBLE_ALPHA_VALUE = 255
 MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 1.
+MINIMAL_WEIGHTED_SEGMENT_RATIO = .2
 
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
     nonTransparentMask = (shipImage[:, :, 3] == VISIBLE_ALPHA_VALUE)
+    nrNonTransparentPixels = nonTransparentMask.sum()
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
     compactnessToUse = 0.3
@@ -38,7 +40,7 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
         # TODO: try additional parameters e.g. channel-axis
         segments = slic(shipImage, n_segments=nrGibs, compactness=compactnessToUse, max_num_iter=100,
                         mask=nonTransparentMask)
-        nrSuccessfulGibs = determineNrSuccessfulGibs(segments, nrGibs)
+        nrSuccessfulGibs = determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels)
         if nrSuccessfulGibs == nrGibs:
             percentage = determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, nrSuccessfulGibs,
                                                                                            shipImage)
@@ -73,28 +75,15 @@ def determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, 
     return imageDifferenceInPercentage(shipImage, reconstructedFromSegments)
 
 
-def determineNrSuccessfulGibs(segments, nrGibs):
+def determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels):
     nrSuccessfulGibs = 0
     for gibId in range(1, nrGibs + 1):
-        if moreThanOnePoint(gibId, segments) and moreThanOneDistinctYvalue(gibId,
-                                                                           segments) and moreThanOneDistinctXvalue(
-            gibId, segments):
+        if float(len(np.where(segments == gibId)[0])) * nrGibs / nrNonTransparentPixels >= MINIMAL_WEIGHTED_SEGMENT_RATIO:
             nrSuccessfulGibs += 1
+        else:
+            logger.warning("Segment too small, having %u pixels" % len(np.where(segments == gibId)[0]))
     return nrSuccessfulGibs
 
-
-def moreThanOneDistinctXvalue(gibId, segments):
-    return min(np.where(segments == gibId)[1]) < max(
-        np.where(segments == gibId)[1])
-
-
-def moreThanOneDistinctYvalue(gibId, segments):
-    return min(np.where(segments == gibId)[0]) < max(
-        np.where(segments == gibId)[0])
-
-
-def moreThanOnePoint(gibId, segments):
-    return len(np.where(segments == gibId)[0]) > 1
 
 
 def turnSegmentsIntoGibs(nrGibs, segments, shipImage):

@@ -30,5 +30,5 @@ loggers:
     handlers: [console, replacingFileHandler, appendingFileHandler]
     propagate: no
 root:
-  level: WARNING
+  level: DEBUG
   handlers: [console, replacingFileHandler, appendingFileHandler]
