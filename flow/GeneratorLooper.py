@@ -29,7 +29,8 @@ ADDON_MODE = 'addon'
 
 def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
-    logger.info("Starting Gib generation at %s, with PARAMETERS:" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    logger.info(
+        "Starting Gib generation at %s, with PARAMETERS:" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     logger.info(PARAMETERS)
     tracemalloc.start()
     logger.info("Loading ship file names...")
@@ -208,10 +209,10 @@ def saveShipLayoutWithProfiling(PARAMETERS, layoutName, layoutWithNewGibs, appen
     start = time.time()
     if PARAMETERS.OUTPUT_MODE == STANDALONE_MODE:
         saveShipLayoutStandalone(layoutWithNewGibs, layoutName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
-                                 developerBackup=PARAMETERS.BACKUP_STANDALONE_LAYOUTS_FOR_DEVELOPER)
+                                 developerBackup=PARAMETERS.BACKUP_LAYOUTS_FOR_DEVELOPER)
     if PARAMETERS.OUTPUT_MODE == ADDON_MODE:
         saveShipLayoutAsAppendFile(appendContentString, layoutName, PARAMETERS.ADDON_OUTPUT_FOLDERPATH,
-                                   developerBackup=False)
+                                   developerBackup=PARAMETERS.BACKUP_LAYOUTS_FOR_DEVELOPER)
     stats['totalSaveShipLayoutDuration'] += time.time() - start
     return stats
 
@@ -235,12 +236,8 @@ def setWeaponMountGibIdsWithProfiling(gibs, layoutWithNewGibs, appendContentStri
 
 def saveGibImagesWithProfiling(PARAMETERS, gibs, gibsWithoutMetalBits, shipImageName, folderPath, stats):
     start = time.time()
-    if PARAMETERS.OUTPUT_MODE == STANDALONE_MODE:
-        saveGibImages(gibs, shipImageName, folderPath,
-                      developerBackup=PARAMETERS.BACKUP_STANDALONE_SEGMENTS_FOR_DEVELOPER)
-    if PARAMETERS.OUTPUT_MODE == ADDON_MODE:
-        saveGibImages(gibs, shipImageName, folderPath,
-                      developerBackup=False)
+    saveGibImages(gibs, shipImageName, folderPath,
+                  developerBackup=PARAMETERS.BACKUP_SEGMENTS_FOR_DEVELOPER)
     saveGibImagesToDiskCache(gibsWithoutMetalBits, shipImageName)
     stats['totalSaveGibImagesDuration'] += time.time() - start
     return stats
@@ -294,5 +291,3 @@ def printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats):
                     totalSegmentDurationPercentage, totalSaveGibImagesDurationPercentage,
                     totalAddGibEntriesToLayoutDurationPercentage, totalSetWeaponMountGibIdsDurationPercentage,
                     totalSaveShipLayoutDurationPercentage))
-
-
