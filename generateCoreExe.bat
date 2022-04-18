@@ -1,1 +1,0 @@
-pyinstaller -F Core.py --hidden-import skimage.filters.edges
