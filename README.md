@@ -266,8 +266,10 @@ Coincidentally (yea, right...), the Glaive beam in FTL is able to destroy many s
 
 # How Can I Contact The Authors Or Otherwise Get Involved?
 
-Epirasque: developer, GMT+1.
+Epirasque: developer, GMT+1
+
 robinthedragon2: drawing tilesets for metal bits
+
 You can find us in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb)
 
 If you have a topic that should be discussed with more people (e.g. if you have strong feelings about how the gibs'
