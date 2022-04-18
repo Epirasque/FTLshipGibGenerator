@@ -76,6 +76,6 @@ def verifyTilesetDimensions(imageArray, tilesetFilePath):
 
 
 def loadTilesetFile():
-    tilesetFilePath = '../metalBits/%s.png' % DEFAULT_TILESET
+    tilesetFilePath = 'metalBits/%s.png' % DEFAULT_TILESET
     imageArray = imread(tilesetFilePath)
     return imageArray, tilesetFilePath
