@@ -1,7 +1,7 @@
 import logging
 
-import imageio
 import numpy as np
+from skimage.io import imread
 
 logger = logging.getLogger('GLAIVE.' + __name__)
 
@@ -12,7 +12,7 @@ VISIBLE_ALPHA_THRESHOLD = 64
 
 def loadShipBaseImage(shipImageName, sourceFolderpath):
     try:
-        imageArray = imageio.imread(
+        imageArray = imread(
             sourceFolderpath + '\\img\\ships_glow\\' + shipImageName + BASE_SUFFIX + '.png')
         # glow should be ignored, is treated as completely transparent
         imageArray[imageArray[:, :, 3] < VISIBLE_ALPHA_THRESHOLD] = 0
@@ -22,7 +22,7 @@ def loadShipBaseImage(shipImageName, sourceFolderpath):
         return imageArray, "ships_glow"
     except FileNotFoundError:
         try:
-            imageArray = imageio.imread(
+            imageArray = imread(
                 sourceFolderpath + '\\img\\ship\\' + shipImageName + BASE_SUFFIX + '.png')
             # glow should be ignored, is treated as completely transparent
             imageArray[imageArray[:, :, 3] < VISIBLE_ALPHA_THRESHOLD] = 0

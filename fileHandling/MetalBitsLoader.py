@@ -1,8 +1,7 @@
 import logging
 
 import numpy as np
-
-import imageio
+from skimage.io import imread
 
 from imageProcessing.ImageProcessingUtilities import findColorInImage, findMeanOfCoordinates
 
@@ -78,5 +77,5 @@ def verifyTilesetDimensions(imageArray, tilesetFilePath):
 
 def loadTilesetFile():
     tilesetFilePath = '../metalBits/%s.png' % DEFAULT_TILESET
-    imageArray = imageio.imread(tilesetFilePath)
+    imageArray = imread(tilesetFilePath)
     return imageArray, tilesetFilePath
