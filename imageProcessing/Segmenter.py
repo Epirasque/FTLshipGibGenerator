@@ -80,8 +80,6 @@ def determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels):
     for gibId in range(1, nrGibs + 1):
         if float(len(np.where(segments == gibId)[0])) * nrGibs / nrNonTransparentPixels >= MINIMAL_WEIGHTED_SEGMENT_RATIO:
             nrSuccessfulGibs += 1
-        else:
-            logger.warning("Segment too small, having %u pixels" % len(np.where(segments == gibId)[0]))
     return nrSuccessfulGibs
 
 
