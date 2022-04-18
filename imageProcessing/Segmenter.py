@@ -76,9 +76,25 @@ def determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, 
 def determineNrSuccessfulGibs(segments, nrGibs):
     nrSuccessfulGibs = 0
     for gibId in range(1, nrGibs + 1):
-        if len(np.where(segments == gibId)[0]) > 1:
+        if moreThanOnePoint(gibId, segments) and moreThanOneDistinctYvalue(gibId,
+                                                                           segments) and moreThanOneDistinctXvalue(
+            gibId, segments):
             nrSuccessfulGibs += 1
     return nrSuccessfulGibs
+
+
+def moreThanOneDistinctXvalue(gibId, segments):
+    return min(np.where(segments == gibId)[1]) < max(
+        np.where(segments == gibId)[1])
+
+
+def moreThanOneDistinctYvalue(gibId, segments):
+    return min(np.where(segments == gibId)[0]) < max(
+        np.where(segments == gibId)[0])
+
+
+def moreThanOnePoint(gibId, segments):
+    return len(np.where(segments == gibId)[0]) > 1
 
 
 def turnSegmentsIntoGibs(nrGibs, segments, shipImage):
