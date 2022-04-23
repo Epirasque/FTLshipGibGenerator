@@ -1,3 +1,4 @@
+import logging
 import xml.etree.ElementTree as ET
 from os.path import exists
 import re
@@ -5,6 +6,7 @@ import re
 SHIP_BLUEPRINT_ATTRIBUTE = 'shipBlueprint'
 MOD_TAG_PREFIXES = ['mod:', 'mod-append:', 'mod-overwrite:']
 
+logger = logging.getLogger('GLAIVE.' + __name__)
 
 def loadShipFileNames(sourceFolderpath):
     blueprints = []
@@ -25,11 +27,14 @@ def loadShipFileNames(sourceFolderpath):
 
 def addBlueprintsFromFile(blueprints, sourceFolderpath, filename):
     if exists(sourceFolderpath + '\\data\\' + filename) == True:
-        with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
-            rawXml = file.read()
-        # TODO: get rid of all <mod:...> sections
-        treeFormedXmlString = '<root>' + re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml) + '</root>'
-        for modPrefix in MOD_TAG_PREFIXES:
-            treeFormedXmlString = treeFormedXmlString.replace(modPrefix, modPrefix[:-1] + "_")
-        parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
-        blueprints.extend(parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE))
+        try:
+            with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
+                rawXml = file.read()
+            # TODO: get rid of all <mod:...> sections
+            treeFormedXmlString = '<root>' + re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml) + '</root>'
+            for modPrefix in MOD_TAG_PREFIXES:
+                treeFormedXmlString = treeFormedXmlString.replace(modPrefix, modPrefix[:-1] + "_")
+            parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
+            blueprints.extend(parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE))
+        except:
+            logger.exception("ERROR: Failed to parse xml content of " + sourceFolderpath + '\\data\\' + filename)
