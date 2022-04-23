@@ -1,12 +1,15 @@
 # G.L.A.I.V.E. v0.9.6: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
 
-# What Does It Do? (TL;DR)
+# What Does It Do?
 
 Pointed to a mod directory it looks for ships that have no gibs, meaning ships that disappear the moment you destroy
 them.
 
 Generates gibs for each ship, based on the base image of the ship. Also updates the metadata (the layout xml file) for
-the ship.
+the ship. 
+Ships that already have gib images and corresponding metadata are not overwritten. 
+If there are multiple ships using the same layout file then they still all end up with individual Gib graphics, 
+though the shape of these Gibs will be identical since only a single set of coordinates can be used.
 
 In standalone-mode (recommended): saves the output directly in the input folder meaning you can pack the addon again and
 use it right away. **Keep a separate backup of your mod before running the generator!**
@@ -16,6 +19,16 @@ vanilla Multiverse).
 
 # How Can I Run It?
 
+## Method A: download and run the precompiled binary
+
+Download the portable bundle here: https://drive.google.com/file/d/1jhqJVhgDAVCN334FsA9STl2J1um24FxC/view?usp=sharing
+
+It contains a README.txt (that can also be found in this repository) with the instructions on how to use it. 
+
+The bundle will be updated for every release. 
+
+## Method B: run the code
+
 You need to install Python 3.8 as well as the appropriate libraries that are used. I personally use the PyCharm
 Community Edition IDE, it makes loading additional libraries much easier (the IDE offers it as quick fix
 recommendations).
@@ -23,6 +36,12 @@ recommendations).
 Set the appropriate parameters in `core.py`, e.g. you can change the desired `NR_GIBS`. At very least you have to set
 the `INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH`. Read the comments above the parameters for more details. Afterwards just
 run the main method without any additional arguments.
+
+## Method C: precompile the code, then run it
+
+If you want to compile the .exe yourself for an intermediate state, use the `generateGlaiveExe.bat`. 
+This requires the Pyinstaller in addition to Python and all relevant libraries (see Method B).  
+Make sure to adjust the paths in the .bat first.
 
 ## Recommended Workflow
 
@@ -144,11 +163,13 @@ gibs look more interesting.
 
 The Generator applies the SLIC algorithm until the output consists of an amount of segments that is equal to `NR_GIBS`.
 If this number is not reached, it retries running the algorithm with a higher `compactness` value until it does, or
-until it a certain number of attempts is reached. There is also a rare edge-case that causes a retry, this will happen 
-if an attempt to reassemble the original image by putting together the segments deviates from the original image by a 
-certain percentage. 
+until it a certain number of attempts is reached. There are also some edge-cases that cause a retry. This will happen 
+if either the segmentation produces a small, unusable last segment (determined the amount of pixels in relation to the 
+number of desired gibs and the amount of visible gibs in the base image) or if an attempt to reassemble the original 
+image by putting together the segments deviates from the original image by a certain percentage. 
 If the maximum number of retries is reached, the generator will continue with the last result it has
-computed, which means fewer segments than was actually defined in `NR_GIBS`. 
+computed, which means fewer segments than was actually defined in `NR_GIBS`. This does not usually happen, however, and 
+will also log an error message. 
 
 The resulting segments are cropped and stored as gibs. Each gib also remembers its relative coordinates (before
 cropping) as well as its ID, center and mass. The mass is currently approximated as the width and height of the gib
@@ -199,19 +220,23 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 
 # Known Issues
 
-- One known case of `tile cannot extend outside image` when generating
+So far all have been fixed. 
+
+## Performance
+
+It should be noted that having more gibs in your mod will increase memory consumption (more images are loaded initially) and load times. 
+If you have at least 8 GB of memory this will still work for Multiverse which comes with way more than a thousand custom ships. 
+With that huge amount of ships the time to load the game initially is increased by about 20% (7s on my older PC) for loading more than a 5000 individual gib pieces. 
 
 # What Is Planned For The Future?
 
 In arbitrary order, *no promises if or when these will be done*:
 
 - Metal bits attached to the gibs, see progress section below
-- More tweaking of direction, velocity and angular values
 - Additional debris-pieces independent of the ship image (think Flak projectiles), also added to ships with already
   existing gibs (there will definitely be a way to turn that off as it does not look like standard FTL gibs anymore)
 - Resolving remaining TODOs in the code
-- Provide a compiled version that runs without installing Python
-- Avoid having longer lines sticking out of gibs (usually black lines that separate parts of the ship image)
+- Avoid having longer lines sticking out of gibs (usually thin black lines that separate parts of the base ship image)
 
 # Progress Of Metal Bits
 
@@ -272,8 +297,7 @@ robinthedragon2: drawing tilesets for metal bits
 
 You can find us in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb)
 
-If you have a topic that should be discussed with more people (e.g. if you have strong feelings about how the gibs'
-physics should behave) then please use the [the-shipyard channel](https://discord.gg/Q9FaGZQw) for now.
+Of course you are very welcome to post in the official [Subsetgames forum thread](https://subsetgames.com/forum/viewtopic.php?f=12&t=38264)
 
 # Special Thanks
 
