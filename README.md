@@ -1,4 +1,4 @@
-# G.L.A.I.V.E. v0.9.6: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
+# G.L.A.I.V.E. v0.9.7: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
 
 # What Does It Do?
 
