@@ -64,7 +64,7 @@ def fitLineToCoordinates(edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX):
     try:
         slope, yOffset = np.polyfit(edgeCoordinatesInRadiusX, edgeCoordinatesInRadiusY, deg=1)
     except:
-        logger.warning("ERROR: Failed to detect line among edge pixels within search radius")
+        logger.warning("WARNING: Failed to detect line among edge pixels within search radius")
     return slope, yOffset
 
 
