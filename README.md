@@ -295,7 +295,7 @@ Coincidentally (yea, right...), the Glaive beam in FTL is able to destroy many s
 
 Epirasque: developer, GMT+1
 
-robinthedragon2: drawing tilesets for metal bits
+Dalvest: providing tilesets for metal bits, GMT+2
 
 You can find us in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb)
 
