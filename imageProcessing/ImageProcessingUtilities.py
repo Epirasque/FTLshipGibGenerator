@@ -102,17 +102,25 @@ def determineOutwardDirectionAtPoint(imageArray, edgeCoordinates, pointOfDetecti
 
 
 def determineOutwardVector(pointOfDetection, vectorA, vectorB, imageArray, scanForTransparencyDistance):
-    # TODO: this could STILL go out of bounds in rare cases even if uncropped
     scanX_A = pointOfDetection[1] + round(vectorA[1] * scanForTransparencyDistance)
     scanY_A = pointOfDetection[0] + round(vectorA[0] * scanForTransparencyDistance)
-    isAtowardsTransparency = imageArray[scanY_A, scanX_A][3] < 255
+    isDetectionSuccessful = True
+    isAtowardsTransparency = False
+    isBtowardsTransparency = False
+    if scanY_A < 0 or scanY_A >= imageArray.shape[0] or scanX_A < 0 or scanX_A >= imageArray.shape[1]:
+        isDetectionSuccessful = False
+    else:
+        isAtowardsTransparency = np.any(imageArray[scanY_A, scanX_A][3] < 255)
     scanX_B = pointOfDetection[1] + round(vectorB[1] * scanForTransparencyDistance)
     scanY_B = pointOfDetection[0] + round(vectorB[0] * scanForTransparencyDistance)
-    isBtowardsTransparency = imageArray[scanY_B, scanX_B][3] < 255
-    isDetectionSuccessful = True
+    if scanY_B < 0 or scanY_B >= imageArray.shape[0] or scanX_B < 0 or scanX_B >= imageArray.shape[1]:
+        isDetectionSuccessful = False
+    else:
+        isBtowardsTransparency = np.any(imageArray[scanY_B, scanX_B][3] < 255)
+
     if isAtowardsTransparency and isBtowardsTransparency:
         isDetectionSuccessful = False
-    elif ~isAtowardsTransparency and ~isBtowardsTransparency:
+    if not isAtowardsTransparency and not isBtowardsTransparency:
         isDetectionSuccessful = False
     if isAtowardsTransparency:
         outwardVector = vectorA
