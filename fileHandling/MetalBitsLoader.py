@@ -44,9 +44,12 @@ def loadTilesetsIntoDictionary(folderName, tilesetFilepaths):
         loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets)
 
     layer1distribution = []
-    angleRange = range(360)
+    layer1distributionString = ''
+    angleRange = range(90)
     for angle in angleRange:
         layer1distribution.append(len(tilesets[LAYER1][angle]))
+        layer1distributionString += "For angle %2u: %u tiles\n" % (angle, len(tilesets[LAYER1][angle]))
+    logger.info('Tile distribution for layer1 (including tolerance of %u): %s' % (ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION, layer1distributionString))
     if min(layer1distribution) == 0:
         logger.critical(
             'For %s, at least one angle has no valid tile to choose from: %s' % (LAYER1, layer1distribution))
@@ -89,7 +92,7 @@ def addTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimensi
     standardDeviationForOrientation = determineStandardDeviation(determinedOrientations)
     logger.debug(
         'Determined tile nr %u / %u in %s with %u%% orientation detection rate for %u attachment pixels, median orientation: %u (standard deviation: %.2f)' %
-        (tileId, nrTiles, tilesetFilepath, successRate, initialNrAttachmentEdgePixels, medianOrientation,
+        (tileId + 1, nrTiles, tilesetFilepath, successRate, initialNrAttachmentEdgePixels, medianOrientation,
          standardDeviationForOrientation))
     # has processed attachment edge color
     del tile
