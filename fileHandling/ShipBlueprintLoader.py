@@ -36,5 +36,5 @@ def addBlueprintsFromFile(blueprints, sourceFolderpath, filename):
                 treeFormedXmlString = treeFormedXmlString.replace(modPrefix, modPrefix[:-1] + "_")
             parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
             blueprints.extend(parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE))
-        except:
-            logger.exception("ERROR: Failed to parse xml content of " + sourceFolderpath + '\\data\\' + filename)
+        except Exception as e:
+            logger.exception("ERROR: Failed to parse xml content of " + sourceFolderpath + '\\data\\' + filename + ": " + e)
