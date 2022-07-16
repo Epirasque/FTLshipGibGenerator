@@ -176,9 +176,11 @@ def determineTargetFolderPath(PARAMETERS):
 
 def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, tilesets):
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(PARAMETERS, shipImageName, stats)
+    logger.debug('Segmenting %s into individual gibs...' % shipImageName)
     gibs, stats = segmentWithProfiling(PARAMETERS, baseImg, shipImageName, stats)
     gibsWithoutMetalBits = deepcopy(gibs)
     if PARAMETERS.GENERATE_METAL_BITS == True:
+        logger.debug('Attaching metalbits to %s...' % shipImageName)
         gibs = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
