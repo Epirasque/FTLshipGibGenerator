@@ -1,81 +1,235 @@
 import logging
+import os
+import random
+import statistics
 
 import numpy as np
+from matplotlib import pyplot as plt
 from skimage.io import imread
 
-from imageProcessing.ImageProcessingUtilities import findColorInImage, findMeanOfCoordinates
+from imageProcessing.ImageProcessingUtilities import determineOutwardDirectionAtPoint, findColorInImage, \
+    findMeanOfCoordinates
+from imageProcessing.MetalBitsConstants import TILESET_ATTACHMENT_EDGE_COLOR, TILESET_PROCESSED_ATTACHMENT_EDGE_COLOR
 
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 LAYER1 = 'layer1'
-DEFAULT_TILESET = 'default/25x21_metal_bit'#'default/10x10_metal_bits_1'
-TILE_WIDTH = 25#10  # 72
-TILE_HEIGHT = 21#10  # 72
-# should divide 360 without remainder
-CLOCKWISE_ANGLE_PER_STEP = 45  # 15
-NR_ANGLE_STEPS = round(360 / CLOCKWISE_ANGLE_PER_STEP)
-NR_ANGLE_STEPS_WHEN_LOADING = round(NR_ANGLE_STEPS / 4)
-ORIGIN_COLOR = [0, 255, 0]
+# always end with trailing / here
+FOLDER_NAME = "metalBits/"
+NR_FILENAME_ENCODED_PARAMETERS = 2
+# is applied in both directions
+ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 30
 
 
 def loadTilesets():
-    imageArray, tilesetFilePath = loadTilesetFile()
-    nrPieces = verifyTilesetDimensions(imageArray, tilesetFilePath)
-    tilesets = splitIntoDictionary(imageArray, nrPieces)
-    addOriginPixels(tilesets)
+    tilesetFilepaths = determineTilesetFilepaths(FOLDER_NAME)
+    tilesets = loadTilesetsIntoDictionary(FOLDER_NAME, tilesetFilepaths)
     return tilesets
 
 
-def addOriginPixels(tilesets):
-    for piece in tilesets['default'][LAYER1]:
-        for angle in range(0, 360, CLOCKWISE_ANGLE_PER_STEP):
-            tile = piece[angle]['img']
-            coloredArea, coloredCoordinates = findColorInImage(tile, ORIGIN_COLOR)
-            originCenterPoint = findMeanOfCoordinates(coloredCoordinates)
-            piece[angle]['origin'] = coloredArea, coloredCoordinates, originCenterPoint
+def determineTilesetFilepaths(folderName):
+    filenames = []
+    for file in os.listdir(folderName):
+        if file.lower().endswith(".png") and file.startswith('layer'):
+            filenames.append(file)
+            logger.info('Detected %s' % file)
+        else:
+            logger.warning('Unexpected file in %s: %s' % (folderName, file))
+    return filenames
 
 
-def splitIntoDictionary(imageArray, nrPieces):
+def loadTilesetsIntoDictionary(folderName, tilesetFilepaths):
     tilesets = {}
-    tilesets['default'] = {}
-    tilesets['default'][LAYER1] = []
-    for pieceID in range(nrPieces):
-        angleDict = {}
-        for angleStep in range(NR_ANGLE_STEPS_WHEN_LOADING):
-            yMin = angleStep * TILE_HEIGHT
-            yMax = (angleStep + 1) * TILE_HEIGHT  # -1 implicitly given by ':' range
-            xMin = pieceID * TILE_WIDTH
-            xMax = (pieceID + 1) * TILE_WIDTH  # -1 implicitly given by ':' range
-            tile = imageArray[yMin:yMax, xMin:xMax]
-            angle = angleStep * CLOCKWISE_ANGLE_PER_STEP
-            angleDict[angle] = {}
-            angleDict[angle]['img'] = np.ma.copy(tile)
-            angleDict[angle + 270] = {}
-            angleDict[angle + 270]['img'] = np.rot90(np.ma.copy(angleDict[angle + 0]['img']))
-            angleDict[angle + 180] = {}
-            angleDict[angle + 180]['img'] = np.rot90(np.ma.copy(angleDict[angle + 270]['img']))
-            angleDict[angle + 90] = {}
-            angleDict[angle + 90]['img'] = np.rot90(np.ma.copy(angleDict[angle + 180]['img']))
+    for tilesetFilepath in tilesetFilepaths:
+        loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets)
 
-        tilesets['default'][LAYER1].append(angleDict)
+    layer1distribution = []
+    angleRange = range(360)
+    for angle in angleRange:
+        layer1distribution.append(len(tilesets[LAYER1][angle]))
+    if min(layer1distribution) == 0:
+        logger.critical(
+            'For %s, at least one angle has no valid tile to choose from: %s' % (LAYER1, layer1distribution))
+    plt.figure(1)
+    plt.bar(angleRange, np.asarray(layer1distribution))
+    plt.title(
+        'Layer 1: nr. of available tiles for each angle (including tolerance of %u)' % ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    plt.savefig('layer1_tiles_per_angle.png')
+    plt.figure(2)
+    plt.hist(layer1distribution)
+    plt.title(
+        'Layer 1: histogram of tile-amount-occurrences (including tolerance of %u)' % ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    plt.savefig('layer1_tile_histogram.png')
     return tilesets
 
 
-def verifyTilesetDimensions(imageArray, tilesetFilePath):
+def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets):
+    layer, tilesetDimension = parseFilenameParameters(tilesetFilepath)
+    if layer == LAYER1:
+        initializeLayerInDictionary(layer, tilesets)
+        imageArray = imread(folderName + tilesetFilepath)
+        ymax = determineFileDimensions(imageArray, tilesetDimension, tilesetFilepath)
+        nrTiles = determineNrOfTiles(tilesetDimension, tilesetFilepath, ymax)
+        for tileId in range(nrTiles):
+            addTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimension, tilesetFilepath, tilesets)
+
+
+def addTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimension, tilesetFilepath, tilesets):
+    tile = extractTileArray(imageArray, tileId, tilesetDimension)
+    tile0turned = np.ma.copy(tile)
+    remainingUncoveredAttachmentEdgePixels = np.where(
+        np.all(tile == TILESET_ATTACHMENT_EDGE_COLOR, axis=-1))
+    allEdgePixelsAsList, initialNrAttachmentEdgePixels = determineAllInitialEdgePixelsAsList(
+        remainingUncoveredAttachmentEdgePixels)
+    determinedOrientations, nrFailedOrientationDetections, nrSuccessfulOrientationDetections = determineOrientationsForEdge(
+        allEdgePixelsAsList, remainingUncoveredAttachmentEdgePixels, tile, tilesetDimension)
+    successRate = determineSuccessRate(nrFailedOrientationDetections, nrSuccessfulOrientationDetections, tileId,
+                                       tilesetFilepath)
+    medianOrientation = consolidateOrientationsIntoSingleOrientation(determinedOrientations)
+    standardDeviationForOrientation = determineStandardDeviation(determinedOrientations)
+    logger.debug(
+        'Determined tile nr %u / %u in %s with %u%% orientation detection rate for %u attachment pixels, median orientation: %u (standard deviation: %.2f)' %
+        (tileId, nrTiles, tilesetFilepath, successRate, initialNrAttachmentEdgePixels, medianOrientation,
+         standardDeviationForOrientation))
+    # has processed attachment edge color
+    del tile
+    # original tile does not have to be between 0° and 90° for this to work
+    tile270turned = np.rot90(np.ma.copy(tile0turned))
+    tile180turned = np.rot90(np.ma.copy(tile270turned))
+    tile90turned = np.rot90(np.ma.copy(tile180turned))
+    for angleWithinTolerance in range(medianOrientation - ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION,
+                                      medianOrientation + ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION + 1):
+        allowTileToCoverAngle(angleWithinTolerance, layer, tile0turned, tile180turned, tile270turned, tile90turned,
+                              tilesets)
+
+
+def allowTileToCoverAngle(angleWithinTolerance, layer, tile0turned, tile180turned, tile270turned, tile90turned,
+                          tilesets):
+    coveredAngle = angleWithinTolerance % 360
+    addTileToTileset(coveredAngle, layer, tile0turned, tilesets)
+    coveredAngle = (coveredAngle + 90) % 360
+    addTileToTileset(coveredAngle, layer, tile90turned, tilesets)
+    coveredAngle = (coveredAngle + 90) % 360
+    addTileToTileset(coveredAngle, layer, tile180turned, tilesets)
+    coveredAngle = (coveredAngle + 90) % 360
+    addTileToTileset(coveredAngle, layer, tile270turned, tilesets)
+
+
+def addTileToTileset(coveredAngle, layer, tile, tilesets):
+    angleDict = {}
+    angleDict['img'] = tile
+    coloredArea, coloredCoordinates = findColorInImage(tile, TILESET_ATTACHMENT_EDGE_COLOR)
+    originCenterPoint = findMeanOfCoordinates(coloredCoordinates)
+    angleDict['origin'] = coloredArea, coloredCoordinates, originCenterPoint
+    tilesets[layer][coveredAngle].append(angleDict)
+
+
+def determineStandardDeviation(determinedOrientations):
+    standardDeviationForOrientation = np.std(determinedOrientations)
+    if standardDeviationForOrientation > 0.:
+        logger.warning(
+            "standard deviation for orientation detection is above 0: %.2f" % standardDeviationForOrientation)
+    return standardDeviationForOrientation
+
+
+def consolidateOrientationsIntoSingleOrientation(determinedOrientations):
+    return int(round(statistics.median(determinedOrientations)))
+
+
+def determineSuccessRate(nrFailedOrientationDetections, nrSuccessfulOrientationDetections, tileId, tilesetFilepath):
+    if nrFailedOrientationDetections > 0:
+        successRate = round(nrSuccessfulOrientationDetections * 100 / (
+                nrSuccessfulOrientationDetections + nrFailedOrientationDetections))
+    else:
+        successRate = 100
+    if nrSuccessfulOrientationDetections == 0:
+        raise Exception('tile nr %u in %s: failed to detect orientation for even one edge pixel' % (
+            tileId, tilesetFilepath))
+    return successRate
+
+
+def determineOrientationsForEdge(allEdgePixelsAsList, remainingUncoveredAttachmentEdgePixels, tile, tilesetDimension):
+    nrSuccessfulOrientationDetections = 0
+    nrFailedOrientationDetections = 0
+    determinedOrientations = []
+    while np.any(remainingUncoveredAttachmentEdgePixels):
+        attachmentPointId = random.randint(0, len(remainingUncoveredAttachmentEdgePixels[0]) - 1)
+        edgePointToCheck = remainingUncoveredAttachmentEdgePixels[0][attachmentPointId], \
+                           remainingUncoveredAttachmentEdgePixels[1][
+                               attachmentPointId]
+
+        isDetectionSuccessful, outwardAngle, outwardVectorYX = determineOutwardDirectionAtPoint(
+            tile,
+            allEdgePixelsAsList,
+            edgePointToCheck,
+            tilesetDimension,
+            tilesetDimension)
+
+        tile[edgePointToCheck] = TILESET_PROCESSED_ATTACHMENT_EDGE_COLOR
+        remainingUncoveredAttachmentEdgePixels = np.where(
+            np.all(tile == TILESET_ATTACHMENT_EDGE_COLOR, axis=-1))
+
+        if isDetectionSuccessful:
+            nrSuccessfulOrientationDetections += 1
+            outwardAngle = (
+                                   outwardAngle + 180) % 360  # invert since we want to attach the tile and not ONTO the tile
+            determinedOrientations.append(outwardAngle)
+        else:
+            nrFailedOrientationDetections += 1
+    return determinedOrientations, nrFailedOrientationDetections, nrSuccessfulOrientationDetections
+
+
+def determineAllInitialEdgePixelsAsList(remainingUncoveredAttachmentEdgePixels):
+    initialNrAttachmentEdgePixels = remainingUncoveredAttachmentEdgePixels[0].size
+    allEdgePixelsAsList = []
+    for edgePixelId in range(initialNrAttachmentEdgePixels):
+        allEdgePixelsAsList.append((remainingUncoveredAttachmentEdgePixels[0][edgePixelId],
+                                    remainingUncoveredAttachmentEdgePixels[1][edgePixelId]))
+    return allEdgePixelsAsList, initialNrAttachmentEdgePixels
+
+
+def extractTileArray(imageArray, tileId, tilesetDimension):
+    xMin = 0
+    xMax = tilesetDimension
+    yMin = tileId * tilesetDimension
+    yMax = (tileId + 1) * tilesetDimension  # -1 implicitly given by ':' range
+    tile = imageArray[yMin:yMax, xMin:xMax]
+    return tile
+
+
+def determineNrOfTiles(tilesetDimension, tilesetFilepath, ymax):
+    nrTiles = float(ymax) / tilesetDimension
+    if nrTiles != round(nrTiles):
+        raise Exception(
+            "Tileset height is supposed to be an integer multiple of %u pixels but is actually a multiple of %f.2f: %s" % (
+                tilesetDimension, nrTiles, tilesetFilepath))
+    nrTiles = int(nrTiles)
+    return nrTiles
+
+
+def determineFileDimensions(imageArray, tilesetDimension, tilesetFilepath):
     ymax, xmax = imageArray.shape[0], imageArray.shape[1]
-    if (ymax / TILE_HEIGHT != NR_ANGLE_STEPS_WHEN_LOADING):
-        logger.critical('ERROR when reading tileset %s, tileset height does not match expected %u' % (
-            tilesetFilePath, TILE_HEIGHT * (360 / CLOCKWISE_ANGLE_PER_STEP)))
-        exit(1)
-    nrPieces = xmax / TILE_WIDTH
-    if nrPieces != round(nrPieces):
-        logger.critical(
-            'ERROR when reading tileset %s, tileset width is not multiple of %u' % (tilesetFilePath, TILE_WIDTH))
-        exit(1)
-    return round(nrPieces)
+    if xmax != tilesetDimension:
+        raise Exception("Tileset width is supposed to be %u pixels but is actually %u: %s" % (
+            tilesetDimension, xmax, tilesetFilepath))
+    return ymax
 
 
-def loadTilesetFile():
-    tilesetFilePath = 'metalBits/%s.png' % DEFAULT_TILESET
-    imageArray = imread(tilesetFilePath)
-    return imageArray, tilesetFilePath
+def initializeLayerInDictionary(layer, tilesets):
+    if not layer in tilesets:
+        tilesets[layer] = {}
+        for coveredAngle in range(360):
+            tilesets[layer][coveredAngle] = []
+
+
+def parseFilenameParameters(tilesetFilepath):
+    filenameParameters = tilesetFilepath.split('_')
+    if len(filenameParameters) != NR_FILENAME_ENCODED_PARAMETERS:
+        raise Exception('Malformed filename, expected %u parameters separated by _: %s' % (
+            NR_FILENAME_ENCODED_PARAMETERS, tilesetFilepath))
+    try:
+        layer = filenameParameters[0]
+        tilesetDimension = int(filenameParameters[1].split('x')[0])
+    except Exception as e:
+        raise Exception("Failed to decode filename parameters for %s: %s" % (tilesetFilepath, e))
+    return layer, tilesetDimension

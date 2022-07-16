@@ -220,12 +220,12 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 
 # Known Issues
 
-So far all have been fixed. 
+- Glow can sometimes cause an issue  
 
 ## Performance
 
 It should be noted that having more gibs in your mod will increase memory consumption (more images are loaded initially) and load times. 
-If you have at least 8 GB of memory this will still work for Multiverse which comes with way more than a thousand custom ships. 
+If you have at least 8 GB of memory this will still work for Multiverse, which comes with way more than a thousand custom ships. 
 With that huge amount of ships the time to load the game initially is increased by about 20% (7s on my older PC) for loading more than a 5000 individual gib pieces. 
 
 # What Is Planned For The Future?
@@ -245,6 +245,8 @@ In arbitrary order, *no promises if or when these will be done*:
         - [x] load and split
         - [x] detect origin/edge
         - [x] support pre-rotation
+        - [x] support multiple tile-sizes from different files
+        - [x] support arbitrary rotations and amounts regarding orientation coverage
     - [ ] program flow
         - [x] feature toggle
         - [x] flow to class at lowest level
@@ -280,13 +282,13 @@ In arbitrary order, *no promises if or when these will be done*:
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
-    - [ ] prevent skewed coordinates by caching unique metal bits per layout (should not be necessay; verify)
+    - [ ] prevent skewed coordinates by caching unique metal bits per layout (should not be necessary; verify)
 - [ ] shading
 - [ ] tweak until it looks great
 
 # What does G.L.A.I.V.E. stand for?
 
-Gibs Leveraging Artificial Intelligence & Voodoo Enchantments. K-Means is an unsupervised machine learning algorithm. Some people consider machine learning to be artificial intelligence, strictly speaking it is not. There are also a ton of crazy little headache-inducing edge cases and tricks involved that I don't want to bother explaining in the README, so let's just call it Voodoo Enchantments. 
+**G**ibs **L**everaging **A**rtificial **I**ntelligence & **V**oodoo **E**nchantments. K-Means is an unsupervised machine learning algorithm. Some people consider machine learning to be artificial intelligence, strictly speaking it is not. There are also a ton of crazy little headache-inducing edge cases and tricks involved that I don't want to bother explaining in the README, so let's just call it Voodoo Enchantments. 
 Coincidentally (yea, right...), the Glaive beam in FTL is able to destroy many ships in a single blow when cutting across their hull, only their gibs remain...
 
 # How Can I Contact The Authors Or Otherwise Get Involved?

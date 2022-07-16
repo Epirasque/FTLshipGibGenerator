@@ -2,7 +2,7 @@ import random
 
 from skimage.draw import line
 
-from fileHandling.MetalBitsLoader import LAYER1, CLOCKWISE_ANGLE_PER_STEP
+from fileHandling.MetalBitsLoader import LAYER1
 from flow.GeneratorLooper import logHighestMemoryUsage
 from flow.MemoryManagement import cleanUpMemory
 from imageProcessing.DebugAnimator import saveGif
@@ -28,8 +28,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     originalGibImageArray = np.ma.copy(gibImage)
     seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
-    tilesToUse = tilesets['default'][LAYER1]
-    nrTilesToUse = len(tilesToUse)
+    tilesToUse = tilesets[LAYER1]
     # TODO: use seamCoordinates directly?
     for coordinates in seamCoordinates:
         metalBits[coordinates[0], coordinates[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
@@ -42,7 +41,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         nrAttemptsForLayer += 1
         cleanUpMemory()
         metalBits, remainingUncoveredSeamPixels = attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames,
-                                                                        metalBits, nrTilesToUse, originalGibImageArray,
+                                                                        metalBits, originalGibImageArray,
                                                                         remainingUncoveredSeamPixels, seamCoordinates,
                                                                         seamImageArray, shipImage, tilesToUse)
 
@@ -50,7 +49,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     gibToPopulate['img'] = metalBits
 
 
-def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits, nrTilesToUse, originalGibImageArray,
+def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits, originalGibImageArray,
                           remainingUncoveredSeamPixels, seamCoordinates, seamImageArray, shipImage, tilesToUse):
     isCandidateOriginCoveredByGib = False
     isCandidateValid = False
@@ -59,7 +58,7 @@ def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits,
         PARAMETERS, gifFrames, metalBits, originalGibImageArray, remainingUncoveredSeamPixels, seamCoordinates)
     if isDetectionSuccessful == True:
         inwardsSearchX, inwardsSearchY, isCandidateOriginCoveredByGib, tileImageArray, tileOriginCenterPoint = determineCandidateTileWithCoveredOrigin(
-            PARAMETERS, attachmentPoint, gifFrames, metalBits, nrTilesToUse, originalGibImageArray, outwardAngle,
+            PARAMETERS, attachmentPoint, gifFrames, metalBits, originalGibImageArray, outwardAngle,
             outwardVectorYX, tilesToUse)
     if isCandidateOriginCoveredByGib == True:
         isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
@@ -77,17 +76,15 @@ def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits,
                                                                                                      tileOriginCenterPoint)
     if isCandidateValid == True:
         metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate,
-                                                                   originalGibImageArray, remainingUncoveredSeamPixels,
-                                                                   seamPixelsCoveredByCandidate)
-    remainingUncoveredSeamPixels = updateRemainingSeamPoints(attachmentPoint, metalBits, remainingUncoveredSeamPixels)
+                                                                   originalGibImageArray, seamPixelsCoveredByCandidate)
+    remainingUncoveredSeamPixels = updateRemainingSeamPoints(attachmentPoint, metalBits)
     return metalBits, remainingUncoveredSeamPixels
 
 
 def approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate, originalGibImageArray,
-                     remainingUncoveredSeamPixels, seamPixelsCoveredByCandidate):
+                     seamPixelsCoveredByCandidate):
     metalBits = metalBitsCandidate
-    remainingUncoveredSeamPixels = updateRemainingSeamPoints(seamPixelsCoveredByCandidate, metalBits,
-                                                             remainingUncoveredSeamPixels)
+    remainingUncoveredSeamPixels = updateRemainingSeamPoints(seamPixelsCoveredByCandidate, metalBits)
     animateGibResultAndSeamPreview(PARAMETERS, gifFrames, metalBits, originalGibImageArray,
                                    remainingUncoveredSeamPixels)
     return metalBits, remainingUncoveredSeamPixels
@@ -127,9 +124,9 @@ def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gi
     return isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate
 
 
-def determineCandidateTileWithCoveredOrigin(PARAMETERS, attachmentPoint, gifFrames, metalBits, nrTilesToUse,
-                                            originalGibImageArray, outwardAngle, outwardVectorYX, tilesToUse):
-    tileImageArray, tileOriginCenterPoint, tileOriginCoordinates = determineTileToAttach(nrTilesToUse, outwardAngle,
+def determineCandidateTileWithCoveredOrigin(PARAMETERS, attachmentPoint, gifFrames, metalBits, originalGibImageArray,
+                                            outwardAngle, outwardVectorYX, tilesToUse):
+    tileImageArray, tileOriginCenterPoint, tileOriginCoordinates = determineTileToAttach(outwardAngle,
                                                                                          tilesToUse)
     alreadyCoveredArea = np.ma.copy(originalGibImageArray)
     pasteNonTransparentValuesIntoArray(metalBits, alreadyCoveredArea)
@@ -248,15 +245,15 @@ def animateAlreadyCoveredArea(PARAMETERS, alreadyCoveredArea, attachmentPoint, g
         gifFrames.append(gifFrame)
 
 
-def determineTileToAttach(nrTilesToUse, outwardAngle, tilesToUse):
-    tileId = random.randint(0, nrTilesToUse - 1)
-    tileAngleId = (CLOCKWISE_ANGLE_PER_STEP * round(outwardAngle / CLOCKWISE_ANGLE_PER_STEP)) % 360
-    tileImageArray = tilesToUse[tileId][tileAngleId]['img']
-    tileOriginArea, tileOriginCoordinates, tileOriginCenterPoint = tilesToUse[tileId][tileAngleId]['origin']
+def determineTileToAttach(outwardAngle, tilesToUse):
+    tileCandidates = tilesToUse[outwardAngle]
+    tileId = random.randint(0, len(tileCandidates) - 1)
+    tileImageArray = tilesToUse[outwardAngle][tileId]['img']
+    tileOriginArea, tileOriginCoordinates, tileOriginCenterPoint = tilesToUse[outwardAngle][tileId]['origin']
     return tileImageArray, tileOriginCenterPoint, tileOriginCoordinates
 
 
-def updateRemainingSeamPoints(attachmentPoint, metalBits, remainingUncoveredSeamPixels):
+def updateRemainingSeamPoints(attachmentPoint, metalBits):
     metalBits[attachmentPoint] = BLOCKED_SEAM_PIXELS_COLOR
     remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
     return remainingUncoveredSeamPixels
