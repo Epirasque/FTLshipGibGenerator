@@ -12,3 +12,5 @@ TODOS.txt
 *.exe
 *.zip
 binary/*
+TCC*/
+investigation/
