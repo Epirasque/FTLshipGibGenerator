@@ -293,7 +293,21 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
 
 
 def determineAttachmentPoint(remainingUncoveredSeamPixels):
-    attachmentPointId = random.randint(0, len(remainingUncoveredSeamPixels[0]) - 1)
+    seamPointY = remainingUncoveredSeamPixels[0]
+    seamPointX = remainingUncoveredSeamPixels[1]
+    seamPointFreedomScores = [0] * len(seamPointX)
+    # TODO: improve performance if feasible and necessary
+    for seamPointID in range(len(seamPointX)):
+        seamPointFreedomScores[seamPointID] = 0
+        pointToEvaluateX = seamPointX[seamPointID]
+        pointToEvaluateY = seamPointY[seamPointID]
+        for seamPointInSomeRangeID in range(len(seamPointX)):
+            if seamPointID != seamPointInSomeRangeID:
+                # sqrt not necessarily needed for proper order of scores, using inverse squared distance right now
+                seamPointFreedomScores[seamPointID] += 1. / (
+                        (pointToEvaluateX - seamPointX[seamPointInSomeRangeID]) ** 2
+                        + (pointToEvaluateY - seamPointY[seamPointInSomeRangeID]) ** 2)
+    attachmentPointId = np.argmax(seamPointFreedomScores)
     attachmentPoint = remainingUncoveredSeamPixels[0][attachmentPointId], remainingUncoveredSeamPixels[1][
         attachmentPointId]
     return attachmentPoint
