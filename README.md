@@ -220,7 +220,8 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 
 # Known Issues
 
-- Glow can sometimes cause an issue  
+- Glow can sometimes cause an issue
+- Out of bounds issue for metal bits
 
 ## Performance
 
@@ -257,8 +258,8 @@ In arbitrary order, *no promises if or when these will be done*:
 - [x] mark seams between gibs
     - [x] prototype
     - [ ] dark edge in final gib, invisible before flying apart
-- [ ] innermost layer1 (chunks)
-    - [ ] tileset
+- [x] innermost layer1 (chunks)
+    - [x] tileset
     - [x] determine general direction
         - [x] prototype
     - [x] constraints
@@ -277,9 +278,11 @@ In arbitrary order, *no promises if or when these will be done*:
 - [x] QoL
     - [x] feature toggle
     - [x] save generation process as gif for debugging
-    - [x] performance improvements
+    - [ ] performance improvements
       - [x] dynamic transparency detection offset
       - [x] fix gib topology resulting in unintended neighbour-blocking
+      - [x] fix slowdown when determining attachment detection
+      - [ ] multithreading
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
