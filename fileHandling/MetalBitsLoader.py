@@ -49,7 +49,7 @@ def loadTilesetsIntoDictionary(folderName, tilesetFilepaths):
     for angle in angleRange:
         layer1distribution.append(len(tilesets[LAYER1][angle]))
         layer1distributionString += "For angle %2u: %u tiles\n" % (angle, len(tilesets[LAYER1][angle]))
-    logger.info('Tile distribution for layer1 (including tolerance of %u): %s' % (ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION, layer1distributionString))
+    logger.info('Tile distribution for layer1 (including tolerance of %u): \n%s' % (ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION, layer1distributionString))
     if min(layer1distribution) == 0:
         logger.critical(
             'For %s, at least one angle has no valid tile to choose from: %s' % (LAYER1, layer1distribution))

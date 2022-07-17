@@ -256,6 +256,7 @@ In arbitrary order, *no promises if or when these will be done*:
         - [ ] classify ships during gib generation
 - [x] mark seams between gibs
     - [x] prototype
+    - [ ] dark edge in final gib, invisible before flying apart
 - [ ] innermost layer1 (chunks)
     - [ ] tileset
     - [x] determine general direction

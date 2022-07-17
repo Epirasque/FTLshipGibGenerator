@@ -40,6 +40,9 @@ def determineParameters():
 
 
 def main(argv):
+    runIt()
+
+def runIt():
     initializeLogging()
     logger = logging.getLogger('Core')
     logger.info('Parsing config.ini...')
