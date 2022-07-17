@@ -27,6 +27,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     gibImage = gibToPopulate['img']
     originalGibImageArray = np.ma.copy(gibImage)
     seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
+    seamDistanceScores = precalculateSeamDistanceScores(seamCoordinates)
     metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
     tilesToUse = tilesets[LAYER1]
     # TODO: use seamCoordinates directly?
@@ -43,19 +44,35 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         metalBits, remainingUncoveredSeamPixels = attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames,
                                                                         metalBits, originalGibImageArray,
                                                                         remainingUncoveredSeamPixels, seamCoordinates,
-                                                                        seamImageArray, shipImage, tilesToUse)
+                                                                        seamImageArray, shipImage, tilesToUse,
+                                                                        seamDistanceScores)
 
     pasteNonTransparentValuesIntoArray(originalGibImageArray, metalBits)
     gibToPopulate['img'] = metalBits
 
 
+def precalculateSeamDistanceScores(seamCoordinates):
+    seamDistanceScores = {}
+    for coordinates in seamCoordinates:
+        for distanceCoordinates in seamCoordinates:
+            squaredDistance = ((coordinates[0] - distanceCoordinates[0]) ** 2
+                               + (coordinates[1] - distanceCoordinates[1]) ** 2)
+            if squaredDistance > 0:  # occurs for distance to itself
+                seamDistanceScores[coordinates, distanceCoordinates] = 1. / squaredDistance
+            else:
+                seamDistanceScores[coordinates, distanceCoordinates] = 0
+    return seamDistanceScores
+
+
 def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits, originalGibImageArray,
-                          remainingUncoveredSeamPixels, seamCoordinates, seamImageArray, shipImage, tilesToUse):
+                          remainingUncoveredSeamPixels, seamCoordinates, seamImageArray, shipImage, tilesToUse,
+                          seamDistanceScores):
     isCandidateOriginCoveredByGib = False
     isCandidateValid = False
 
     attachmentPoint, isDetectionSuccessful, outwardAngle, outwardVectorYX = determineAttachmentPointWithOrientation(
-        PARAMETERS, gifFrames, metalBits, originalGibImageArray, remainingUncoveredSeamPixels, seamCoordinates)
+        PARAMETERS, gifFrames, metalBits, originalGibImageArray, remainingUncoveredSeamPixels, seamCoordinates,
+        seamDistanceScores)
     if isDetectionSuccessful == True:
         inwardsSearchX, inwardsSearchY, isCandidateOriginCoveredByGib, tileImageArray, tileOriginCenterPoint = determineCandidateTileWithCoveredOrigin(
             PARAMETERS, attachmentPoint, gifFrames, metalBits, originalGibImageArray, outwardAngle,
@@ -142,8 +159,8 @@ def determineCandidateTileWithCoveredOrigin(PARAMETERS, attachmentPoint, gifFram
 
 
 def determineAttachmentPointWithOrientation(PARAMETERS, gifFrames, metalBits, originalGibImageArray,
-                                            remainingUncoveredSeamPixels, seamCoordinates):
-    attachmentPoint = determineAttachmentPoint(remainingUncoveredSeamPixels)
+                                            remainingUncoveredSeamPixels, seamCoordinates, seamDistanceScores):
+    attachmentPoint = determineAttachmentPoint(remainingUncoveredSeamPixels, seamDistanceScores)
     isDetectionSuccessful, outwardAngle, outwardVectorYX = determineOutwardDirectionAtPoint(originalGibImageArray,
                                                                                             seamCoordinates,
                                                                                             attachmentPoint,
@@ -292,25 +309,18 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
         gifFrames.append(gifFrame)
 
 
-def determineAttachmentPoint(remainingUncoveredSeamPixels):
-    seamPointY = remainingUncoveredSeamPixels[0]
-    seamPointX = remainingUncoveredSeamPixels[1]
-    seamPointFreedomScores = [0] * len(seamPointX)
-    # TODO: improve performance if feasible and necessary
-    for seamPointID in range(len(seamPointX)):
-        seamPointFreedomScores[seamPointID] = 0
-        pointToEvaluateX = seamPointX[seamPointID]
-        pointToEvaluateY = seamPointY[seamPointID]
-        for seamPointInSomeRangeID in range(len(seamPointX)):
-            if seamPointID != seamPointInSomeRangeID:
-                # sqrt not necessarily needed for proper order of scores, using inverse squared distance right now
-                seamPointFreedomScores[seamPointID] += 1. / (
-                        (pointToEvaluateX - seamPointX[seamPointInSomeRangeID]) ** 2
-                        + (pointToEvaluateY - seamPointY[seamPointInSomeRangeID]) ** 2)
-    attachmentPointId = np.argmax(seamPointFreedomScores)
-    attachmentPoint = remainingUncoveredSeamPixels[0][attachmentPointId], remainingUncoveredSeamPixels[1][
-        attachmentPointId]
-    return attachmentPoint
+def determineAttachmentPoint(remainingUncoveredSeamPixels, seamDistanceScores):
+    candidatePoints = list(zip(remainingUncoveredSeamPixels[0], remainingUncoveredSeamPixels[1]))
+    bestScore = 0
+    bestCandidatePoint = candidatePoints[0]
+    for candidatePoint in candidatePoints:
+        score = 0
+        for candidateInRange in candidatePoints:
+            score += seamDistanceScores[candidatePoint, candidateInRange]
+        if score > bestScore:
+            bestCandidatePoint = candidatePoint
+            bestScore = score
+    return bestCandidatePoint
 
 
 def doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shipImage):
