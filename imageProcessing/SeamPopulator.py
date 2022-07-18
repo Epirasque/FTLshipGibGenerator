@@ -1,4 +1,5 @@
 import random
+import concurrent.futures
 
 from skimage.draw import line
 
@@ -11,19 +12,49 @@ from imageProcessing.MetalBitsConstants import *
 
 
 def populateSeams(gibs, shipImageName, shipImage, tilesets, PARAMETERS):
+    parallelGibToPopulate = []
+    parallelGibs = []
+    parallelShipImage = []
+    parallelNeighbourId = []
+    parallelTilesets = []
+    parallelShipImageName = []
+    parallelGibToPopulateId = []
+    parallelParameters = []
     for gibToPopulate in gibs:
         gibToPopulateId = gibToPopulate['id']
         for neighbouringGib in gibs:
             neighbourId = neighbouringGib['id']
             if gibToPopulateId != neighbourId:
                 if gibToPopulate['coveredByNeighbour'][neighbourId] == True:
-                    gifFrames = []
-                    populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, PARAMETERS)
-                    saveGif(gifFrames, '%s_gib%uto%u' % (shipImageName, gibToPopulateId, neighbourId), PARAMETERS)
+                    parallelGibToPopulate.append(deepcopy(gibToPopulate))
+                    parallelGibs.append(deepcopy(gibs))
+                    parallelShipImage.append(deepcopy(shipImage))
+                    parallelNeighbourId.append(deepcopy(neighbourId))
+                    parallelTilesets.append(deepcopy(tilesets))
+                    parallelShipImageName.append(deepcopy(shipImageName))
+                    parallelGibToPopulateId.append(deepcopy(gibToPopulateId))
+                    parallelParameters.append(deepcopy(PARAMETERS))
 
-
-def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, PARAMETERS):
     cleanUpMemory()
+    futures = []
+    gibUpdates = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        for processID in range(len(gibs)):
+            futures.append(executor.submit(populateSeam, parallelGibToPopulate[processID], parallelGibs[processID],
+                                           parallelNeighbourId[processID], parallelShipImage[processID],
+                                           parallelTilesets[processID], parallelShipImageName[processID],
+                                           parallelGibToPopulateId[processID],
+                                           parallelParameters[processID]))
+        for future in concurrent.futures.as_completed(futures):
+            gibUpdates.append(future.result())
+    for gibUpdate in gibUpdates:
+        pasteNonTransparentValuesIntoArray(gibUpdate[0]['img'], gibs[gibUpdate[1] - 1]['img'])
+
+
+def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, shipImageName, gibToPopulateId, PARAMETERS):
+    logger.debug('Populating gib ID %u' % gibToPopulateId)
+    # cleanUpMemory()
+    gifFrames = []
     gibImage = gibToPopulate['img']
     originalGibImageArray = np.ma.copy(gibImage)
     seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
@@ -49,6 +80,10 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
 
     pasteNonTransparentValuesIntoArray(originalGibImageArray, metalBits)
     gibToPopulate['img'] = metalBits
+
+    saveGif(gifFrames, '%s_gib%uto%u' % (shipImageName, gibToPopulateId, neighbourId), PARAMETERS)
+    logger.debug('Finished populating gib ID %u' % gibToPopulateId)
+    return gibToPopulate, gibToPopulateId
 
 
 def precalculateSeamDistanceScores(seamCoordinates):
