@@ -4,6 +4,7 @@ import shutil
 import time
 import traceback
 import tracemalloc
+import concurrent.futures
 from copy import deepcopy
 
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
@@ -34,7 +35,7 @@ def startGeneratorLoop(PARAMETERS):
     logger.info(PARAMETERS)
     tracemalloc.start()
     logger.info("Loading ship file names...")
-    ships = loadShipFileNames(PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
+    ships, layoutUsages = loadShipFileNames(PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
     stats = {'nrShips': len(ships),
              'nrShipsWithNewlyGeneratedGibs': 0,
              'nrShipsWithGibsAlreadyPresent': 0,
@@ -43,13 +44,14 @@ def startGeneratorLoop(PARAMETERS):
              'nrErrorsInSegmentation': 0,
              'nrErrorsInWeaponMounts': 0,
              'nrErrorsUnknownCause': 0,
-             'nrIterations': 0,
              'totalLoadShipBaseImageDuration': 0,
              'totalSegmentDuration': 0,
              'totalSaveGibImagesDuration': 0,
              'totalAddGibEntriesToLayoutDuration': 0,
              'totalSetWeaponMountGibIdsDuration': 0,
              'totalSaveShipLayoutDuration': 0}
+    finalStats = deepcopy(stats)
+    nrIterations = 0
     logger.info("Cleaning up gibCache...")
     try:
         shutil.rmtree('gibCache')
@@ -62,40 +64,58 @@ def startGeneratorLoop(PARAMETERS):
         tilesets = loadTilesets()
     logger.info("Iterating ships...")
     layoutNameToGibCache = {}
-    for shipName, filenames in ships.items():
-        cleanUpMemory()
-        if PARAMETERS.CHECK_SPECIFIC_SHIPS == True:
-            if shipName not in PARAMETERS.SPECIFIC_SHIP_NAMES:
+    futures = []
+    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+        # futures.append(executor.submit())
+        for shipName, filenames in ships.items():
+            # TODO: separate step for multiused layouts
+            # cleanUpMemory()
+            if PARAMETERS.CHECK_SPECIFIC_SHIPS == True:
+                if shipName not in PARAMETERS.SPECIFIC_SHIP_NAMES:
+                    continue
+            if shipName in PARAMETERS.SHIPS_TO_IGNORE:
+                logger.info("Skipping %s" % shipName)
                 continue
-        if shipName in PARAMETERS.SHIPS_TO_IGNORE:
-            logger.info("Skipping %s" % shipName)
-            continue
-        stats['nrIterations'] += 1
-        layoutName = filenames['layout']
-        shipImageName = filenames['img']
-        printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats)
+            layoutName = filenames['layout']
+            if layoutUsages[layoutName] > 1:
+                logger.debug("Skipping %s due to multiple layout usage" % shipName)
+                continue
+            shipImageName = filenames['img']
+            # printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats)
+            #print("Processing %s in parallel..." % shipName)
+            futures.append(
+                executor.submit(processShipInParallel, PARAMETERS, layoutName, layoutNameToGibCache,
+                                shipImageName, shipName, ships, deepcopy(stats), tilesets))
 
-        # print('Processing %s ' % name)
-        layout = loadShipLayout(layoutName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
-        if layout == None:
-            logger.error('Cannot process layout for %s ' % shipName)
-            stats['nrErrorsInsource'] += 1
-        elif hasShipGibs(PARAMETERS, layout, shipImageName):
-            # print('Gibs already present for %s ' % name)
-            stats['nrShipsWithGibsAlreadyPresent'] += 1
-        else:
-            stats, layoutNameToGibCache = createNewGibs(PARAMETERS, layout, layoutName,
-                                                        layoutNameToGibCache, shipName,
-                                                        shipImageName, ships, stats, tilesets)
-
-        if PARAMETERS.LIMIT_ITERATIONS == True and stats['nrIterations'] >= PARAMETERS.ITERATION_LIMIT:
-            break
+            # TODO
+            #if PARAMETERS.LIMIT_ITERATIONS == True and stats['nrIterations'] >= PARAMETERS.ITERATION_LIMIT:
+            #    break
+    for future in concurrent.futures.as_completed(futures):
+        # TODO: offset by 1?
+        nrIterations += 1
+        shipName, layoutName, shipImageName, statsFromParallel = future.result()
+        print("Finished %s in parallel" % shipName)
+        finalStats['nrShipsWithNewlyGeneratedGibs'] += statsFromParallel['nrShipsWithNewlyGeneratedGibs']
+        finalStats['nrShipsWithGibsAlreadyPresent'] += statsFromParallel['nrShipsWithGibsAlreadyPresent']
+        finalStats['nrShipsWithIncompleteGibSetup'] += statsFromParallel['nrShipsWithIncompleteGibSetup']
+        finalStats['nrErrorsInsource'] += statsFromParallel['nrErrorsInsource']
+        finalStats['nrErrorsInSegmentation'] += statsFromParallel['nrErrorsInSegmentation']
+        finalStats['nrErrorsInWeaponMounts'] += statsFromParallel['nrErrorsInWeaponMounts']
+        finalStats['nrErrorsUnknownCause'] += statsFromParallel['nrErrorsUnknownCause']
+        finalStats['totalLoadShipBaseImageDuration'] += statsFromParallel['totalLoadShipBaseImageDuration']
+        finalStats['totalSegmentDuration'] += statsFromParallel['totalSegmentDuration']
+        finalStats['totalSaveGibImagesDuration'] += statsFromParallel['totalSaveGibImagesDuration']
+        finalStats['totalAddGibEntriesToLayoutDuration'] += statsFromParallel['totalAddGibEntriesToLayoutDuration']
+        finalStats['totalSetWeaponMountGibIdsDuration'] += statsFromParallel['totalSetWeaponMountGibIdsDuration']
+        finalStats['totalSaveShipLayoutDuration'] += statsFromParallel['totalSaveShipLayoutDuration']
+        printIterationInfo(globalStart, shipName, layoutName, shipImageName, finalStats)
+        print("Finished recording stats for %s" % shipName)
 
     logger.info(
         "DONE. Created gibs for %u ships out of %u ships, %u of which had gibs before, %u of which had an incomplete gib setup. \nErrors when loading source: %u. Failed ship segmentations: %u. Ships with unassociated weaponMounts: %u. Unknown errors: %u" % (
-            stats['nrShipsWithNewlyGeneratedGibs'], stats['nrShips'], stats['nrShipsWithGibsAlreadyPresent'],
-            stats['nrShipsWithIncompleteGibSetup'], stats['nrErrorsInsource'], stats['nrErrorsInSegmentation'],
-            stats['nrErrorsInWeaponMounts'], stats['nrErrorsUnknownCause']))
+            finalStats['nrShipsWithNewlyGeneratedGibs'], finalStats['nrShips'], finalStats['nrShipsWithGibsAlreadyPresent'],
+            finalStats['nrShipsWithIncompleteGibSetup'], finalStats['nrErrorsInsource'], finalStats['nrErrorsInSegmentation'],
+            finalStats['nrErrorsInWeaponMounts'], finalStats['nrErrorsUnknownCause']))
     logger.info("Cleaning up gibCache...")
     try:
         shutil.rmtree('gibCache')
@@ -104,6 +124,25 @@ def startGeneratorLoop(PARAMETERS):
     except Exception:
         logger.warning("UNEXPECTED EXCEPTION when cleaning up gibCache: %s" % traceback.format_exc())
     logger.info('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
+
+
+def processShipInParallel(PARAMETERS, layoutName, layoutNameToGibCache, shipImageName, shipName,
+                          ships, stats, tilesets):
+    # print('Processing %s ' % name)
+    layout = loadShipLayout(layoutName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
+    if layout == None:
+        logger.error('Cannot process layout for %s ' % shipName)
+        stats['nrErrorsInsource'] += 1
+    elif hasShipGibs(PARAMETERS, layout, shipImageName):
+        # print('Gibs already present for %s ' % name)
+        stats['nrShipsWithGibsAlreadyPresent'] += 1
+    else:
+        createNewGibs(PARAMETERS, layout, layoutName,
+                      layoutNameToGibCache, shipName,
+                      shipImageName, ships, stats, tilesets)
+    # return stats
+    logger.debug("trying to return from processShipInParallel from generateGibsForShip %s" % (shipImageName))
+    return shipName, layoutName, shipImageName, stats
 
 
 def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, shipImageName, ships, stats, tilesets):
@@ -131,10 +170,13 @@ def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, sh
         try:
             stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(PARAMETERS, layout, layoutName,
                                                                                      shipImageName, stats, tilesets)
+            logger.debug("successfully returned from generateGibsForShip %s" % (shipImageName))
             layoutNameToGibCache[layoutName] = shipImageName, len(gibs), layoutWithNewGibs
+            logger.debug("successfully stored in layoutNameToGibCache %s" % (shipImageName))
         except Exception:
             logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
             stats['nrErrorsUnknownCause'] += 1
+    logger.debug("trying to return from createNewGibs %s" % (shipImageName))
     return stats, layoutNameToGibCache
 
 
@@ -182,23 +224,29 @@ def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, ti
     if PARAMETERS.GENERATE_METAL_BITS == True:
         logger.debug('Attaching metalbits to %s...' % shipImageName)
         gibs = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
+        logger.debug('Finished metalbits to %s...' % shipImageName)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:
         targetFolderPath = determineTargetFolderPath(PARAMETERS)
         targetFolderPath += '\\img\\' + shipImageSubfolder
+        logger.debug('SavingGibImagesWithProfiling %s...' % shipImageName)
         stats = saveGibImagesWithProfiling(PARAMETERS, gibs, gibsWithoutMetalBits, shipImageName, targetFolderPath,
                                            stats)
+        logger.debug('AddingGibEntriesToLayoutWithProfiling %s...' % shipImageName)
         layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats)
+        logger.debug('x %s...' % shipImageName)
         appendContentString, nrWeaponMountsWithoutGibId, stats = setWeaponMountGibIdsWithProfiling(gibs,
                                                                                                    layoutWithNewGibs,
                                                                                                    appendContentString,
                                                                                                    stats)
         if nrWeaponMountsWithoutGibId > 0:
             stats['nrErrorsInWeaponMounts'] += 1
+        logger.debug('y %s...' % shipImageName)
         stats = saveShipLayoutWithProfiling(PARAMETERS, layoutName, layoutWithNewGibs, appendContentString, stats)
         # print("Done with %s " % name)
         stats['nrShipsWithNewlyGeneratedGibs'] += 1
+    logger.debug('Done generating for ship %s...' % shipImageName)
     return stats, gibs, shipImageSubfolder, layoutWithNewGibs
 
 
