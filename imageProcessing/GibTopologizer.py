@@ -1,3 +1,4 @@
+import logging
 from copy import deepcopy
 
 import numpy as np
@@ -5,22 +6,26 @@ import numpy as np
 from imageProcessing.ImageProcessingUtilities import pasteNonTransparentValuesIntoArray, getDistanceBetweenPoints
 from imageProcessing.MetalBitsConstants import SEAM_DETECTION_SEARCH_RADIUS
 
+logger = logging.getLogger('GLAIVE.' + __name__)
 
-def buildSeamTopology(gibs, shipImage):
+def buildSeamTopology(gibs, shipImage, shipImageName):
     nrGibs = len(gibs)
     currentZ = 1
     for gib in gibs:
         # overwrite fallback defined by non-metalbit part of segmenter
         gib['z'] = None
+    logger.debug('%s: Getting centermost gib...' % shipImageName)
     centerMostGib = getCenterMostGib(gibs, shipImage)
-    buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage)
+    logger.debug('%s: Building seam topology for single gib...' % shipImageName)
+    buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage, shipImageName)
 
     for currentZ in range(2, nrGibs + 1):
         for gib in gibs:
             if gib['z'] == None:
                 nextGib = gib
                 break
-        buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage)
+        logger.debug('%s: Building even more seam topology for single gib...' % shipImageName)
+        buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage, shipImageName)
 
 
 def orderGibsByZCoordinates(gibs):
@@ -75,9 +80,12 @@ def animateTopology(gifImages, PARAMETERS, gibs):
             gifImages.append(np.ma.copy(gibImageArray))
 
 
-def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage):
+def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage, shipImageName):
+    logger.debug('%s: InitializingGibAttributes...' % shipImageName)
     initializeGibAttributes(currentZ, gibToProcess, nrGibs)
+    logger.debug('%s: determineSeamsWithNeighbours...' % shipImageName)
     determineSeamsWithNeighbours(gibToProcess, gibs, shipImage)
+    logger.debug('%s: Defining Topology With Neighbours...' % shipImageName)
     defineTopologyWithNeighbours(gibToProcess, gibs)
 
 

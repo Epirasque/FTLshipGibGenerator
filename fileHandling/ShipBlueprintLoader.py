@@ -8,7 +8,9 @@ MOD_TAG_PREFIXES = ['mod:', 'mod-append:', 'mod-overwrite:']
 
 logger = logging.getLogger('GLAIVE.' + __name__)
 
+
 def loadShipFileNames(sourceFolderpath):
+    layoutUsages = {}
     blueprints = []
     addBlueprintsFromFile(blueprints, sourceFolderpath, 'blueprints.xml.append')
     addBlueprintsFromFile(blueprints, sourceFolderpath, 'autoBlueprints.xml.append')
@@ -20,9 +22,22 @@ def loadShipFileNames(sourceFolderpath):
     for blueprint in blueprints:
         ships[blueprint.attrib['name']] = {}
         ships[blueprint.attrib['name']]['img'] = blueprint.attrib['img']
+        layoutName = blueprint.attrib['layout']
         ships[blueprint.attrib['name']]['layout'] = blueprint.attrib['layout']
-
-    return ships
+        if layoutName not in layoutUsages:
+            layoutUsages[layoutName] = 0
+        layoutUsages[layoutName] += 1
+    nrSingleUsage = 0
+    nrMultipleUsages = 0
+    nrShipsInMultiUsage = 0
+    for nr in layoutUsages.values():
+        if nr == 1:
+            nrSingleUsage += 1
+        if nr > 1:
+            nrMultipleUsages += 1
+            nrShipsInMultiUsage += nr
+    logger.info("Layouts with single usage: %u, with multiple usages: %u (affects %u ships)" % (nrSingleUsage, nrMultipleUsages, nrShipsInMultiUsage))
+    return ships, layoutUsages
 
 
 def addBlueprintsFromFile(blueprints, sourceFolderpath, filename):
@@ -37,4 +52,5 @@ def addBlueprintsFromFile(blueprints, sourceFolderpath, filename):
             parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
             blueprints.extend(parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE))
         except Exception as e:
-            logger.exception("ERROR: Failed to parse xml content of " + sourceFolderpath + '\\data\\' + filename + ": " + e)
+            logger.exception(
+                "ERROR: Failed to parse xml content of " + sourceFolderpath + '\\data\\' + filename + ": " + e)
