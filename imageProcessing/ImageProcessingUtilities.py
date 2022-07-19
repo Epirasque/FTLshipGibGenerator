@@ -63,6 +63,8 @@ def areAllCoordinatesContainedInVisibleArea(coordinates, outerImageArray):
 
 
 def fitLineToCoordinates(edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX):
+    slope = 0.
+    yOffset = 0
     try:
         slope, yOffset = np.polyfit(edgeCoordinatesInRadiusX, edgeCoordinatesInRadiusY, deg=1)
     except:
