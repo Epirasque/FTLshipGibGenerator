@@ -183,12 +183,14 @@ def processShipInParallel(PARAMETERS, layoutName, layoutNameToGibCache, shipImag
         logger.error('Cannot process layout for %s ' % shipName)
         stats['nrErrorsInsource'] += 1
     elif hasShipGibs(PARAMETERS, layout, shipImageName):
+        logger.debug('Skipping ship that already has gibs')
         stats['nrShipsWithGibsAlreadyPresent'] += 1
+        status = STATE_READY
     else:
-        status = createNewGibs(PARAMETERS, layout, layoutName,
-                      layoutNameToGibCache, shipName,
-                      shipImageName, ships, stats, tilesets)
-    storeStatsToMarkShipAsProcessed(shipName, status, stats)
+        stats, layoutNameToGibCache, status = createNewGibs(PARAMETERS, layout, layoutName,
+                                                            layoutNameToGibCache, shipName,
+                                                            shipImageName, ships, stats, tilesets)
+    storeStatsToMarkShipAsProcessed(shipName, stats, status)
     logger.debug('Finishing subprocess %u' % os.getpid())
     return shipName, layoutName, shipImageName, stats
 
