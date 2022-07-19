@@ -7,6 +7,7 @@ from PIL import Image
 
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
 from fileHandling.ShipImageLoader import loadShipBaseImage, VISIBLE_ALPHA_THRESHOLD
+from flow.LoggerUtils import getSubProcessLogger
 from imageProcessing.ImageProcessingUtilities import cropImage
 from imageProcessing.MetalBitsAttacher import attachMetalBits
 from metadata.GibEntryChecker import getExplosionNode
@@ -21,6 +22,7 @@ GIB_CACHE_FOLDER = 'gibCache'
 # TODO: add profiling
 def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, tilesets, layout, layoutName, name, nrGibs, shipImageName, ships, standaloneFolderPath, targetFolderPath,
                                          layoutNameToGibCache):
+    logger = getSubProcessLogger()
     logger.debug('Gibs in layout %s but not in image %s for %s' % (layoutName, shipImageName, name))
     foundGibsSameLayout = False
     newGibsWithoutMetalBits = []

@@ -3,6 +3,8 @@ import logging
 import numpy as np
 from skimage.io import imread
 
+from flow.LoggerUtils import getSubProcessLogger
+
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 BASE_SUFFIX = '_base'
@@ -11,6 +13,7 @@ VISIBLE_ALPHA_THRESHOLD = 64
 
 
 def loadShipBaseImage(shipImageName, sourceFolderpath):
+    logger = getSubProcessLogger()
     try:
         imageArray = imread(
             sourceFolderpath + '\\img\\ships_glow\\' + shipImageName + BASE_SUFFIX + '.png')

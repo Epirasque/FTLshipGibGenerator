@@ -10,7 +10,7 @@ def countNrProcessedShipStats():
     for path in os.listdir(FOLDER_PATH):
         if os.path.isfile(os.path.join(FOLDER_PATH, path)):
             nrExistingFiles += 1
-    return nrExistingFiles
+    return nrExistingFiles - 1
 
 
 # TODO: read actual stats for intermediate results

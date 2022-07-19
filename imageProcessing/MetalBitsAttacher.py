@@ -5,26 +5,15 @@ from imageProcessing.GibTopologizer import *
 from imageProcessing.ImageProcessingUtilities import *
 from imageProcessing.SeamPopulator import populateSeams
 
-logger = logging.getLogger('GLAIVE.' + __name__)
-
 def attachMetalBits(gibs, shipImage, tilesets, PARAMETERS, shipImageName):
-    logger.debug('%s: Initializing GifFrames if applicable...' % shipImageName)
     gifFrames = initializeGifFramesWithShipImage(shipImage, PARAMETERS)
-    #logger.debug('%s: Uncropping gibs...' % shipImageName)
     uncropGibs(gibs, shipImage)
-    logger.debug('%s: Building seam topology...' % shipImageName)
     buildSeamTopology(gibs, shipImage  , shipImageName)
-    logger.debug('%s: Ordering gibs by z-coordinates...' % shipImageName)
     gibs = orderGibsByZCoordinates(gibs)
-    #logger.debug('%s: Animating Topology if applicable...' % shipImageName)
     animateTopology(gifFrames, PARAMETERS, gibs)
-    #logger.debug('%s: Storing GifFrames if applicable...' % shipImageName)
     saveGif(gifFrames, shipImageName + "_topology", PARAMETERS)
-    logger.debug('%s: Populating Seams...' % shipImageName)
     populateSeams(gibs, shipImageName, shipImage, tilesets, PARAMETERS)
-    logger.debug('%s: Cropping and updating Gibs...' % shipImageName)
     cropAndUpdateGibs(gibs)
-    logger.debug('%s: Returning...' % shipImageName)
     return gibs
 
 
