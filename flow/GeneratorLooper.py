@@ -174,7 +174,7 @@ def processShipInParallel(PARAMETERS, layoutName, layoutNameToGibCache, shipImag
         createNewGibs(PARAMETERS, layout, layoutName,
                       layoutNameToGibCache, shipName,
                       shipImageName, ships, stats, tilesets)
-        storeStatsToMarkShipAsProcessed(shipImageName, stats)
+    storeStatsToMarkShipAsProcessed(shipImageName, stats)
     logger.debug('Finishing subprocess %u' % os.getpid())
     return shipName, layoutName, shipImageName, stats
 
