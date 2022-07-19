@@ -15,7 +15,8 @@ import yaml
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
 from fileHandling.GibImageSaver import saveGibImages, saveGibImagesToDiskCache
 from fileHandling.MetalBitsLoader import loadTilesets
-from fileHandling.ProcessedShipStatsDao import countNrProcessedShipStats, storeStatsToMarkShipAsProcessed
+from fileHandling.ProcessedShipStatsDao import countNrProcessedShipStats, storeStatsToMarkShipAsProcessed, doStatsExist, \
+    STATE_FAILED, STATE_READY
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
@@ -75,23 +76,29 @@ def startGeneratorLoop(PARAMETERS):
     layoutNameToGibCache = {}
     futures = []
     nrSubmissions = 0
+    nrPreviouslyFinishedSubmissions = countNrProcessedShipStats()
+    logger.info("Already processed in previous runs: %u" % nrPreviouslyFinishedSubmissions)
     with concurrent.futures.ProcessPoolExecutor(max_workers=NR_SUBPROCESSES) as executor:
         for shipName, filenames in ships.items():
+            if PARAMETERS.LIMIT_ITERATIONS == True and nrSubmissions >= PARAMETERS.ITERATION_LIMIT:
+                logger.info("Reached iteration limit of %u" % PARAMETERS.ITERATION_LIMIT)
+                break
             # TODO: separate step for multiused layouts
             # cleanUpMemory()
             if PARAMETERS.CHECK_SPECIFIC_SHIPS == True:
                 if shipName not in PARAMETERS.SPECIFIC_SHIP_NAMES:
+                    logger.info("Skipping %s (not in whitelist)" % shipName)
                     continue
             if shipName in PARAMETERS.SHIPS_TO_IGNORE:
-                logger.info("Skipping %s" % shipName)
+                logger.info("Skipping %s (is in blacklist)" % shipName)
                 continue
             layoutName = filenames['layout']
+            if doStatsExist(shipName) == True:
+                logger.debug("Skipping %s because it was processed in previous run" % shipName)
+                continue
             if layoutUsages[layoutName] > 1:
                 logger.debug("Skipping %s due to multiple layout usage" % shipName)
                 continue
-            if PARAMETERS.LIMIT_ITERATIONS == True and nrSubmissions >= PARAMETERS.ITERATION_LIMIT:
-                logger.info("Reached submission limit of %u" % PARAMETERS.ITERATION_LIMIT)
-                break
             shipImageName = filenames['img']
             # printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats)
             logger.debug("Submitting %s..." % shipName)
@@ -105,12 +112,15 @@ def startGeneratorLoop(PARAMETERS):
             # if PARAMETERS.LIMIT_ITERATIONS == True and stats['nrIterations'] >= PARAMETERS.ITERATION_LIMIT:
             #    break
 
-        nrIterations = 0
+        nrFinishedSubmissions = 0
         nrShips = len(ships)
         # TODO: this is not correct yet: layout reusages are not counted here
-        while (nrIterations < nrSubmissions):
-            nrIterations = countNrProcessedShipStats()
-            logger.info("Iterations: %u / %u (Total ships: %u)" % (nrIterations, nrSubmissions, nrShips))
+        while (nrFinishedSubmissions < nrSubmissions):
+            nrFinishedSubmissions = countNrProcessedShipStats() - nrPreviouslyFinishedSubmissions
+            logger.info(
+                "Finished Gib generations requests: %u / %u (Including previous run: %u / %u; Total ships: %u)" % (
+                    nrFinishedSubmissions, nrSubmissions, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
+                    nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips))
             # TODO: iterate through multi-layout ships here?
             time.sleep(5)
         logger.info('Finished all processes, shutting down Executors.')
@@ -119,6 +129,7 @@ def startGeneratorLoop(PARAMETERS):
         # TODO: offset by 1?
 
         shipName, layoutName, shipImageName, statsFromParallel = future.result()
+        # TODO: also account for previously computed stuff; ensure interruptions cause no issue (already stored gibs before stats are written)
         logger.debug("Finished %s in parallel" % shipName)
         finalStats['nrShipsWithNewlyGeneratedGibs'] += statsFromParallel['nrShipsWithNewlyGeneratedGibs']
         finalStats['nrShipsWithGibsAlreadyPresent'] += statsFromParallel['nrShipsWithGibsAlreadyPresent']
@@ -133,6 +144,8 @@ def startGeneratorLoop(PARAMETERS):
         finalStats['totalAddGibEntriesToLayoutDuration'] += statsFromParallel['totalAddGibEntriesToLayoutDuration']
         finalStats['totalSetWeaponMountGibIdsDuration'] += statsFromParallel['totalSetWeaponMountGibIdsDuration']
         finalStats['totalSaveShipLayoutDuration'] += statsFromParallel['totalSaveShipLayoutDuration']
+
+        finalStats['nrIterations'] = nrFinishedSubmissions
         printIterationInfo(globalStart, shipName, layoutName, shipImageName, finalStats)
         logger.debug("Finished recording stats for %s" % shipName)
 
@@ -158,6 +171,7 @@ def processShipInParallel(PARAMETERS, layoutName, layoutNameToGibCache, shipImag
     # print('Initializing logging for %u...' % os.getpid())
     process = current_process()
     process.name = shipName
+    status = STATE_FAILED
     with open('loggingForSubprocess.yaml') as configFile:
         configDict = yaml.load(configFile, Loader=yaml.FullLoader)
     logging.config.dictConfig(configDict)
@@ -171,16 +185,17 @@ def processShipInParallel(PARAMETERS, layoutName, layoutNameToGibCache, shipImag
     elif hasShipGibs(PARAMETERS, layout, shipImageName):
         stats['nrShipsWithGibsAlreadyPresent'] += 1
     else:
-        createNewGibs(PARAMETERS, layout, layoutName,
+        status = createNewGibs(PARAMETERS, layout, layoutName,
                       layoutNameToGibCache, shipName,
                       shipImageName, ships, stats, tilesets)
-    storeStatsToMarkShipAsProcessed(shipImageName, stats)
+    storeStatsToMarkShipAsProcessed(shipName, status, stats)
     logger.debug('Finishing subprocess %u' % os.getpid())
     return shipName, layoutName, shipImageName, stats
 
 
 def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, shipImageName, ships, stats, tilesets):
     logger = getSubProcessLogger()
+    status = STATE_FAILED
     foundGibsSameLayout = False
     gibs = []
     folderPath = 'not set'
@@ -197,6 +212,7 @@ def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, sh
     if foundGibsSameLayout == True:
         logger.debug("Succeeded in generating gibs with mask of gibs from same layout")
         stats = saveGibImagesWithProfiling(PARAMETERS, gibs, newGibsWithoutMetalBits, shipImageName, folderPath, stats)
+        status = STATE_READY
     else:
         if areGibsPresentAsImageFiles(shipImageName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH) == True:
             stats['nrShipsWithIncompleteGibSetup'] += 1
@@ -207,10 +223,11 @@ def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, sh
                                                                                      shipImageName, stats, tilesets)
             layoutNameToGibCache[layoutName] = shipImageName, len(gibs), layoutWithNewGibs
             logger.debug("Succeeded in generating gibs from scratch")
+            status = STATE_READY
         except Exception:
             logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
             stats['nrErrorsUnknownCause'] += 1
-    return stats, layoutNameToGibCache
+    return stats, layoutNameToGibCache, status
 
 
 def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, tilesets, layout, layoutName,
