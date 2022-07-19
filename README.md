@@ -1,4 +1,4 @@
-# G.L.A.I.V.E. v0.9.7: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
+# G.L.A.I.V.E. v1.0.0: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
 
 # What Does It Do?
 
@@ -257,7 +257,7 @@ In arbitrary order, *no promises if or when these will be done*:
         - [ ] classify ships during gib generation
 - [x] mark seams between gibs
     - [x] prototype
-    - [ ] dark edge in final gib, invisible before flying apart
+    - [ ] dark edge in final gib, invisible before flying apart?
 - [x] innermost layer1 (chunks)
     - [x] tileset
     - [x] determine general direction
@@ -278,11 +278,11 @@ In arbitrary order, *no promises if or when these will be done*:
 - [x] QoL
     - [x] feature toggle
     - [x] save generation process as gif for debugging
-    - [ ] performance improvements
+    - [x] performance improvements
       - [x] dynamic transparency detection offset
       - [x] fix gib topology resulting in unintended neighbour-blocking
       - [x] fix slowdown when determining attachment detection
-      - [ ] multithreading
+      - [x] multiprocessing
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
