@@ -20,7 +20,7 @@ from fileHandling.ProcessedShipStatsDao import countNrProcessedShipStats, storeS
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
-from fileHandling.StabilityMarkers import createMarker, deleteMarker
+from fileHandling.StabilityMarkers import createMarker, deleteMarker, countNrMarkers
 from flow.LoggerUtils import getSubProcessLogger
 from flow.MemoryManagement import logHighestMemoryUsage, cleanUpMemory
 from flow.SameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
@@ -37,7 +37,7 @@ STANDALONE_MODE = 'standalone'
 ADDON_MODE = 'addon'
 
 # TODO: configurable parameter
-NR_SUBPROCESSES = 4
+NR_SUBPROCESSES = 2
 
 
 def startGeneratorLoop(PARAMETERS):
@@ -48,6 +48,11 @@ def startGeneratorLoop(PARAMETERS):
     tracemalloc.start()
     logger.info("Loading ship file names...")
     ships, layoutUsages = loadShipFileNames(PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
+    nrStabilityMarkers = countNrMarkers()
+    if nrStabilityMarkers > 0:
+        logger.error(
+            "\nDetected %u markers in the stabilityMarkers subfolder, \nthese markers indicate that processing these ships / layouts was interrupted. \nTo avoid corrupted data, remove any intermediate results of these ships (in case of layouts: of ALL ships (re)using that layout!) as well as the markers." % nrStabilityMarkers)
+        return
     stats = {'nrShips': len(ships),
              'nrShipsWithNewlyGeneratedGibs': 0,
              'nrShipsWithGibsAlreadyPresent': 0,
