@@ -1,11 +1,10 @@
-import logging
 from copy import deepcopy
 
 import numpy as np
 
-from flow.LoggerUtils import getSubProcessLogger
 from imageProcessing.ImageProcessingUtilities import pasteNonTransparentValuesIntoArray, getDistanceBetweenPoints
 from imageProcessing.MetalBitsConstants import SEAM_DETECTION_SEARCH_RADIUS
+
 
 def buildSeamTopology(gibs, shipImage, shipImageName):
     nrGibs = len(gibs)

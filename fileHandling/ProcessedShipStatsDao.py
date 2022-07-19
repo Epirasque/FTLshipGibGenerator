@@ -19,13 +19,17 @@ def countNrProcessedShipStats():
 
 # TODO: read actual stats for intermediate results
 def storeStatsToMarkShipAsProcessed(shipName, stats, status):
-    with open("%s/stats_for_%s_%s.dictionary" % (FOLDER_PATH, shipName, status), "wb") as file:
+    with open(generateFilepath(shipName, status), "wb") as file:
         pickle.dump(stats, file, -1)
 
 
+def generateFilepath(shipName, status):
+    return "%s/%s_%s.dictionary" % (FOLDER_PATH, status, shipName)
+
+
 def doStatsExist(shipName):
-    statFileReady = Path("%s/stats_for_%s_%s.dictionary" % (FOLDER_PATH, shipName, STATE_READY))
-    statFileFailed = Path("%s/stats_for_%s_%s.dictionary" % (FOLDER_PATH, shipName, STATE_FAILED))
+    statFileReady = Path(generateFilepath(shipName, STATE_READY))
+    statFileFailed = Path(generateFilepath(shipName, STATE_FAILED))
     return statFileReady.is_file() or statFileFailed.is_file()
 
 

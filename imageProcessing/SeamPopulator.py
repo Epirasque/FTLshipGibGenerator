@@ -1,4 +1,5 @@
 import random
+import traceback
 
 from skimage.draw import line
 
@@ -47,7 +48,11 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                                                                         seamImageArray, shipImage, tilesToUse,
                                                                         seamDistanceScores)
 
-    pasteNonTransparentValuesIntoArray(originalGibImageArray, metalBits)
+    try:
+        pasteNonTransparentValuesIntoArray(originalGibImageArray, metalBits)
+    except Exception:
+        logger = getSubProcessLogger()
+        logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
     gibToPopulate['img'] = metalBits
 
 
@@ -126,18 +131,23 @@ def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCand
 def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gifFrames, inwardsSearchX, inwardsSearchY,
                             metalBits, originalGibImageArray, seamImageArray, shipImage, tileImageArray,
                             tileOriginCenterPoint):
-    metalBitsCandidate, seamPixelsCoveredByCandidate = constructMetalBitsCandidateBelowMetalBits(inwardsSearchX,
-                                                                                                 inwardsSearchY,
-                                                                                                 metalBits,
-                                                                                                 seamImageArray,
-                                                                                                 tileImageArray,
-                                                                                                 tileOriginCenterPoint)
-    animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, metalBitsCandidate,
-                                       originalGibImageArray)
-    isCandidateValid, blockingNeighbourId = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate,
-                                                                            shipImage)
-    animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCandidateValid, blockingNeighbourId,
-                         shipImage)
+    metalBitsCandidate, seamPixelsCoveredByCandidate, isCandidateValidInitially = constructMetalBitsCandidateBelowMetalBits(
+        inwardsSearchX,
+        inwardsSearchY,
+        metalBits,
+        seamImageArray,
+        tileImageArray,
+        tileOriginCenterPoint)
+    if not isCandidateValidInitially:
+        isCandidateValid = False
+    else:
+        animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, metalBitsCandidate,
+                                           originalGibImageArray)
+        isCandidateValid, blockingNeighbourId = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate,
+                                                                                shipImage)
+
+        animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCandidateValid, blockingNeighbourId,
+                             shipImage)
     return isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate
 
 
@@ -198,13 +208,19 @@ def animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, m
 
 def constructMetalBitsCandidateBelowMetalBits(inwardsSearchX, inwardsSearchY, metalBits, seamImageArray, tileImageArray,
                                               tileOriginCenterPoint):
+    isCandidateValidInitially = True
     metalBitsCandidate = np.zeros(metalBits.shape, dtype=np.uint8)
-    pasteNonTransparentValuesIntoArrayWithOffset(tileImageArray, metalBitsCandidate,
-                                                 inwardsSearchY - tileOriginCenterPoint[0],
-                                                 inwardsSearchX - tileOriginCenterPoint[1])
+    try:
+        pasteNonTransparentValuesIntoArrayWithOffset(tileImageArray, metalBitsCandidate,
+                                                     inwardsSearchY - tileOriginCenterPoint[0],
+                                                     inwardsSearchX - tileOriginCenterPoint[1])
+    except IndexError:
+        logger = getSubProcessLogger()
+        logger.debug('Discarding candidate with metal bits stretching out of bounds')
+        isCandidateValidInitially = False
     seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidate, seamImageArray)
     pasteNonTransparentValuesIntoArray(metalBits, metalBitsCandidate)
-    return metalBitsCandidate, seamPixelsCoveredByCandidate
+    return metalBitsCandidate, seamPixelsCoveredByCandidate, isCandidateValidInitially
 
 
 def searchInwardUntilOriginIsCoveredByGib(PARAMETERS, alreadyCoveredArea, attachmentPoint, gifFrames, outwardVectorYX,
@@ -279,6 +295,7 @@ def updateRemainingSeamPoints(attachmentPoint, metalBits):
 def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames, isDetectionSuccessful, metalBits,
                                           originalGibImageArray, outwardVectorYX, remainingUncoveredSeamPixels,
                                           seamCoordinates):
+    logger = getSubProcessLogger()
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
         gifFrame = np.ma.copy(metalBits)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
@@ -336,5 +353,6 @@ def doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate, shi
                         blockingNeighbourId = otherGibId
                         break
                 else:
+                    logger = getSubProcessLogger()
                     logger.critical('Gib should not be covering itself?!')
     return isCandidateValid, blockingNeighbourId

@@ -20,7 +20,7 @@ from fileHandling.ProcessedShipStatsDao import countNrProcessedShipStats, storeS
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
-from fileHandling.StabilityMarkers import createMarker, deleteMarker, doesMarkerExist
+from fileHandling.StabilityMarkers import createMarker, deleteMarker
 from flow.LoggerUtils import getSubProcessLogger
 from flow.MemoryManagement import logHighestMemoryUsage, cleanUpMemory
 from flow.SameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
@@ -36,8 +36,8 @@ logger = logging.getLogger('GLAIVE.' + __name__)
 STANDALONE_MODE = 'standalone'
 ADDON_MODE = 'addon'
 
-# TODO: parameter
-NR_SUBPROCESSES = 8
+# TODO: configurable parameter
+NR_SUBPROCESSES = 4
 
 
 def startGeneratorLoop(PARAMETERS):
@@ -79,6 +79,7 @@ def startGeneratorLoop(PARAMETERS):
     nrSubmissions = 0
     nrPreviouslyFinishedSubmissions = countNrProcessedShipStats()
     logger.info("Already processed in previous runs: %u" % nrPreviouslyFinishedSubmissions)
+    firstOfMultipleLayoutUsages = {}
     with concurrent.futures.ProcessPoolExecutor(max_workers=NR_SUBPROCESSES) as executor:
         for shipName, filenames in ships.items():
             if PARAMETERS.LIMIT_ITERATIONS == True and nrSubmissions >= PARAMETERS.ITERATION_LIMIT:
@@ -97,11 +98,13 @@ def startGeneratorLoop(PARAMETERS):
             if doStatsExist(shipName) == True:
                 logger.debug("Skipping %s because it was processed in previous run" % shipName)
                 continue
-            if layoutUsages[layoutName] > 1: # race condition: process did not create it yet
-                if doesMarkerExist('LAYOUT_%s_started' % layoutName):
+            if layoutUsages[layoutName] > 1:
+                if layoutName in firstOfMultipleLayoutUsages:
                     logger.debug(
                         "Skipping %s due to multiple layout usage (first usage is already in progress)" % shipName)
                     continue
+                else:
+                    firstOfMultipleLayoutUsages[layoutName] = True
             shipImageName = filenames['img']
             # printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats)
             logger.debug("Submitting %s..." % shipName)
@@ -128,7 +131,7 @@ def startGeneratorLoop(PARAMETERS):
             remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
 
             logger.info(
-                "SINGLE-USAGE: Finished Gib generations requests: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, elapsed: %u minutes, remaining for all ships: %u minutes" % (
+                "SINGLE-USAGE: Generated: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, %u min elapsed, %u min remaining to finish all ships" % (
                     nrFinishedSubmissions, nrSubmissions, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
                     nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, 100. * finishedFraction, elapsedMinutes,
                     remainingMinutes))
@@ -211,7 +214,7 @@ def startGeneratorLoop(PARAMETERS):
             remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
 
             logger.info(
-                "LAYOUT-REUSAGE: Finished Gib generations requests: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, elapsed: %u minutes, remaining for all ships: %u minutes" % (
+                "LAYOUT-REUSAGE: Generated: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, %u min elapsed, %u min remaining to finish all ships" % (
                     nrFinishedSubmissions, nrSubmissions, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
                     nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, 100. * finishedFraction, elapsedMinutes,
                     remainingMinutes))
@@ -245,6 +248,10 @@ def startGeneratorLoop(PARAMETERS):
         printIterationInfo(globalStart, shipName, layoutName, shipImageName, finalStats)
         logger.debug("Finished recording stats for %s" % shipName)
 
+    logger.info('Cleaning up LAYOUT markers...')
+    for layoutName in firstOfMultipleLayoutUsages.keys():
+        deleteMarker('LAYOUT_started_%s' % layoutName)
+
     logger.info(
         "DONE. Created gibs for %u ships out of %u ships, %u of which had gibs before, %u of which had an incomplete gib setup. \nErrors when loading source: %u. Failed ship segmentations: %u. Ships with unassociated weaponMounts: %u. Unknown errors: %u" % (
             finalStats['nrShipsWithNewlyGeneratedGibs'], finalStats['nrShips'],
@@ -274,9 +281,9 @@ def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, layoutNameToGi
     logger = getSubProcessLogger()
     # print('Initialized logging for %u.' % os.getpid())
     logger.debug('Running subprocess %u in parallel for %s' % (os.getpid(), shipName))
-    createMarker('%s_started' % shipName)
+    createMarker('SHIP_started_%s' % shipName)
     if nrLayoutUsages > 1:
-        createMarker('LAYOUT_%s_started' % layoutName)
+        createMarker('LAYOUT_started_%s' % layoutName)
     layout = loadShipLayout(layoutName, PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH)
     if layout == None:
         logger.error('Cannot process layout for %s ' % shipName)
@@ -290,7 +297,7 @@ def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, layoutNameToGi
                                                             layoutNameToGibCache, shipName,
                                                             shipImageName, ships, stats, tilesets)
     storeStatsToMarkShipAsProcessed(shipName, stats, status)
-    deleteMarker('%s_started' % shipName)
+    deleteMarker('SHIP_started_%s' % shipName)
     logger.debug('Finishing subprocess %u' % os.getpid())
     return shipName, layoutName, shipImageName, stats
 
