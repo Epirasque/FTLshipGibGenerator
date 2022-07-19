@@ -128,7 +128,10 @@ def startGeneratorLoop(PARAMETERS):
             elapsedMinutes = (time.time() - globalStart) / 60.
             finishedFraction = (nrFinishedSubmissions / nrShips)
             remainingFraction = 1. - finishedFraction
-            remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
+            if finishedFraction == 0:
+                remainingMinutes = -1  # unknown
+            else:
+                remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
 
             logger.info(
                 "SINGLE-USAGE: Generated: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, %u min elapsed, %u min remaining to finish all ships" % (
@@ -137,7 +140,7 @@ def startGeneratorLoop(PARAMETERS):
                     remainingMinutes))
             # TODO: iterate through multi-layout ships here?
             time.sleep(5)
-        logger.info('Finished all initial submissions, resuming with layout re-usages.')
+
         for future in concurrent.futures.as_completed(futures):
             # TODO: offset by 1?
 
@@ -164,6 +167,7 @@ def startGeneratorLoop(PARAMETERS):
             printIterationInfo(globalStart, shipName, layoutName, shipImageName, finalStats)
             logger.debug("Finished recording stats for %s" % shipName)
 
+        logger.info('Finished all initial submissions, resuming with layout re-usages.')
         futures = []
         nrSubmissions = 0
 
@@ -211,7 +215,10 @@ def startGeneratorLoop(PARAMETERS):
             elapsedMinutes = (time.time() - globalStart) / 60.
             finishedFraction = (nrFinishedSubmissions / nrShips)
             remainingFraction = 1. - finishedFraction
-            remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
+            if finishedFraction == 0:
+                remainingMinutes = -1  # unknown
+            else:
+                remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
 
             logger.info(
                 "LAYOUT-REUSAGE: Generated: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, %u min elapsed, %u min remaining to finish all ships" % (
@@ -466,7 +473,10 @@ def printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats):
         elapsedMinutes = (time.time() - globalStart) / 60.
         finishedFraction = (stats['nrIterations'] / float(stats['nrShips']))
         remainingFraction = 1. - finishedFraction
-        remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
+        if finishedFraction == 0:
+            remainingMinutes = -1  # unknown
+        else:
+            remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
         logger.info(
             "Iterating ships: %u / %u (%.0f%%), elapsed %u minutes, remaining %u minutes, new: %u, untouched: %u, incomplete in source: %u, errors in source: %u, errors SLIC: %u, errors weaponMounts: %u, unknown errors: %u, current entry: %s / %s / %s" % (
                 stats['nrIterations'], stats['nrShips'], 100. * finishedFraction, elapsedMinutes, remainingMinutes,
