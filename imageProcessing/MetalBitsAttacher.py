@@ -1,3 +1,4 @@
+import numpy as np
 from PIL import Image
 
 from imageProcessing.DebugAnimator import saveGif
@@ -5,16 +6,19 @@ from imageProcessing.GibTopologizer import *
 from imageProcessing.ImageProcessingUtilities import *
 from imageProcessing.SeamPopulator import populateSeams
 
+
 def attachMetalBits(gibs, shipImage, tilesets, PARAMETERS, shipImageName):
     gifFrames = initializeGifFramesWithShipImage(shipImage, PARAMETERS)
     uncropGibs(gibs, shipImage)
-    buildSeamTopology(gibs, shipImage  , shipImageName)
+    buildSeamTopology(gibs, shipImage, shipImageName)
     gibs = orderGibsByZCoordinates(gibs)
+    gibsWithoutMetalBits = deepcopy(gibs)
+    cropGibs(gibsWithoutMetalBits)
     animateTopology(gifFrames, PARAMETERS, gibs)
     saveGif(gifFrames, shipImageName + "_topology", PARAMETERS)
     populateSeams(gibs, shipImageName, shipImage, tilesets, PARAMETERS)
-    cropAndUpdateGibs(gibs)
-    return gibs
+    cropAndUpdateGibs(gibs, shipImage)
+    return gibs, gibsWithoutMetalBits
 
 
 def initializeGifFramesWithShipImage(shipImage, PARAMETERS):
@@ -24,12 +28,19 @@ def initializeGifFramesWithShipImage(shipImage, PARAMETERS):
     return gifFrames
 
 
-def cropAndUpdateGibs(gibs):
+def cropGibs(gibs):
+    for gib in gibs:
+        croppedGibArray, center, minX, minY = cropImage(gib['img'])
+        gib['img'] = croppedGibArray
+
+def cropAndUpdateGibs(gibs, shipImage):
     for gib in gibs:
         croppedGibArray, center, minX, minY = cropImage(gib['img'])
         # TODO: reenable, but its slow nrVisiblePixels = sum(matchingSegmentIndex.flatten() == True)
 
         gib['img'] = croppedGibArray
+        if 'uncropped_metalbits' not in gib:
+            gib['uncropped_metalbits'] = np.zeros(shipImage.shape, dtype=np.uint8)
         gib['center'] = center
         gib['x'] = minX
         gib['y'] = minY

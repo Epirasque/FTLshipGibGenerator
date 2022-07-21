@@ -1,19 +1,20 @@
+import concurrent.futures
 import datetime
 import logging
+import multiprocessing
 import os
 import shutil
 import time
 import traceback
 import tracemalloc
-import concurrent.futures
-import pickle
 from copy import deepcopy
 from multiprocessing import current_process
 
 import yaml
 
+from fileHandling.CacheDao import isLayoutNameInCache, loadCacheForLayoutName, saveCacheForLayoutName
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.GibImageSaver import saveGibImages, saveGibImagesToDiskCache
+from fileHandling.GibImageSaver import saveGibImages, saveGibImagesToDiskCache, saveGibMetalBitsToDiskCache
 from fileHandling.MetalBitsLoader import loadTilesets
 from fileHandling.ProcessedShipStatsDao import countNrProcessedShipStats, storeStatsToMarkShipAsProcessed, doStatsExist, \
     STATE_FAILED, STATE_READY
@@ -22,7 +23,7 @@ from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
 from fileHandling.StabilityMarkers import createMarker, deleteMarker, countNrMarkers
 from flow.LoggerUtils import getSubProcessLogger
-from flow.MemoryManagement import logHighestMemoryUsage, cleanUpMemory
+from flow.MemoryManagement import logHighestMemoryUsage
 from flow.SameLayoutGibMaskReuser import generateGibsBasedOnSameLayoutGibMask
 from imageProcessing.MetalBitsAttacher import attachMetalBits
 from imageProcessing.Segmenter import segment
@@ -37,13 +38,14 @@ STANDALONE_MODE = 'standalone'
 ADDON_MODE = 'addon'
 
 # TODO: configurable parameter
-NR_SUBPROCESSES = 2
+NR_SUBPROCESSES = multiprocessing.cpu_count() - 1
 
 
 def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
     logger.info(
-        "Starting Gib generation at %s, with PARAMETERS:" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        "Starting Gib generation at %s, using %u additional subprocesses, with PARAMETEReS:" % (
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), NR_SUBPROCESSES))
     logger.info(PARAMETERS)
     tracemalloc.start()
     logger.info("Loading ship file names...")
@@ -79,7 +81,6 @@ def startGeneratorLoop(PARAMETERS):
     if (PARAMETERS.GENERATE_METAL_BITS == True):
         tilesets = loadTilesets()
     logger.info("Iterating ships...")
-    layoutNameToGibCache = {}
     futures = []
     nrSubmissions = 0
     nrPreviouslyFinishedSubmissions = countNrProcessedShipStats()
@@ -94,15 +95,20 @@ def startGeneratorLoop(PARAMETERS):
             # cleanUpMemory()
             if PARAMETERS.CHECK_SPECIFIC_SHIPS == True:
                 if shipName not in PARAMETERS.SPECIFIC_SHIP_NAMES:
-                    logger.info("Skipping %s (not in whitelist)" % shipName)
+                    # logger.debug("Skipping %s (not in whitelist)" % shipName)
                     continue
             if shipName in PARAMETERS.SHIPS_TO_IGNORE:
-                logger.info("Skipping %s (is in blacklist)" % shipName)
+                logger.debug("Skipping %s (is in blacklist)" % shipName)
                 continue
             layoutName = filenames['layout']
             if doStatsExist(shipName) == True:
                 logger.debug("Skipping %s because it was processed in previous run" % shipName)
                 continue
+
+            # TODO: TEMPORARY!
+            # if layoutUsages[layoutName] == 1:
+            #    logger.debug("SKIPPING BECAUSE TEMPORARILY EXCLUDE SINGLE-LAYOUT-USAGE-SHIPS!")
+            #    continue
             if layoutUsages[layoutName] > 1:
                 if layoutName in firstOfMultipleLayoutUsages:
                     logger.debug(
@@ -116,7 +122,6 @@ def startGeneratorLoop(PARAMETERS):
             nrSubmissions += 1
             futures.append(
                 executor.submit(processShipInParallel, PARAMETERS, layoutName, layoutUsages[layoutName],
-                                layoutNameToGibCache,
                                 shipImageName, shipName, ships, deepcopy(stats), tilesets))
             logger.debug("Submitted %s" % shipName)
 
@@ -175,6 +180,7 @@ def startGeneratorLoop(PARAMETERS):
         logger.info('Finished all initial submissions, resuming with layout re-usages.')
         futures = []
         nrSubmissions = 0
+        nrPreviouslyFinishedSubmissions = countNrProcessedShipStats()
 
         for shipName, filenames in ships.items():
             if PARAMETERS.LIMIT_ITERATIONS == True and nrSubmissions >= PARAMETERS.ITERATION_LIMIT:
@@ -184,10 +190,10 @@ def startGeneratorLoop(PARAMETERS):
             # cleanUpMemory()
             if PARAMETERS.CHECK_SPECIFIC_SHIPS == True:
                 if shipName not in PARAMETERS.SPECIFIC_SHIP_NAMES:
-                    logger.info("Skipping %s (not in whitelist)" % shipName)
+                    #logger.debug("Skipping %s (not in whitelist)" % shipName)
                     continue
             if shipName in PARAMETERS.SHIPS_TO_IGNORE:
-                logger.info("Skipping %s (is in blacklist)" % shipName)
+                logger.debug("Skipping %s (is in blacklist)" % shipName)
                 continue
             layoutName = filenames['layout']
             if doStatsExist(shipName) == True:
@@ -203,7 +209,6 @@ def startGeneratorLoop(PARAMETERS):
             nrSubmissions += 1
             futures.append(
                 executor.submit(processShipInParallel, PARAMETERS, layoutName, layoutUsages[layoutName],
-                                layoutNameToGibCache,
                                 shipImageName, shipName, ships, deepcopy(stats), tilesets))
             # just delete all layout markers at very end? deleteMarker('LAYOUT_%s_started' % layoutName)
             logger.debug("Submitted %s" % shipName)
@@ -281,8 +286,7 @@ def startGeneratorLoop(PARAMETERS):
     logger.info('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
 
-def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, layoutNameToGibCache, shipImageName, shipName,
-                          ships, stats, tilesets):
+def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, shipImageName, shipName, ships, stats, tilesets):
     # print('Initializing logging for %u...' % os.getpid())
     process = current_process()
     process.name = shipName
@@ -305,31 +309,26 @@ def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, layoutNameToGi
         stats['nrShipsWithGibsAlreadyPresent'] += 1
         status = STATE_READY
     else:
-        stats, layoutNameToGibCache, status = createNewGibs(PARAMETERS, layout, layoutName,
-                                                            layoutNameToGibCache, shipName,
-                                                            shipImageName, ships, stats, tilesets)
+        stats, status = createNewGibs(PARAMETERS, layout, layoutName,
+                                      shipName, shipImageName, ships, stats, tilesets)
     storeStatsToMarkShipAsProcessed(shipName, stats, status)
     deleteMarker('SHIP_started_%s' % shipName)
     logger.debug('Finishing subprocess %u' % os.getpid())
     return shipName, layoutName, shipImageName, stats
 
 
-def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, shipImageName, ships, stats, tilesets):
+def createNewGibs(PARAMETERS, layout, layoutName, name, shipImageName, ships, stats, tilesets):
     logger = getSubProcessLogger()
     status = STATE_FAILED
     foundGibsSameLayout = False
     gibs = []
     folderPath = 'not set'
-    if layoutName in layoutNameToGibCache:
+    if isLayoutNameInCache(layoutName) == True:
         logger.debug('Found layout already filled in this run')
-        shipImageNameInCache, nrGibs, layout = layoutNameToGibCache[layoutName]
+        shipImageNameInCache, nrGibs, layout = loadCacheForLayoutName(layoutName)
     if areGibsPresentInLayout(layout) == True:
         foundGibsSameLayout, gibs, newGibsWithoutMetalBits, folderPath = attemptGeneratingGibsFromIdenticalLayout(
-            PARAMETERS, tilesets, layout,
-            layoutName,
-            layoutNameToGibCache,
-            name, shipImageName,
-            ships, stats)
+            PARAMETERS, layout, layoutName, name, shipImageName, ships, stats)
     if foundGibsSameLayout == True:
         logger.debug("Succeeded in generating gibs with mask of gibs from same layout")
         stats = saveGibImagesWithProfiling(PARAMETERS, gibs, newGibsWithoutMetalBits, shipImageName, folderPath, stats)
@@ -342,18 +341,16 @@ def createNewGibs(PARAMETERS, layout, layoutName, layoutNameToGibCache, name, sh
         try:
             stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(PARAMETERS, layout, layoutName,
                                                                                      shipImageName, stats, tilesets)
-            layoutNameToGibCache[layoutName] = shipImageName, len(gibs), layoutWithNewGibs
+            saveCacheForLayoutName(layoutName, shipImageName, len(gibs), layoutWithNewGibs)
             logger.debug("Succeeded in generating gibs from scratch")
             status = STATE_READY
         except Exception:
             logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
             stats['nrErrorsUnknownCause'] += 1
-    return stats, layoutNameToGibCache, status
+    return stats, status
 
 
-def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, tilesets, layout, layoutName,
-                                             layoutNameToGibCache, name, shipImageName,
-                                             ships, stats):
+def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout, layoutName, name, shipImageName, ships, stats):
     logger = getSubProcessLogger()
     stats['nrShipsWithIncompleteGibSetup'] += 1  # TODO: separate profiling / stat case
     logger.debug("There are gibs in layout %s, but no images %s_gibN for it." % (layoutName, shipImageName))
@@ -365,14 +362,8 @@ def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, tilesets, layout, layou
         logger.debug('Trying to find gibs already existing for the layout before this run...')
         targetFolderPath = determineTargetFolderPath(PARAMETERS)
         foundGibsSameLayout, newGibsWithMetalBits, newGibsWithoutMetalBits, folderPath = generateGibsBasedOnSameLayoutGibMask(
-            PARAMETERS, tilesets, layout,
-            layoutName,
-            name, PARAMETERS.NR_GIBS,
-            shipImageName,
-            ships,
-            PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH,
-            targetFolderPath,
-            layoutNameToGibCache)
+            PARAMETERS, layout, layoutName, name, PARAMETERS.NR_GIBS, shipImageName, ships,
+            PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH, targetFolderPath)
     except Exception:
         logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
         stats['nrErrorsUnknownCause'] += 1
@@ -393,10 +384,11 @@ def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, ti
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(PARAMETERS, shipImageName, stats)
     logger.debug('Segmenting %s into individual Gibs...' % shipImageName)
     gibs, stats = segmentWithProfiling(PARAMETERS, baseImg, shipImageName, stats)
-    gibsWithoutMetalBits = deepcopy(gibs)
     if PARAMETERS.GENERATE_METAL_BITS == True:
         logger.debug('Attaching metalbits to %s...' % shipImageName)
-        gibs = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
+        gibs, gibsWithoutMetalBits = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
+    else:
+        gibsWithoutMetalBits = deepcopy(gibs)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:
@@ -455,6 +447,12 @@ def saveGibImagesWithProfiling(PARAMETERS, gibs, gibsWithoutMetalBits, shipImage
     saveGibImages(gibs, shipImageName, folderPath,
                   developerBackup=PARAMETERS.BACKUP_SEGMENTS_FOR_DEVELOPER)
     saveGibImagesToDiskCache(gibsWithoutMetalBits, shipImageName)
+    if PARAMETERS.GENERATE_METAL_BITS == True:
+        try:
+            saveGibMetalBitsToDiskCache(gibs, shipImageName)
+        except:
+            # TODO: is this fine?
+            pass
     stats['totalSaveGibImagesDuration'] += time.time() - start
     return stats
 

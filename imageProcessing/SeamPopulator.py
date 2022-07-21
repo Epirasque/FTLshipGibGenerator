@@ -54,6 +54,8 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         logger = getSubProcessLogger()
         logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
     gibToPopulate['img'] = metalBits
+    gibToPopulate['uncropped_metalbits'] = deepcopy(metalBits)
+    removeNonTransparentValuesFromArray(originalGibImageArray, gibToPopulate['uncropped_metalbits'])
 
 
 def precalculateSeamDistanceScores(seamCoordinates):

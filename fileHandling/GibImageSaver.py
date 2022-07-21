@@ -22,3 +22,10 @@ def saveGibImagesToDiskCache(gibsWithoutMetalBits, shipImageName):
         # TODO: refactor to avoid redundant saves
         os.makedirs(GIB_CACHE_FOLDER, exist_ok=True)
         imageio.imsave(GIB_CACHE_FOLDER + '/' + shipImageName + '_gib' + str(gibId) + '.png', gib['img'])
+
+def saveGibMetalBitsToDiskCache(gibs, shipImageName):
+    for gib in gibs:
+        gibId = gib['id']
+        # TODO: refactor to avoid redundant saves
+        os.makedirs(GIB_CACHE_FOLDER, exist_ok=True)
+        imageio.imsave(GIB_CACHE_FOLDER + '/' + shipImageName + '_uncropped_metalbits' + str(gibId) + '.png', gib['uncropped_metalbits'])

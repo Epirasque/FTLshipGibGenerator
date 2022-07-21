@@ -26,6 +26,11 @@ def pasteNonTransparentValuesIntoArray(source, target):
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = source[colorMaskCoordinates[0],
                                                                   colorMaskCoordinates[1], :]
 
+def removeNonTransparentValuesFromArray(source, target):
+    # NOTE: has to ensure source is not altered
+    colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
+    target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = [0, 0, 0, 0]
+
 
 def pasteNonTransparentValuesIntoArrayWithOffset(source, target, yOffset, xOffset):
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
