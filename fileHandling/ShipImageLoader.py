@@ -9,7 +9,7 @@ logger = logging.getLogger('GLAIVE.' + __name__)
 
 BASE_SUFFIX = '_base'
 
-VISIBLE_ALPHA_THRESHOLD = 64
+VISIBLE_ALPHA_THRESHOLD = 255
 
 
 def loadShipBaseImage(shipImageName, sourceFolderpath):
