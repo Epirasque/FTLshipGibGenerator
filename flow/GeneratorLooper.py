@@ -149,10 +149,10 @@ def startGeneratorLoop(PARAMETERS):
             globalElapsedMinutes = (time.time() - globalStart) / 60.
 
             logger.info(
-                "SINGLE-LAYOUT-USAGE: Generated in this phase: %u / %u, %.0f%%, %u min elapsed, %u min remaining. (Including previous run: %u / %u; Total ships: %u; Total elapsed: %u min))" % (
+                "SINGLE-LAYOUT-USAGES: Generated in this phase: %u / %u, %.0f%%, %u min elapsed, %u min remaining. (Total elapsed: %u min; Including previous run: %u / %u; Total ships: %u))" % (
                     nrFinishedSubmissions, nrSubmissions, 100. * finishedFraction, elapsedMinutes,
                     remainingMinutes, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
-                    nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, globalElapsedMinutes))
+                    globalElapsedMinutes, nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips))
             # TODO: iterate through multi-layout ships here?
             time.sleep(5)
 
@@ -238,10 +238,10 @@ def startGeneratorLoop(PARAMETERS):
             globalElapsedMinutes = (time.time() - globalStart) / 60.
 
             logger.info(
-                "MULTIPLE-LAYOUT-USAGES: Generated in this phase: %u / %u, %.0f%%, %u min elapsed, %u min remaining. (Including previous run: %u / %u; Total ships: %u; Total elapsed: %u min)" % (
+                "MULTIPLE-LAYOUT-USAGES: Generated in this phase: %u / %u, %.0f%%, %u min elapsed, %u min remaining. (Total elapsed: %u min; Including previous run: %u / %u; Total ships: %u)" % (
                     nrFinishedSubmissions, nrSubmissions, 100. * finishedFraction, elapsedMinutes,
                     remainingMinutes, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
-                    nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, globalElapsedMinutes))
+                    globalElapsedMinutes, nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips))
 
             # TODO: iterate through multi-layout ships here?
             time.sleep(5)
