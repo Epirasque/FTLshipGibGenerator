@@ -11,3 +11,4 @@ robocopy C:\Users\roman\PycharmProjects\glaive\metalBits C:\Users\roman\PycharmP
 robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ config.ini_for_addons
 ren config.ini_for_addons config.ini
 robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ loggingForCore.yaml
+robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ loggingForSubprocess.yaml
