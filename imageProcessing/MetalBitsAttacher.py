@@ -1,4 +1,3 @@
-import numpy as np
 from PIL import Image
 
 from imageProcessing.DebugAnimator import saveGif
@@ -12,13 +11,13 @@ def attachMetalBits(gibs, shipImage, tilesets, PARAMETERS, shipImageName):
     uncropGibs(gibs, shipImage)
     buildSeamTopology(gibs, shipImage, shipImageName)
     gibs = orderGibsByZCoordinates(gibs)
-    gibsWithoutMetalBits = deepcopy(gibs)
-    cropGibs(gibsWithoutMetalBits)
+    uncroppedGibsWithoutMetalBits = deepcopy(gibs)
+    # cropGibs(gibsWithoutMetalBits)
     animateTopology(gifFrames, PARAMETERS, gibs)
     saveGif(gifFrames, shipImageName + "_topology", PARAMETERS)
     populateSeams(gibs, shipImageName, shipImage, tilesets, PARAMETERS)
     cropAndUpdateGibs(gibs, shipImage)
-    return gibs, gibsWithoutMetalBits
+    return gibs, uncroppedGibsWithoutMetalBits
 
 
 def initializeGifFramesWithShipImage(shipImage, PARAMETERS):
@@ -32,6 +31,7 @@ def cropGibs(gibs):
     for gib in gibs:
         croppedGibArray, center, minX, minY = cropImage(gib['img'])
         gib['img'] = croppedGibArray
+
 
 def cropAndUpdateGibs(gibs, shipImage):
     for gib in gibs:

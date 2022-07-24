@@ -17,7 +17,7 @@ from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
 from fileHandling.GibImageSaver import saveGibImages, saveGibImagesToDiskCache, saveGibMetalBitsToDiskCache
 from fileHandling.MetalBitsLoader import loadTilesets
 from fileHandling.ProcessedShipStatsDao import countNrProcessedShipStats, storeStatsToMarkShipAsProcessed, doStatsExist, \
-    STATE_FAILED, STATE_READY
+    STATE_FAILED, STATE_READY, clearStoredStats
 from fileHandling.ShipBlueprintLoader import loadShipFileNames
 from fileHandling.ShipImageLoader import loadShipBaseImage
 from fileHandling.ShipLayoutDao import loadShipLayout, saveShipLayoutStandalone, saveShipLayoutAsAppendFile
@@ -39,6 +39,7 @@ ADDON_MODE = 'addon'
 
 # TODO: configurable parameter
 NR_SUBPROCESSES = multiprocessing.cpu_count() - 1
+CLEAR_ALL_STATS_FOR_PROCESSED_SHIPS = True
 
 
 def startGeneratorLoop(PARAMETERS):
@@ -77,6 +78,9 @@ def startGeneratorLoop(PARAMETERS):
         logger.info("Did not clean gibCache (e.g. folder was already cleaned up): %s" % e)
     except Exception as e:
         logger.warning("EXCEPTION when cleaning up gibCache: %s" % e)
+    if CLEAR_ALL_STATS_FOR_PROCESSED_SHIPS == True:
+        logger.info("Cleaning up statsForProcessedShips...")
+        clearStoredStats()
     tilesets = {}
     if (PARAMETERS.GENERATE_METAL_BITS == True):
         tilesets = loadTilesets()
@@ -129,25 +133,26 @@ def startGeneratorLoop(PARAMETERS):
             # if PARAMETERS.LIMIT_ITERATIONS == True and stats['nrIterations'] >= PARAMETERS.ITERATION_LIMIT:
             #    break
 
+        phaseStart = time.time()
         nrFinishedSubmissions = 0
         nrShips = len(ships)
-        # TODO: this is not correct yet: layout reusages are not counted here
         while (nrFinishedSubmissions < nrSubmissions):
             nrFinishedSubmissions = countNrProcessedShipStats() - nrPreviouslyFinishedSubmissions
 
-            elapsedMinutes = (time.time() - globalStart) / 60.
-            finishedFraction = (nrFinishedSubmissions / nrShips)
+            elapsedMinutes = (time.time() - phaseStart) / 60.
+            finishedFraction = (nrFinishedSubmissions / nrSubmissions)
             remainingFraction = 1. - finishedFraction
             if finishedFraction == 0:
                 remainingMinutes = -1  # unknown
             else:
                 remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
+            globalElapsedMinutes = (time.time() - globalStart) / 60.
 
             logger.info(
-                "SINGLE-USAGE: Generated: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, %u min elapsed, %u min remaining to finish all ships" % (
-                    nrFinishedSubmissions, nrSubmissions, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
-                    nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, 100. * finishedFraction, elapsedMinutes,
-                    remainingMinutes))
+                "SINGLE-LAYOUT-USAGE: Generated in this phase: %u / %u, %.0f%%, %u min elapsed, %u min remaining. (Including previous run: %u / %u; Total ships: %u; Total elapsed: %u min))" % (
+                    nrFinishedSubmissions, nrSubmissions, 100. * finishedFraction, elapsedMinutes,
+                    remainingMinutes, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
+                    nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, globalElapsedMinutes))
             # TODO: iterate through multi-layout ships here?
             time.sleep(5)
 
@@ -181,6 +186,7 @@ def startGeneratorLoop(PARAMETERS):
         futures = []
         nrSubmissions = 0
         nrPreviouslyFinishedSubmissions = countNrProcessedShipStats()
+        phaseStart = time.time()
 
         for shipName, filenames in ships.items():
             if PARAMETERS.LIMIT_ITERATIONS == True and nrSubmissions >= PARAMETERS.ITERATION_LIMIT:
@@ -190,7 +196,7 @@ def startGeneratorLoop(PARAMETERS):
             # cleanUpMemory()
             if PARAMETERS.CHECK_SPECIFIC_SHIPS == True:
                 if shipName not in PARAMETERS.SPECIFIC_SHIP_NAMES:
-                    #logger.debug("Skipping %s (not in whitelist)" % shipName)
+                    # logger.debug("Skipping %s (not in whitelist)" % shipName)
                     continue
             if shipName in PARAMETERS.SHIPS_TO_IGNORE:
                 logger.debug("Skipping %s (is in blacklist)" % shipName)
@@ -222,19 +228,20 @@ def startGeneratorLoop(PARAMETERS):
         # TODO: this is not correct yet: layout reusages are not counted here
         while (nrFinishedSubmissions < nrSubmissions):
             nrFinishedSubmissions = countNrProcessedShipStats() - nrPreviouslyFinishedSubmissions
-            elapsedMinutes = (time.time() - globalStart) / 60.
+            elapsedMinutes = (time.time() - phaseStart) / 60.
             finishedFraction = (nrFinishedSubmissions / nrShips)
             remainingFraction = 1. - finishedFraction
             if finishedFraction == 0:
                 remainingMinutes = -1  # unknown
             else:
                 remainingMinutes = elapsedMinutes * remainingFraction / finishedFraction
+            globalElapsedMinutes = (time.time() - globalStart) / 60.
 
             logger.info(
-                "LAYOUT-REUSAGE: Generated: %u / %u (Including previous run: %u / %u; Total ships: %u), ships done: %.0f%%, %u min elapsed, %u min remaining to finish all ships" % (
-                    nrFinishedSubmissions, nrSubmissions, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
-                    nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, 100. * finishedFraction, elapsedMinutes,
-                    remainingMinutes))
+                "MULTIPLE-LAYOUT-USAGES: Generated in this phase: %u / %u, %.0f%%, %u min elapsed, %u min remaining. (Including previous run: %u / %u; Total ships: %u; Total elapsed: %u min)" % (
+                    nrFinishedSubmissions, nrSubmissions, 100. * finishedFraction, elapsedMinutes,
+                    remainingMinutes, nrFinishedSubmissions + nrPreviouslyFinishedSubmissions,
+                    nrSubmissions + nrPreviouslyFinishedSubmissions, nrShips, globalElapsedMinutes))
 
             # TODO: iterate through multi-layout ships here?
             time.sleep(5)
@@ -262,7 +269,6 @@ def startGeneratorLoop(PARAMETERS):
         finalStats['totalSaveShipLayoutDuration'] += statsFromParallel['totalSaveShipLayoutDuration']
 
         finalStats['nrIterations'] = nrFinishedSubmissions
-        printIterationInfo(globalStart, shipName, layoutName, shipImageName, finalStats)
         logger.debug("Finished recording stats for %s" % shipName)
 
     logger.info('Cleaning up LAYOUT markers...')
@@ -386,15 +392,16 @@ def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, ti
     gibs, stats = segmentWithProfiling(PARAMETERS, baseImg, shipImageName, stats)
     if PARAMETERS.GENERATE_METAL_BITS == True:
         logger.debug('Attaching metalbits to %s...' % shipImageName)
-        gibs, gibsWithoutMetalBits = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
+        gibs, uncroppedGibsWithoutMetalBits = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
     else:
-        gibsWithoutMetalBits = deepcopy(gibs)
+        uncroppedGibsWithoutMetalBits = deepcopy(gibs)
     if len(gibs) == 0:
         stats['nrErrorsInSegmentation'] += 1
     else:
         targetFolderPath = determineTargetFolderPath(PARAMETERS)
         targetFolderPath += '\\img\\' + shipImageSubfolder
-        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, gibsWithoutMetalBits, shipImageName, targetFolderPath,
+        stats = saveGibImagesWithProfiling(PARAMETERS, gibs, uncroppedGibsWithoutMetalBits, shipImageName,
+                                           targetFolderPath,
                                            stats)
         layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats)
         appendContentString, nrWeaponMountsWithoutGibId, stats = setWeaponMountGibIdsWithProfiling(gibs,
@@ -442,11 +449,11 @@ def setWeaponMountGibIdsWithProfiling(gibs, layoutWithNewGibs, appendContentStri
     return appendContentString, nrWeaponMountsWithoutGibId, stats
 
 
-def saveGibImagesWithProfiling(PARAMETERS, gibs, gibsWithoutMetalBits, shipImageName, folderPath, stats):
+def saveGibImagesWithProfiling(PARAMETERS, gibs, uncroppedGibsWithoutMetalBits, shipImageName, folderPath, stats):
     start = time.time()
     saveGibImages(gibs, shipImageName, folderPath,
                   developerBackup=PARAMETERS.BACKUP_SEGMENTS_FOR_DEVELOPER)
-    saveGibImagesToDiskCache(gibsWithoutMetalBits, shipImageName)
+    saveGibImagesToDiskCache(uncroppedGibsWithoutMetalBits, shipImageName)
     if PARAMETERS.GENERATE_METAL_BITS == True:
         try:
             saveGibMetalBitsToDiskCache(gibs, shipImageName)

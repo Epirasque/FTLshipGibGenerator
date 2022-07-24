@@ -1,3 +1,4 @@
+import logging
 import os
 import pickle
 import shutil
@@ -7,6 +8,8 @@ FOLDER_PATH = 'statsForProcessedShips'
 
 STATE_READY = 'READY'
 STATE_FAILED = 'FAILED'
+
+logger = logging.getLogger('GLAIVE.' + __name__)
 
 
 def countNrProcessedShipStats():
@@ -33,6 +36,7 @@ def doStatsExist(shipName):
     return statFileReady.is_file() or statFileFailed.is_file()
 
 
-# TODO: use/activate (commit first...) , see shutil.rmtree('gibCache')
 def clearStoredStats():
     shutil.rmtree(FOLDER_PATH)
+    os.mkdir(FOLDER_PATH)
+    Path('%s/%s' % (FOLDER_PATH, "DO_NOT_PUT_OTHER_FILES_HERE")).touch()

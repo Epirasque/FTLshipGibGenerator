@@ -48,16 +48,20 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, layout, layoutName, name, n
                     else:
                         if areGibsPresentAsImageFiles(searchShipName, standaloneFolderPath):
                             logger.debug('Found identical layout with existing gibs for image %s' % searchShipName)
-                            gibsForMask, missingMetalBits = loadGibs(layout, nrGibs, standaloneFolderPath + '/img/' + newShipImageSubfolder,
-                                                   searchShipName, PARAMETERS)
+                            gibsForMask, missingMetalBits = loadGibs(layout, nrGibs,
+                                                                     standaloneFolderPath + '/img/' + newShipImageSubfolder,
+                                                                     searchShipName, PARAMETERS)
                             if len(gibsForMask) > 0:
                                 foundGibsSameLayout = True
                         else:
-                            logger.debug('Skipping identical layout for image %s as it has no gibs either' % searchShipName)
+                            logger.debug(
+                                'Skipping identical layout for image %s as it has no gibs either' % searchShipName)
     if foundGibsSameLayout == True:
         for gibForMask in gibsForMask:  # TODO: test case for deviating number of maskgibs
             uncroppedSearchGibImg = Image.fromarray(np.zeros(newBaseImage.shape, dtype=np.uint8))
-            uncroppedSearchGibImg.paste(gibForMask['img'], (gibForMask['x'], gibForMask['y']), gibForMask['img'])
+            # TODO: different x-y offset: coordinates without metalbits!
+            uncroppedSearchGibImg.paste(gibForMask['img'], (gibForMask['x_no_metalbits'], gibForMask['y_no_metalbits']),
+                                        gibForMask['img'])
             searchGibTransparentMask = np.asarray(uncroppedSearchGibImg)[:, :, 3] < VISIBLE_ALPHA_THRESHOLD
             uncroppedNewGib = deepcopy(newBaseImage)
             uncroppedNewGib[searchGibTransparentMask] = (0, 0, 0, 0)
@@ -65,17 +69,17 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, layout, layoutName, name, n
                 pasteNonTransparentValuesIntoArray(np.asarray(gibForMask['uncropped_metalbits']),
                                                    uncroppedNewGib)
 
-            #uncroppedSearchGibImgArray = np.zeros(newBaseImage.shape, dtype=np.uint8)
-            #if PARAMETERS.GENERATE_METAL_BITS == True:
+            # uncroppedSearchGibImgArray = np.zeros(newBaseImage.shape, dtype=np.uint8)
+            # if PARAMETERS.GENERATE_METAL_BITS == True:
             #    pasteNonTransparentValuesIntoArray(np.asarray(gibForMask['uncropped_metalbits']), uncroppedSearchGibImgArray)
-            #uncroppedSearchGibImg = Image.fromarray(uncroppedSearchGibImgArray)
+            # uncroppedSearchGibImg = Image.fromarray(uncroppedSearchGibImgArray)
             ## TODO: DONT OVERWRITE GIB IN ADDONLAYOUT!
-            #uncroppedSearchGibImg.paste(gibForMask['img'], (gibForMask['x'], gibForMask['y']), gibForMask['img'])
-            #uncroppedSearchGibImgArray = np.asarray(uncroppedSearchGibImg)
-            #searchGibTransparentMask = uncroppedSearchGibImgArray[:, :, 3] < VISIBLE_ALPHA_THRESHOLD
+            # uncroppedSearchGibImg.paste(gibForMask['img'], (gibForMask['x'], gibForMask['y']), gibForMask['img'])
+            # uncroppedSearchGibImgArray = np.asarray(uncroppedSearchGibImg)
+            # searchGibTransparentMask = uncroppedSearchGibImgArray[:, :, 3] < VISIBLE_ALPHA_THRESHOLD
             ##uncroppedNewGib = deepcopy(newBaseImage)
             ##uncroppedNewGib[searchGibTransparentMask] = (0, 0, 0, 0)
-            #uncroppedSearchGibImgArray[searchGibTransparentMask] = (0, 0, 0, 0)
+            # uncroppedSearchGibImgArray[searchGibTransparentMask] = (0, 0, 0, 0)
 
             newGib = {}
             newGib['id'] = gibForMask['id']
@@ -87,7 +91,7 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, layout, layoutName, name, n
             # newGib['x'] = minX
             # newGib['y'] = minY
             newGib['mass'] = (center['x'] - newGib['x']) * (
-                        center['y'] - newGib['y']) * 4  # TODO: reenable nrVisiblePixels
+                    center['y'] - newGib['y']) * 4  # TODO: reenable nrVisiblePixels
             newGibsWithMetalBits.append(newGib)
 
     return foundGibsSameLayout, newGibsWithMetalBits, newGibsWithoutMetalBits, folderPath
@@ -107,10 +111,13 @@ def loadGibs(layout, nrGibs, basePath, shipName, PARAMETERS):
         # TODO: use nparray instead?
 
         with Image.open(basePath + '/' + shipName + "_gib" + str(gibId) + '.png') as gibForMaskImage:
-            gibForMask['img'] = deepcopy(gibForMaskImage)
+            imgAsArray, dummy, gibForMask['x_no_metalbits'], gibForMask['y_no_metalbits'] = cropImage(
+                np.asarray(deepcopy(gibForMaskImage)))
+            gibForMask['img'] = Image.fromarray(imgAsArray)
         if PARAMETERS.GENERATE_METAL_BITS == True:
             try:
-                with Image.open(basePath + '/' + shipName + "_uncropped_metalbits" + str(gibId) + '.png') as gibForMaskImage:
+                with Image.open(
+                        basePath + '/' + shipName + "_uncropped_metalbits" + str(gibId) + '.png') as gibForMaskImage:
                     gibForMask['uncropped_metalbits'] = deepcopy(gibForMaskImage)
             except:
                 missingMetalBits = True

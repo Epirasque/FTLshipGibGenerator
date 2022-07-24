@@ -1,5 +1,6 @@
-import imageio
 import os
+
+import imageio
 
 GIB_CACHE_FOLDER = 'gibCache'
 
@@ -16,16 +17,18 @@ def saveGibImages(gibs, shipImageName, folderPath, developerBackup):
             imageio.imsave('gibs/' + shipImageName + '_gib' + str(gibId) + '.png', gib['img'])
 
 
-def saveGibImagesToDiskCache(gibsWithoutMetalBits, shipImageName):
-    for gib in gibsWithoutMetalBits:
+def saveGibImagesToDiskCache(uncroppedGibsWithoutMetalBits, shipImageName):
+    for gib in uncroppedGibsWithoutMetalBits:
         gibId = gib['id']
         # TODO: refactor to avoid redundant saves
         os.makedirs(GIB_CACHE_FOLDER, exist_ok=True)
         imageio.imsave(GIB_CACHE_FOLDER + '/' + shipImageName + '_gib' + str(gibId) + '.png', gib['img'])
+
 
 def saveGibMetalBitsToDiskCache(gibs, shipImageName):
     for gib in gibs:
         gibId = gib['id']
         # TODO: refactor to avoid redundant saves
         os.makedirs(GIB_CACHE_FOLDER, exist_ok=True)
-        imageio.imsave(GIB_CACHE_FOLDER + '/' + shipImageName + '_uncropped_metalbits' + str(gibId) + '.png', gib['uncropped_metalbits'])
+        imageio.imsave(GIB_CACHE_FOLDER + '/' + shipImageName + '_uncropped_metalbits' + str(gibId) + '.png',
+                       gib['uncropped_metalbits'])
