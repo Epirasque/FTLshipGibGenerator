@@ -1,4 +1,4 @@
-# G.L.A.I.V.E. v0.9.7: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
+# G.L.A.I.V.E. v1.0.1: Pre-Generate Ship Debris (Gibs) For Faster Than Light (FTL) Mods
 
 # What Does It Do?
 
@@ -221,7 +221,8 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 # Known Issues
 
 - Glow can sometimes cause an issue
-- Out of bounds issue for metal bits
+- Subprocesses are not part of log (consider copying the console-output, might not work for .exe though)
+- test_ReusedLayoutFile is failing after multi-process refactoring
 
 ## Performance
 
@@ -233,7 +234,7 @@ With that huge amount of ships the time to load the game initially is increased 
 
 In arbitrary order, *no promises if or when these will be done*:
 
-- Metal bits attached to the gibs, see progress section below
+- More content and improvements regarding metal bits (see below)
 - Additional debris-pieces independent of the ship image (think Flak projectiles), also added to ships with already
   existing gibs (there will definitely be a way to turn that off as it does not look like standard FTL gibs anymore)
 - Resolving remaining TODOs in the code
@@ -257,7 +258,7 @@ In arbitrary order, *no promises if or when these will be done*:
         - [ ] classify ships during gib generation
 - [x] mark seams between gibs
     - [x] prototype
-    - [ ] dark edge in final gib, invisible before flying apart
+    - [ ] dark edge in final gib, invisible before flying apart?
 - [x] innermost layer1 (chunks)
     - [x] tileset
     - [x] determine general direction
@@ -268,9 +269,10 @@ In arbitrary order, *no promises if or when these will be done*:
         - [x] don't cover gibs with lower z-value
     - [x] iteration
     - [x] proper seam-travel strategy
-- [ ] layer2
-- [ ] layer3
+- [ ] layer2 metal beams
+- [ ] layer3 both edge-endings
 - [ ] layer4
+- [ ] layer5?
 - [x] ensure metal bits are always hidden initially
     - [x] unit test
         - [x] update to reconstruct based on z-layers
@@ -278,11 +280,11 @@ In arbitrary order, *no promises if or when these will be done*:
 - [x] QoL
     - [x] feature toggle
     - [x] save generation process as gif for debugging
-    - [ ] performance improvements
+    - [x] performance improvements
       - [x] dynamic transparency detection offset
       - [x] fix gib topology resulting in unintended neighbour-blocking
       - [x] fix slowdown when determining attachment detection
-      - [ ] multithreading
+      - [x] multiprocessing
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs

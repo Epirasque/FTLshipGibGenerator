@@ -5,6 +5,7 @@ from PIL import Image
 from skimage.segmentation import slic
 
 # TODO: remove shipImageName as parameter
+from flow.LoggerUtils import getSubProcessLogger
 from flow.MemoryManagement import cleanUpMemory
 from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceInPercentage
 
@@ -13,10 +14,8 @@ VISIBLE_ALPHA_VALUE = 255
 MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 1.
 MINIMAL_WEIGHTED_SEGMENT_RATIO = .2
 
-logger = logging.getLogger('GLAIVE.' + __name__)
-
-
 def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
+    logger = getSubProcessLogger()
     nonTransparentMask = (shipImage[:, :, 3] == VISIBLE_ALPHA_VALUE)
     nrNonTransparentPixels = nonTransparentMask.sum()
     nrSuccessfulGibs = 0

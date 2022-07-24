@@ -2,10 +2,13 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 import os
+from multiprocessing import current_process
 
-logger = logging.getLogger('GLAIVE.' + __name__)
+# logger = logging.getLogger('GLAIVE.' + __name__)
+
 
 def loadShipLayout(shipLayoutName, sourceFolderpath):
+    logger = logging.getLogger('GLAIVE.' + __name__ + '|' + current_process().name)
     os.makedirs(sourceFolderpath + '\\data\\', exist_ok=True)
     try:
         # workaround: ElementTree expect a single root node
