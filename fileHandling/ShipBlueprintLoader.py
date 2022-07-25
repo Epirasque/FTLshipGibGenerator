@@ -46,7 +46,10 @@ def addBlueprintsFromFile(blueprints, sourceFolderpath, filename):
             with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
                 rawXml = file.read()
             # TODO: get rid of all <mod:...> sections
-            treeFormedXmlString = '<root>' + re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml) + '</root>'
+            xmlWithoutGeneralTag = re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml)
+            xmlWithShortenedStartCommentTag = re.sub(r"(<!-{2,})", r"<!--", xmlWithoutGeneralTag)
+            xmlWithShortenedEndCommentTag = re.sub(r"(-{2,}>)", r"-->", xmlWithShortenedStartCommentTag)
+            treeFormedXmlString = '<root>' + xmlWithShortenedEndCommentTag + '</root>'
             for modPrefix in MOD_TAG_PREFIXES:
                 treeFormedXmlString = treeFormedXmlString.replace(modPrefix, modPrefix[:-1] + "_")
             parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
