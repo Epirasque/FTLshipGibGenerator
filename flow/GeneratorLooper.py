@@ -45,7 +45,7 @@ CLEAR_ALL_STATS_FOR_PROCESSED_SHIPS = True
 def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
     logger.info(
-        "Starting Gib generation at %s, using %u additional subprocesses, with PARAMETEReS:" % (
+        "Starting Gib generation at %s, using %u additional subprocesses, with PARAMETERS:" % (
             datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), NR_SUBPROCESSES))
     logger.info(PARAMETERS)
     tracemalloc.start()
