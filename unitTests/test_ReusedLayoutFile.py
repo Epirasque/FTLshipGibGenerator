@@ -43,7 +43,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         startGeneratorLoop(generatorParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                           requiredRestorationAccuracyInPercent=2,
                                                                           maximumSharedGibPixelsInPercent=0.01)
@@ -72,7 +72,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         startGeneratorLoop(generatorParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                           requiredRestorationAccuracyInPercent=2,
                                                                           maximumSharedGibPixelsInPercent=1.)
@@ -84,27 +84,28 @@ class ReusedLayoutFileTest(unittest.TestCase):
         nrGibs = 2
 
         PARAMETERS = Core.PARAMETERS
-        generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
-                                         ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                         OUTPUT_MODE=Core.ADDON_MODE,
-                                         BACKUP_SEGMENTS_FOR_DEVELOPER=False,
-                                         BACKUP_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
-                                         ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
-                                         CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
-                                         LIMIT_ITERATIONS=False, ITERATION_LIMIT=0)
+        generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                             ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                             OUTPUT_MODE=Core.ADDON_MODE,
+                                             BACKUP_SEGMENTS_FOR_DEVELOPER=False,
+                                             BACKUP_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                             QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=False,
+                                             ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                             CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                             LIMIT_ITERATIONS=False, ITERATION_LIMIT=0)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
         # ACT
-        startGeneratorLoop(generatorParameters)
+        startGeneratorLoop(generatorLoopParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                      addonFolderPath,
                                                                      requiredRestorationAccuracyInPercent=2,
-                                                                     maximumSharedGibPixelsInPercent=0.01)
+                                                                     maximumSharedGibPixelsInPercent=0.01,
+                                                                     PARAMETERS=generatorLoopParameters)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -124,27 +125,28 @@ class ReusedLayoutFileTest(unittest.TestCase):
         nrGibs = 2
 
         PARAMETERS = Core.PARAMETERS
-        generatorParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
-                                         ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
-                                         OUTPUT_MODE=Core.ADDON_MODE,
-                                         BACKUP_SEGMENTS_FOR_DEVELOPER=False,
-                                         BACKUP_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
-                                         QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=True,
-                                         ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
-                                         CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
-                                         LIMIT_ITERATIONS=False, ITERATION_LIMIT=0)
+        generatorLoopParameters = PARAMETERS(INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH=standaloneFolderPath,
+                                             ADDON_OUTPUT_FOLDERPATH=addonFolderPath, SHIPS_TO_IGNORE='unset',
+                                             OUTPUT_MODE=Core.ADDON_MODE,
+                                             BACKUP_SEGMENTS_FOR_DEVELOPER=False,
+                                             BACKUP_LAYOUTS_FOR_DEVELOPER=False, NR_GIBS=nrGibs,
+                                             QUICK_AND_DIRTY_SEGMENT=True, GENERATE_METAL_BITS=True,
+                                             ANIMATE_METAL_BITS_FOR_DEVELOPER=False, ANIMATE_METAL_BITS_FPS=5.,
+                                             CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
+                                             LIMIT_ITERATIONS=False, ITERATION_LIMIT=0)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
         # ACT
-        startGeneratorLoop(generatorParameters)
+        startGeneratorLoop(generatorLoopParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                      addonFolderPath,
                                                                      requiredRestorationAccuracyInPercent=2,
-                                                                     maximumSharedGibPixelsInPercent=1.)
+                                                                     maximumSharedGibPixelsInPercent=1.,
+                                                                     PARAMETERS=generatorLoopParameters)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -182,7 +184,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         startGeneratorLoop(generatorLoopParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                           requiredRestorationAccuracyInPercent=2,
                                                                           maximumSharedGibPixelsInPercent=1.)
@@ -212,7 +214,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
         startGeneratorLoop(generatorLoopParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForStandaloneIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                           requiredRestorationAccuracyInPercent=2,
                                                                           maximumSharedGibPixelsInPercent=1.)
@@ -242,11 +244,12 @@ class ReusedLayoutFileTest(unittest.TestCase):
         startGeneratorLoop(generatorLoopParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                      addonFolderPath,
                                                                      requiredRestorationAccuracyInPercent=2,
-                                                                     maximumSharedGibPixelsInPercent=1.)
+                                                                     maximumSharedGibPixelsInPercent=1.,
+                                                                     PARAMETERS=generatorLoopParameters)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -279,11 +282,12 @@ class ReusedLayoutFileTest(unittest.TestCase):
         startGeneratorLoop(generatorLoopParameters)
 
         # ASSERT
-        ships = loadShipFileNames(standaloneFolderPath)
+        ships, layoutUsages = loadShipFileNames(standaloneFolderPath)
         self.assertShipReconstructedFromGibsForAddonIsAccurateEnough(nrGibs, ships, standaloneFolderPath,
                                                                      addonFolderPath,
                                                                      requiredRestorationAccuracyInPercent=2,
-                                                                     maximumSharedGibPixelsInPercent=1.)
+                                                                     maximumSharedGibPixelsInPercent=1.,
+                                                                     PARAMETERS=generatorLoopParameters)
 
         with open(addonFolderPath + '/data/test_layoutA.xml.append') as layoutA:
             content = layoutA.read()
@@ -342,11 +346,12 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
     def assertShipReconstructedFromGibsForAddonIsAccurateEnough(self, nrGibs, ships, standaloneFolderPath,
                                                                 addonFolderPath, requiredRestorationAccuracyInPercent,
-                                                                maximumSharedGibPixelsInPercent):
+                                                                maximumSharedGibPixelsInPercent, PARAMETERS):
         for name, filenames in ships.items():
             shipImageName = filenames['img']
             layoutName = filenames['layout']
-            gibs = self.loadGibsForAddon(standaloneFolderPath, addonFolderPath, layoutName, nrGibs, shipImageName)
+            gibs = self.loadGibsForAddon(standaloneFolderPath, addonFolderPath, layoutName, nrGibs, shipImageName,
+                                         PARAMETERS)
             shipImage, shipImageSubfolder = loadShipBaseImage(shipImageName, standaloneFolderPath)
             highlightingImage, percentage, reconstructedFromGibs = self.reconstructFromGibs(gibs, layoutName, shipImage,
                                                                                             shipImageName)
@@ -360,7 +365,7 @@ class ReusedLayoutFileTest(unittest.TestCase):
 
             self.assertGibsDoNotShareTooManyIdenticalPixels(gibs, shipImage, maximumSharedGibPixelsInPercent)
 
-    def loadGibsForAddon(self, inputPath, addonFolderPath, layoutName, nrGibs, shipImageName):
+    def loadGibsForAddon(self, inputPath, addonFolderPath, layoutName, nrGibs, shipImageName, PARAMETERS):
         try:
             appendLayoutFilepath = addonFolderPath + '/data/' + layoutName + '.xml.append'
             with open(appendLayoutFilepath) as appendFile:
@@ -393,12 +398,15 @@ class ReusedLayoutFileTest(unittest.TestCase):
         except:
             layout = loadShipLayout(layoutName, inputPath)
             try:
-                gibs = loadGibs(layout, nrGibs, GIB_CACHE_FOLDER + '/img/ship/', shipImageName)
+                gibs, missingMetalBits = loadGibs(layout, nrGibs, GIB_CACHE_FOLDER + '/img/ship/', shipImageName,
+                                                  PARAMETERS)
             except:
                 try:
-                    gibs = loadGibs(layout, nrGibs, addonFolderPath + '/img/ship/', shipImageName)
+                    gibs, missingMetalBits = loadGibs(layout, nrGibs, addonFolderPath + '/img/ship/', shipImageName,
+                                                      PARAMETERS)
                 except:
-                    gibs = loadGibs(layout, nrGibs, inputPath + '/img/ship/', shipImageName)
+                    gibs, missingMetalBits = loadGibs(layout, nrGibs, inputPath + '/img/ship/', shipImageName,
+                                                      PARAMETERS)
             for gib in gibs:
                 gib['img'] = np.asarray(gib['img'])
         return gibs
