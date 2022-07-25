@@ -1,12 +1,14 @@
 import logging
+import warnings
 from copy import deepcopy
 
 import numpy as np
 
-logger = logging.getLogger('GLAIVE.' + __name__)
-
 
 # takes numpy array and RGB color of the filter in form of an array
+from flow.LoggerUtils import getSubProcessLogger
+
+
 def findColorInImage(imageArray, colorToFind):
     nonColorMask = np.where(np.any(imageArray != [colorToFind[0], colorToFind[1], colorToFind[2], 255], axis=-1))
     coloredArea = imageArray.copy()
@@ -23,6 +25,11 @@ def pasteNonTransparentValuesIntoArray(source, target):
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = source[colorMaskCoordinates[0],
                                                                   colorMaskCoordinates[1], :]
+
+def removeNonTransparentValuesFromArray(source, target):
+    # NOTE: has to ensure source is not altered
+    colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
+    target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = [0, 0, 0, 0]
 
 
 def pasteNonTransparentValuesIntoArrayWithOffset(source, target, yOffset, xOffset):
@@ -61,9 +68,12 @@ def areAllCoordinatesContainedInVisibleArea(coordinates, outerImageArray):
 
 
 def fitLineToCoordinates(edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX):
+    slope = 0.
+    yOffset = 0
     try:
         slope, yOffset = np.polyfit(edgeCoordinatesInRadiusX, edgeCoordinatesInRadiusY, deg=1)
     except:
+        logger = getSubProcessLogger()
         logger.warning("WARNING: Failed to detect line among edge pixels within search radius")
     return slope, yOffset
 
@@ -90,7 +100,9 @@ def determineOutwardDirectionAtPoint(imageArray, edgeCoordinates, pointOfDetecti
                                      maximumScanForTransparencyDistance):
     edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX = findEdgePixelsInSearchRadius(edgeCoordinates, pointOfDetection,
                                                                                       nearbyEdgePixelScanRadius)
-    slope, yOffset = fitLineToCoordinates(edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX)
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        slope, yOffset = fitLineToCoordinates(edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX)
     vectorA, vectorB = determineYXorthogonalVectorsForSlope(slope)
     for scanForTransparencyDistance in range(1, maximumScanForTransparencyDistance + 1):
         isDetectionSuccessful, outwardVector = determineOutwardVector(pointOfDetection, vectorA, vectorB, imageArray,

@@ -6,21 +6,21 @@ from imageProcessing.ImageProcessingUtilities import pasteNonTransparentValuesIn
 from imageProcessing.MetalBitsConstants import SEAM_DETECTION_SEARCH_RADIUS
 
 
-def buildSeamTopology(gibs, shipImage):
+def buildSeamTopology(gibs, shipImage, shipImageName):
     nrGibs = len(gibs)
     currentZ = 1
     for gib in gibs:
         # overwrite fallback defined by non-metalbit part of segmenter
         gib['z'] = None
     centerMostGib = getCenterMostGib(gibs, shipImage)
-    buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage)
+    buildSeamTopologyForGib(centerMostGib, currentZ, gibs, nrGibs, shipImage, shipImageName)
 
     for currentZ in range(2, nrGibs + 1):
         for gib in gibs:
             if gib['z'] == None:
                 nextGib = gib
                 break
-        buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage)
+        buildSeamTopologyForGib(nextGib, currentZ, gibs, nrGibs, shipImage, shipImageName)
 
 
 def orderGibsByZCoordinates(gibs):
@@ -75,7 +75,7 @@ def animateTopology(gifImages, PARAMETERS, gibs):
             gifImages.append(np.ma.copy(gibImageArray))
 
 
-def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage):
+def buildSeamTopologyForGib(gibToProcess, currentZ, gibs, nrGibs, shipImage, shipImageName):
     initializeGibAttributes(currentZ, gibToProcess, nrGibs)
     determineSeamsWithNeighbours(gibToProcess, gibs, shipImage)
     defineTopologyWithNeighbours(gibToProcess, gibs)

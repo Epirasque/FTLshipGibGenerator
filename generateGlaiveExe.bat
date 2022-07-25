@@ -11,3 +11,8 @@ robocopy C:\Users\roman\PycharmProjects\glaive\metalBits C:\Users\roman\PycharmP
 robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ config.ini_for_addons
 ren config.ini_for_addons config.ini
 robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ loggingForCore.yaml
+robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ loggingForSubprocess.yaml
+mkdir stabilityMarkers
+robocopy C:\Users\roman\PycharmProjects\glaive\stabilityMarkers\ C:\Users\roman\PycharmProjects\glaive\binary\stabilityMarkers\ STABILITY_MARKERS_ARE_STORED_HERE
+mkdir statsForProcessedShips
+robocopy C:\Users\roman\PycharmProjects\glaive\statsForProcessedShips\ C:\Users\roman\PycharmProjects\glaive\binary\statsForProcessedShips\ DO_NOT_PUT_OTHER_FILES_HERE

@@ -20,7 +20,7 @@ NR_GIBS = 5
 # enable for sanity checks
 QUICK_AND_DIRTY_SEGMENT = False
 # enable to attach several layers of metal bits to the gibs; takes significantly longer. THIS IS WORK IN PROGRESS!
-GENERATE_METAL_BITS = False
+GENERATE_METAL_BITS = True
 # create gifs to illustrate the metal bit generation process into metalBitsDebugAnimations folder
 ANIMATE_METAL_BITS_FOR_DEVELOPER = False
 # playback speed of the gifs in frames per second
