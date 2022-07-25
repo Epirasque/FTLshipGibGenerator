@@ -1,7 +1,7 @@
 import collections
 import sys
 import logging.config
-import yaml
+
 import configparser
 
 from flow.GeneratorLooper import *
@@ -43,13 +43,19 @@ def main(argv):
     runIt()
 
 def runIt():
+    multiprocessing.freeze_support()
     initializeLogging()
     logger = logging.getLogger('Core')
     logger.info('Parsing config.ini...')
     coreParameters = determineParameters()
     logger.info('Initialized core.')
-    startGeneratorLoop(coreParameters)
-
+    try:
+        startGeneratorLoop(coreParameters)
+    except Exception as e:
+        logger.error('Stopped main execution due to Exception %s ' % e)
+        pass
+    logger.info('Press any key to exit...')
+    os.system('pause')
 
 def initializeLogging():
     print('Initializing logging...')
