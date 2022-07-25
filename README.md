@@ -220,9 +220,9 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 
 # Known Issues
 
-- Glow can sometimes cause an issue
-- Subprocesses are not part of log (consider copying the console-output, might not work for .exe though)
-- test_ReusedLayoutFile is failing after multi-process refactoring
+- Glow can sometimes cause an issue (might have been fixed in the meantime)
+- Subprocesses are not writing into the log files (consider copying the console-output)
+- test_ReusedLayoutFile is failing after multi-process refactoring as it was not updated yet
 
 ## Performance
 
@@ -256,6 +256,7 @@ In arbitrary order, *no promises if or when these will be done*:
     - [ ] support different layers
     - [ ] support different themes
         - [ ] classify ships during gib generation
+        - [ ] shading
 - [x] mark seams between gibs
     - [x] prototype
     - [ ] dark edge in final gib, invisible before flying apart?
@@ -289,7 +290,6 @@ In arbitrary order, *no promises if or when these will be done*:
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
     - [ ] prevent skewed coordinates by caching unique metal bits per layout (should not be necessary; verify)
-- [ ] shading
 - [ ] tweak until it looks great
 
 # What does G.L.A.I.V.E. stand for?
