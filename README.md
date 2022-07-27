@@ -270,8 +270,8 @@ In arbitrary order, *no promises if or when these will be done*:
         - [x] don't cover gibs with lower z-value
     - [x] iteration
     - [x] proper seam-travel strategy
-- [ ] layer2 metal beams
-- [ ] layer3 both edge-endings
+- [ ] layer2 both edge-endings
+- [ ] layer3 metal beams
 - [ ] layer4
 - [ ] layer5?
 - [x] ensure metal bits are always hidden initially
@@ -286,6 +286,7 @@ In arbitrary order, *no promises if or when these will be done*:
       - [x] fix gib topology resulting in unintended neighbour-blocking
       - [x] fix slowdown when determining attachment detection
       - [x] multiprocessing
+    - [ ] subprocess logging into main log file
 - [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs

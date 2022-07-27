@@ -14,6 +14,7 @@ from imageProcessing.MetalBitsConstants import TILESET_ATTACHMENT_EDGE_COLOR, TI
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 LAYER1 = 'layer1'
+LAYER3 = 'layer3'
 # always end with trailing / here
 FOLDER_NAME = "metalBits/"
 NR_FILENAME_ENCODED_PARAMETERS = 2
@@ -43,32 +44,38 @@ def loadTilesetsIntoDictionary(folderName, tilesetFilepaths):
     for tilesetFilepath in tilesetFilepaths:
         loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets)
 
-    layer1distribution = []
-    layer1distributionString = ''
+    distributeTilesToAngles(tilesets, LAYER1, ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    return tilesets
+
+
+def distributeTilesToAngles(tilesets, layerName, angleTolerance):
+    layerDistribution = []
+    layerDistributionString = ''
     angleRange = range(90)
     for angle in angleRange:
-        layer1distribution.append(len(tilesets[LAYER1][angle]))
-        layer1distributionString += "For angle %2u: %u tiles\n" % (angle, len(tilesets[LAYER1][angle]))
-    logger.info('Tile distribution for layer1 (including tolerance of %u): \n%s' % (ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION, layer1distributionString))
-    if min(layer1distribution) == 0:
+        layerDistribution.append(len(tilesets[layerName][angle]))
+        layerDistributionString += "For angle %2u: %u tiles\n" % (angle, len(tilesets[layerName][angle]))
+    logger.info('Tile distribution for %s (including tolerance of %u): \n%s' % (layerName,
+                                                                                angleTolerance,
+                                                                                layerDistributionString))
+    if min(layerDistribution) == 0:
         logger.critical(
-            'For %s, at least one angle has no valid tile to choose from: %s' % (LAYER1, layer1distribution))
+            'For %s, at least one angle has no valid tile to choose from: %s' % (layerName, layerDistribution))
     plt.figure(1)
-    plt.bar(angleRange, np.asarray(layer1distribution))
+    plt.bar(angleRange, np.asarray(layerDistribution))
     plt.title(
-        'Layer 1: nr. of available tiles for each angle (including tolerance of %u)' % ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
-    plt.savefig('layer1_tiles_per_angle.png')
+        '%s: nr. of available tiles for each angle (including tolerance of %u)' % (layerName, angleTolerance))
+    plt.savefig('%s_tiles_per_angle.png' % layerName)
     plt.figure(2)
-    plt.hist(layer1distribution)
+    plt.hist(layerDistribution)
     plt.title(
-        'Layer 1: histogram of tile-amount-occurrences (including tolerance of %u)' % ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
-    plt.savefig('layer1_tile_histogram.png')
-    return tilesets
+        '%s: histogram of tile-amount-occurrences (including tolerance of %u)' % (layerName, angleTolerance))
+    plt.savefig('%s_tile_histogram.png' % layerName)
 
 
 def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets):
     layer, tilesetDimension = parseFilenameParameters(tilesetFilepath)
-    if layer == LAYER1:
+    if layer == LAYER1 or layer == LAYER3:
         initializeLayerInDictionary(layer, tilesets)
         imageArray = imread(folderName + tilesetFilepath)
         ymax = determineFileDimensions(imageArray, tilesetDimension, tilesetFilepath)
