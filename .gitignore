@@ -12,5 +12,9 @@ TODOS.txt
 *.exe
 *.zip
 binary/*
-TCC*/
+TCC*/*
 investigation/
+docs/*
+output/*
+*.png
+*.bat
