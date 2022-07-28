@@ -253,7 +253,7 @@ In arbitrary order, *no promises if or when these will be done*:
         - [x] feature toggle
         - [x] flow to class at lowest level
         - [ ] profiling
-    - [ ] support different layers
+    - [x] support different layers
     - [ ] support different themes
         - [ ] classify ships during gib generation
         - [ ] shading

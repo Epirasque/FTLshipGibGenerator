@@ -19,7 +19,8 @@ LAYER3 = 'layer3'
 FOLDER_NAME = "metalBits/"
 NR_FILENAME_ENCODED_PARAMETERS = 2
 # is applied in both directions
-ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 15
+LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 15
+LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 40
 
 
 def loadTilesets():
@@ -44,7 +45,8 @@ def loadTilesetsIntoDictionary(folderName, tilesetFilepaths):
     for tilesetFilepath in tilesetFilepaths:
         loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets)
 
-    distributeTilesToAngles(tilesets, LAYER1, ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    distributeTilesToAngles(tilesets, LAYER1, LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    distributeTilesToAngles(tilesets, LAYER3, LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
     return tilesets
 
 
@@ -54,7 +56,7 @@ def distributeTilesToAngles(tilesets, layerName, angleTolerance):
     angleRange = range(90)
     for angle in angleRange:
         layerDistribution.append(len(tilesets[layerName][angle]))
-        layerDistributionString += "For angle %2u: %u tiles\n" % (angle, len(tilesets[layerName][angle]))
+        layerDistributionString += "%s, for angle %2u: %u tiles\n" % (layerName, angle, len(tilesets[layerName][angle]))
     logger.info('Tile distribution for %s (including tolerance of %u): \n%s' % (layerName,
                                                                                 angleTolerance,
                                                                                 layerDistributionString))
@@ -75,16 +77,26 @@ def distributeTilesToAngles(tilesets, layerName, angleTolerance):
 
 def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets):
     layer, tilesetDimension = parseFilenameParameters(tilesetFilepath)
-    if layer == LAYER1 or layer == LAYER3:
+    validLayer = False
+    rotationTolerance = 0
+    if layer == LAYER1:
+        validLayer = True
+        rotationTolerance = LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
+    elif layer == LAYER3:
+        validLayer = True
+        rotationTolerance = LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
+    if validLayer == True:
         initializeLayerInDictionary(layer, tilesets)
         imageArray = imread(folderName + tilesetFilepath)
         ymax = determineFileDimensions(imageArray, tilesetDimension, tilesetFilepath)
         nrTiles = determineNrOfTiles(tilesetDimension, tilesetFilepath, ymax)
         for tileId in range(nrTiles):
-            addTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimension, tilesetFilepath, tilesets)
+            addTileWithIDToDictionary(imageArray, layer, rotationTolerance, nrTiles, tileId, tilesetDimension,
+                                      tilesetFilepath, tilesets)
 
 
-def addTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimension, tilesetFilepath, tilesets):
+def addTileWithIDToDictionary(imageArray, layer, rotationTolerance, nrTiles, tileId, tilesetDimension, tilesetFilepath,
+                              tilesets):
     tile = extractTileArray(imageArray, tileId, tilesetDimension)
     tile0turned = np.ma.copy(tile)
     remainingUncoveredAttachmentEdgePixels = np.where(
@@ -96,19 +108,27 @@ def addTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimensi
     successRate = determineSuccessRate(nrFailedOrientationDetections, nrSuccessfulOrientationDetections, tileId,
                                        tilesetFilepath)
     medianOrientation = consolidateOrientationsIntoSingleOrientation(determinedOrientations)
+    medianOrientationInFirstQuadrant = medianOrientation % 90
     standardDeviationForOrientation = determineStandardDeviation(determinedOrientations)
     logger.debug(
-        'Determined tile nr %u / %u in %s with %u%% orientation detection rate for %u attachment pixels, median orientation: %u (standard deviation: %.2f)' %
-        (tileId + 1, nrTiles, tilesetFilepath, successRate, initialNrAttachmentEdgePixels, medianOrientation,
-         standardDeviationForOrientation))
+        '%s: Determined tile nr %u / %u in %s with %u%% orientation detection rate for %u attachment pixels, median orientation: %u, median rotation as in first quadrant: %u, (standard deviation: %.2f), orientatinos: %s' %
+        (layer, tileId + 1, nrTiles, tilesetFilepath, successRate, initialNrAttachmentEdgePixels, medianOrientation,
+         medianOrientationInFirstQuadrant, standardDeviationForOrientation, determinedOrientations))
     # has processed attachment edge color
     del tile
+    if medianOrientation >= 270:
+        tile0turned = np.rot90(np.ma.copy(tile0turned))
+    if medianOrientation >= 180:
+        tile0turned = np.rot90(np.ma.copy(tile0turned))
+    if medianOrientation >= 90:
+        tile0turned = np.rot90(np.ma.copy(tile0turned))
     # original tile does not have to be between 0° and 90° for this to work
     tile270turned = np.rot90(np.ma.copy(tile0turned))
     tile180turned = np.rot90(np.ma.copy(tile270turned))
     tile90turned = np.rot90(np.ma.copy(tile180turned))
-    for angleWithinTolerance in range(medianOrientation - ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION,
-                                      medianOrientation + ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION + 1):
+    for angleWithinTolerance in range(
+            medianOrientationInFirstQuadrant - rotationTolerance,
+            medianOrientationInFirstQuadrant + rotationTolerance + 1):
         allowTileToCoverAngle(angleWithinTolerance, layer, tile0turned, tile180turned, tile270turned, tile90turned,
                               tilesets)
 
