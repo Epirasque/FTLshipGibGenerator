@@ -6,6 +6,12 @@ from imageProcessing.ImageProcessingUtilities import *
 from imageProcessing.SeamPopulator import populateSeams
 
 
+def determineShipColorMean(shipImage):
+    colorMaskCoordinates = np.where(np.any(shipImage != [0, 0, 0, 0], axis=-1))
+    colorPoints = shipImage[colorMaskCoordinates]
+    return (np.mean(colorPoints[:,0]), np.mean(colorPoints[:,1]), np.mean(colorPoints[:,2]))
+
+
 def attachMetalBits(gibs, shipImage, tilesets, PARAMETERS, shipImageName):
     gifFrames = initializeGifFramesWithShipImage(shipImage, PARAMETERS)
     uncropGibs(gibs, shipImage)
@@ -15,7 +21,8 @@ def attachMetalBits(gibs, shipImage, tilesets, PARAMETERS, shipImageName):
     # cropGibs(gibsWithoutMetalBits)
     animateTopology(gifFrames, PARAMETERS, gibs)
     saveGif(gifFrames, shipImageName + "_topology", PARAMETERS)
-    populateSeams(gibs, shipImageName, shipImage, tilesets, PARAMETERS)
+    shipColorMean = determineShipColorMean(shipImage)
+    populateSeams(gibs, shipImageName, shipImage, tilesets, shipColorMean, PARAMETERS)
     cropAndUpdateGibs(gibs, shipImage)
     return gibs, uncroppedGibsWithoutMetalBits
 
