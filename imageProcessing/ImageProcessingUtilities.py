@@ -4,7 +4,6 @@ from copy import deepcopy
 
 import numpy as np
 
-
 # takes numpy array and RGB color of the filter in form of an array
 from flow.LoggerUtils import getSubProcessLogger
 
@@ -25,6 +24,7 @@ def pasteNonTransparentValuesIntoArray(source, target):
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = source[colorMaskCoordinates[0],
                                                                   colorMaskCoordinates[1], :]
+
 
 def removeNonTransparentValuesFromArray(source, target):
     # NOTE: has to ensure source is not altered
@@ -178,10 +178,12 @@ def findMeanOfCoordinates(coordinates):
 def getDistanceBetweenPoints(x1, y1, x2, y2):
     return np.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
+
 def imageDifferenceInPercentage(imageA, imageB):
     differentTransparencyPixels = abs(imageA - imageB)[:, :, 3] > 0
     percentage = 100. * differentTransparencyPixels.sum() / (imageA.shape[0] * imageA.shape[1])
     return percentage
+
 
 def cropImage(image):
     visiblePixelsY, visiblePixelsX = np.nonzero(image[:, :, 3])
@@ -196,11 +198,13 @@ def cropImage(image):
     center['y'] = (maxY + minY) / 2
     return croppedImage, center, minX, minY
 
-def shadeImage(imageToShade, colorToIncorporate):
+
+def shadeImage(imageToShade, colorToIncorporate, weightForColorToIncorporate):
     imageToShadeWithoutAlpha = imageToShade[:, :, 0:3]
     alpha = imageToShade[:, :, 3]
-    shadedImage = np.uint8(np.divide(np.add(imageToShadeWithoutAlpha, colorToIncorporate), 2))
-    visibleNonBlackCoordinates = np.any(imageToShade != [0, 0, 0, 0], axis = -1)
+    shadedImage = np.uint8(np.add(np.multiply(1. - weightForColorToIncorporate, imageToShadeWithoutAlpha),
+                                            np.multiply(weightForColorToIncorporate, colorToIncorporate)))
+    visibleNonBlackCoordinates = np.any(imageToShade != [0, 0, 0, 0], axis=-1)
     red = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 0], imageToShade[:, :, 0])
     green = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 1], imageToShade[:, :, 1])
     blue = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 2], imageToShade[:, :, 2])

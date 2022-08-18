@@ -19,8 +19,10 @@ def populateSeams(gibs, shipImageName, shipImage, tilesets, shipColorMean, PARAM
             if gibToPopulateId != neighbourId:
                 if gibToPopulate['coveredByNeighbour'][neighbourId] == True:
                     gifFrames = []
-                    populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, shipColorMean, PARAMETERS)
+                    populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, shipColorMean,
+                                 PARAMETERS)
                     saveGif(gifFrames, '%s_gib%uto%u' % (shipImageName, gibToPopulateId, neighbourId), PARAMETERS)
+
 
 def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, shipColorMean, PARAMETERS):
     cleanUpMemory()
@@ -31,12 +33,12 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     metalBitsLayer1AndBeyond = populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray,
                                               seamCoordinates,
                                               seamDistanceScores, shipImage,
-                                              tilesets)  # TODO new seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
+                                              tilesets,
+                                              shipColorMean)  # TODO new seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     metalBitsLayer3 = populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
-                                     seamDistanceScores, shipImage, tilesets)
+                                     seamDistanceScores, shipImage, tilesets, shipColorMean)
     try:
         pasteNonTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
-        metalBitsLayer1AndBeyond = shadeImage(metalBitsLayer1AndBeyond, shipColorMean)
         finalGib = deepcopy(metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, finalGib)
     except Exception:
@@ -48,7 +50,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
 
 
 def populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
-                   seamDistanceScores, shipImage, tilesets):
+                   seamDistanceScores, shipImage, tilesets, shipColorMean):
     metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
     tilesToUse = tilesets[LAYER1]
     # TODO: use seamCoordinates directly?
@@ -56,7 +58,6 @@ def populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
         metalBits[coordinates[0], coordinates[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
     # metalBits[np.asarray(seamCoordinates)] = [0, 255, 0, 255]
     seamImageArray = np.ma.copy(metalBits)
-    # TODO: for currentLayer in range(1, 4 + 1): or layer function as variable/parameter, or ...
     remainingUncoveredSeamPixels = np.where(np.all(metalBits == REMAINING_UNCOVERED_SEAM_PIXEL_COLOR, axis=-1))
     while np.any(remainingUncoveredSeamPixels):
         cleanUpMemory()
@@ -68,12 +69,13 @@ def populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                           seamCoordinates,
                                                                                           seamImageArray, shipImage,
                                                                                           tilesToUse,
-                                                                                          seamDistanceScores)
+                                                                                          seamDistanceScores,
+                                                                                          shipColorMean)
     return metalBits
 
 
 def populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
-                   seamDistanceScores, shipImage, tilesets):
+                   seamDistanceScores, shipImage, tilesets, shipColorMean):
     metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
     tilesToUse = tilesets[LAYER3]
     # TODO: use seamCoordinates directly?
@@ -94,7 +96,8 @@ def populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                           seamCoordinates,
                                                                                           seamImageArray, shipImage,
                                                                                           tilesToUse,
-                                                                                          seamDistanceScores)
+                                                                                          seamDistanceScores,
+                                                                                          shipColorMean)
     return metalBits
 
 
@@ -113,7 +116,7 @@ def precalculateSeamDistanceScores(seamCoordinates):
 
 def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits, originalGibImageArray,
                           remainingUncoveredSeamPixels, seamCoordinates, seamImageArray, shipImage, tilesToUse,
-                          seamDistanceScores):
+                          seamDistanceScores, shipColorMean):
     isCandidateOriginCoveredByGib = False
     isCandidateValid = False
 
@@ -137,7 +140,8 @@ def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits,
                                                                                                      seamImageArray,
                                                                                                      shipImage,
                                                                                                      tileImageArray,
-                                                                                                     tileOriginCenterPoint)
+                                                                                                     tileOriginCenterPoint,
+                                                                                                     shipColorMean)
     if isCandidateValid == True:
         metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate,
                                                                    originalGibImageArray, seamPixelsCoveredByCandidate)
@@ -172,7 +176,8 @@ def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCand
 
 def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gifFrames, inwardsSearchX, inwardsSearchY,
                             metalBits, originalGibImageArray, seamImageArray, shipImage, tileImageArray,
-                            tileOriginCenterPoint):
+                            tileOriginCenterPoint, shipColorMean):
+    tileImageArray = shadeImage(tileImageArray, shipColorMean, random.uniform(0.2, 0.7))
     metalBitsCandidate, seamPixelsCoveredByCandidate, isCandidateValidInitially = constructMetalBitsCandidateBelowMetalBits(
         inwardsSearchX,
         inwardsSearchY,
