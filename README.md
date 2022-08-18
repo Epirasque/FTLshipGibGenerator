@@ -253,7 +253,7 @@ In arbitrary order, *no promises if or when these will be done*:
         - [x] feature toggle
         - [x] flow to class at lowest level
         - [ ] profiling
-    - [x] support different layers
+    - [ ] support different layers
     - [ ] support different themes
         - [ ] classify ships during gib generation
         - [ ] shading
@@ -272,6 +272,8 @@ In arbitrary order, *no promises if or when these will be done*:
     - [x] proper seam-travel strategy
 - [ ] layer2 both edge-endings
 - [ ] layer3 metal beams
+    - [x] prototype
+    - [ ] tiles to cover angles
 - [ ] layer4
 - [ ] layer5?
 - [x] ensure metal bits are always hidden initially
