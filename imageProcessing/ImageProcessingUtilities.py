@@ -195,3 +195,14 @@ def cropImage(image):
     center['x'] = (maxX + minX) / 2
     center['y'] = (maxY + minY) / 2
     return croppedImage, center, minX, minY
+
+def shadeImage(imageToShade, colorToIncorporate):
+    imageToShadeWithoutAlpha = imageToShade[:, :, 0:3]
+    alpha = imageToShade[:, :, 3]
+    shadedImage = np.uint8(np.divide(np.add(imageToShadeWithoutAlpha, colorToIncorporate), 2))
+    visibleNonBlackCoordinates = np.any(imageToShade != [0, 0, 0, 0], axis = -1)
+    red = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 0], imageToShade[:, :, 0])
+    green = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 1], imageToShade[:, :, 1])
+    blue = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 2], imageToShade[:, :, 2])
+    rgba = np.dstack((red, green, blue, alpha))
+    return rgba

@@ -22,17 +22,6 @@ def populateSeams(gibs, shipImageName, shipImage, tilesets, shipColorMean, PARAM
                     populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, shipColorMean, PARAMETERS)
                     saveGif(gifFrames, '%s_gib%uto%u' % (shipImageName, gibToPopulateId, neighbourId), PARAMETERS)
 
-def shadeMetalBits(metalBits, shipColorMean):
-    metalBitsColor = metalBits[:, :, 0:3]
-    alpha = metalBits[:, :, 3]
-    shadedBits = np.uint8(np.divide(np.add(metalBitsColor, shipColorMean), 2))
-    visibleNonBlackCoordinates = np.any(metalBits != [0, 0, 0, 0], axis = -1)
-    red = np.where(visibleNonBlackCoordinates, shadedBits[:, :, 0], metalBits[:, :, 0])
-    green = np.where(visibleNonBlackCoordinates, shadedBits[:, :, 1], metalBits[:, :, 1])
-    blue = np.where(visibleNonBlackCoordinates, shadedBits[:, :, 2], metalBits[:, :, 2])
-    rgba = np.dstack((red, green, blue, alpha))
-    return rgba
-
 def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, shipColorMean, PARAMETERS):
     cleanUpMemory()
     gibImage = gibToPopulate['img']
@@ -47,7 +36,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                                      seamDistanceScores, shipImage, tilesets)
     try:
         pasteNonTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
-        metalBitsLayer1AndBeyond = shadeMetalBits(metalBitsLayer1AndBeyond, shipColorMean)
+        metalBitsLayer1AndBeyond = shadeImage(metalBitsLayer1AndBeyond, shipColorMean)
         finalGib = deepcopy(metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, finalGib)
     except Exception:
