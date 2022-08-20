@@ -33,7 +33,7 @@ You need to install Python 3.8 as well as the appropriate libraries that are use
 Community Edition IDE, it makes loading additional libraries much easier (the IDE offers it as quick fix
 recommendations).
 
-Set the appropriate parameters in `core.py`, e.g. you can change the desired `NR_GIBS`. At very least you have to set
+Set the appropriate parameters in `config.ini`, e.g. you can change the desired `NR_GIBS`. At very least you have to set
 the `INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH`. Read the comments above the parameters for more details. Afterwards just
 run the main method without any additional arguments.
 
@@ -73,7 +73,7 @@ For Multiverse addons:
 
 ## Speeding Things Up
 
-Check the settings in `core.py` on how to run the Gib Generator much more quickly, e.g. for a sanity check or debugging
+Check the settings in `config.ini` on how to run the Gib Generator much more quickly, e.g. for a sanity check or debugging
 purposes.
 
 # How Does It Work?
