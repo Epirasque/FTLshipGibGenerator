@@ -1,34 +1,78 @@
 [core]
+
+# --- program flow ---
+
 # note: use / instead of \ to avoid character-escaping issues
-INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = MyAddon
-# ADDON_OUTPUT_FOLDERPATH = MyAddon
+INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = FTL-Multiverse 5.x
+ADDON_OUTPUT_FOLDERPATH = MyAddon
 # tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug in MV, has no layout file
 SHIPS_TO_IGNORE = PLAYER_SHIP_TUTORIAL, MU_COALITION_CONSTRUCTION
 
 # configure whether the output is meant for standalone or as an addon by setting OUTPUT_MODE to one of them
 # KEEP A BACKUP READY! it is best practice to restore the backup before generating new gibs, .bat files can help a lot for that
-OUTPUT_MODE = standalone
-#OUTPUT_MODE = addon
+#OUTPUT_MODE = standalone
+OUTPUT_MODE = addon
 
 # if enabled, save a separate copy of the output in gibs and/or layouts folders;
 # these have to exist as subfolders of glaive and they are NOT cleaned up automatically
 BACKUP_SEGMENTS_FOR_DEVELOPER = False
 BACKUP_LAYOUTS_FOR_DEVELOPER = False
 
+# if enabled, all ships except SPECIFIC_SHIP_NAMES are skipped
+CHECK_SPECIFIC_SHIPS = True
+SPECIFIC_SHIP_NAMES = PLAYER_SHIP_POTENTIAL
+# if enabled, only ITERATION_LIMIT amount of ships will be processed
+LIMIT_ITERATIONS = False
+ITERATION_LIMIT = 40
+
+# --- segmenting base ship image into gib shapes ---
+
 # actual number can be less: if the algorithm has an issue it is retried with fewer gibs
 NR_GIBS = 5
 # enable for sanity checks
 QUICK_AND_DIRTY_SEGMENT = False
+# start segmenting with this compactness value, the higher the compactness the more compact (blocky/spherical) the gibs will be
+STARTING_COMPACTNESS = 0.3
+# increase compactness by this amount whenever a segmentation attempt is rejected
+COMPACTNESS_GAIN_PER_ATTEMPT = 0.05
+# stop further segmentation attempts when reaching this limit, then use the last one with possibly less gibs than desired
+COMPACTNESS_LIMIT = 2.5
+# when segmenting, reject the result if the combination of gibs deviates too much (in percentage of pixels) from the original base ship image
+MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 1.
+# when segmenting, reject the result if a gib is unexpectedly small. after accounting for the amount of gibs, a gib should not cover less than this portion of all visible base ship pixels
+MINIMAL_WEIGHTED_SEGMENT_RATIO = .2
+
+# --- attaching metal bits to gibs ---
+
 # enable to attach several layers of metal bits to the gibs; takes significantly longer. THIS IS WORK IN PROGRESS!
 GENERATE_METAL_BITS = True
 # create gifs to illustrate the metal bit generation process into metalBitsDebugAnimations folder
 ANIMATE_METAL_BITS_FOR_DEVELOPER = False
 # playback speed of the gifs in frames per second
 ANIMATE_METAL_BITS_FPS = 5.
+# how much the angle of a layer 1 tile may be different from the angle of a surface to still be used, the actual spread will be twice this value
+LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 15
+# how much the angle of a layer 3 tile may be different from the angle of a surface to still be used, the actual spread will be twice this value
+LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 10
+# lower end of random weight of the base ship color's mean color when shading a metal bit tile of layer 1
+SHADING_MINIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR = .3
+# upper end of random weight of the base ship color's mean color when shading a metal bit tile of layer 1
+SHADING_MAXIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR = .7
 
-# if enabled, all ships except SPECIFIC_SHIP_NAME are skipped
-CHECK_SPECIFIC_SHIPS = False
-SPECIFIC_SHIP_NAMES = MU_SLAVER_REBEL_TRANSPORT
-# if enabled, only ITERATION_LIMIT amount of ships will be processed
-LIMIT_ITERATIONS = False
-ITERATION_LIMIT = 3
+# --- ingame behaviour of gibs ---
+
+# minimal velocity that is enforced if the velocity computation ends up with a very small value
+LOWER_BOUND_VELOCITY = .1
+# maximal velocity that is enforced if the velocity computation ends up with a very big value
+UPPER_BOUND_VELOCITY = 1.5
+# the flying direction of a gib will spread by this amount (so a value of 16 means a change of ±8)
+TOTAL_DIRECTION_SPREAD_IN_DEGREES = 16
+# the angular momentum of a gib will be at most this much (aside from the gibs relative mass being a factor)
+MAXIMUM_ANGULAR_SPREAD_IN_DEGREES = 1.4
+
+# --- implosion feature ---
+
+# if enabled, gibs will implode inward instead. recommended: set MAXIMUM_ANGULAR_SPREAD_IN_DEGREES=0. and TOTAL_DIRECTION_SPREAD_IN_DEGREES=0
+IMPLODE = False
+# if IMPLODE is enabled, a different velocity-formula is used based on this factor
+IMPLODE_SPEED_FACTOR = 0.6

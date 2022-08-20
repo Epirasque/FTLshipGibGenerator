@@ -18,14 +18,11 @@ LAYER3 = 'layer3'
 # always end with trailing / here
 FOLDER_NAME = "metalBits/"
 NR_FILENAME_ENCODED_PARAMETERS = 2
-# is applied in both directions
-LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 15
-LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 40
 
 
-def loadTilesets():
+def loadTilesets(PARAMETERS):
     tilesetFilepaths = determineTilesetFilepaths(FOLDER_NAME)
-    tilesets = loadTilesetsIntoDictionary(FOLDER_NAME, tilesetFilepaths)
+    tilesets = loadTilesetsIntoDictionary(FOLDER_NAME, tilesetFilepaths, PARAMETERS)
     return tilesets
 
 
@@ -40,13 +37,13 @@ def determineTilesetFilepaths(folderName):
     return filenames
 
 
-def loadTilesetsIntoDictionary(folderName, tilesetFilepaths):
+def loadTilesetsIntoDictionary(folderName, tilesetFilepaths, PARAMETERS):
     tilesets = {}
     for tilesetFilepath in tilesetFilepaths:
-        loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets)
+        loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets, PARAMETERS)
 
-    distributeTilesToAngles(tilesets, LAYER1, LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
-    distributeTilesToAngles(tilesets, LAYER3, LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    distributeTilesToAngles(tilesets, LAYER1, PARAMETERS.LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    distributeTilesToAngles(tilesets, LAYER3, PARAMETERS.LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
     return tilesets
 
 
@@ -75,16 +72,16 @@ def distributeTilesToAngles(tilesets, layerName, angleTolerance):
     plt.savefig('%s_tile_histogram.png' % layerName)
 
 
-def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets):
+def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets, PARAMETERS):
     layer, tilesetDimension = parseFilenameParameters(tilesetFilepath)
     validLayer = False
     rotationTolerance = 0
     if layer == LAYER1:
         validLayer = True
-        rotationTolerance = LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
+        rotationTolerance = PARAMETERS.LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
     elif layer == LAYER3:
         validLayer = True
-        rotationTolerance = LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
+        rotationTolerance = PARAMETERS.LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
     if validLayer == True:
         initializeLayerInDictionary(layer, tilesets)
         imageArray = imread(folderName + tilesetFilepath)

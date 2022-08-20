@@ -41,7 +41,6 @@ ADDON_MODE = 'addon'
 NR_SUBPROCESSES = multiprocessing.cpu_count() - 1
 CLEAR_ALL_STATS_FOR_PROCESSED_SHIPS = True
 
-
 def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
     logger.info(
@@ -83,7 +82,7 @@ def startGeneratorLoop(PARAMETERS):
         clearStoredStats()
     tilesets = {}
     if (PARAMETERS.GENERATE_METAL_BITS == True):
-        tilesets = loadTilesets()
+        tilesets = loadTilesets(PARAMETERS)
     logger.info("Iterating ships...")
     futures = []
     nrSubmissions = 0
@@ -403,7 +402,7 @@ def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, ti
         stats = saveGibImagesWithProfiling(PARAMETERS, gibs, uncroppedGibsWithoutMetalBits, shipImageName,
                                            targetFolderPath,
                                            stats)
-        layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats)
+        layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats, PARAMETERS)
         appendContentString, nrWeaponMountsWithoutGibId, stats = setWeaponMountGibIdsWithProfiling(gibs,
                                                                                                    layoutWithNewGibs,
                                                                                                    appendContentString,
@@ -432,9 +431,9 @@ def saveShipLayoutWithProfiling(PARAMETERS, layoutName, layoutWithNewGibs, appen
     return stats
 
 
-def addGibEntriesToLayoutWithProfiling(gibs, layout, stats):
+def addGibEntriesToLayoutWithProfiling(gibs, layout, stats, PARAMETERS):
     start = time.time()
-    layoutWithNewGibs = addGibEntriesToLayout(layout, gibs)
+    layoutWithNewGibs = addGibEntriesToLayout(layout, gibs, PARAMETERS)
     appendContentString = convertLayoutToAppendContent(layoutWithNewGibs)  # TODO: separate method
     stats['totalAddGibEntriesToLayoutDuration'] += time.time() - start
     return layoutWithNewGibs, appendContentString, stats
@@ -466,7 +465,7 @@ def saveGibImagesWithProfiling(PARAMETERS, gibs, uncroppedGibsWithoutMetalBits, 
 
 def segmentWithProfiling(PARAMETERS, baseImg, shipImageName, stats):
     start = time.time()
-    gibs = segment(baseImg, shipImageName, PARAMETERS.NR_GIBS, PARAMETERS.QUICK_AND_DIRTY_SEGMENT)
+    gibs = segment(baseImg, shipImageName, PARAMETERS)
     stats['totalSegmentDuration'] += time.time() - start
     return gibs, stats
 

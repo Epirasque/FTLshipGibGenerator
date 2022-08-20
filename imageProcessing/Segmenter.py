@@ -11,26 +11,27 @@ from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceI
 
 # glow around ships should not be part of the gibs
 VISIBLE_ALPHA_VALUE = 255
-MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 1.
-MINIMAL_WEIGHTED_SEGMENT_RATIO = .2
 
-def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
+def segment(shipImage, shipImageName, PARAMETERS):
     logger = getSubProcessLogger()
+    nrGibs = PARAMETERS.NR_GIBS
+    segmentQuickAndDirty = PARAMETERS.QUICK_AND_DIRTY_SEGMENT
+    compactnessToUse = PARAMETERS.STARTING_COMPACTNESS
+    compactnessGainPerAttempt = PARAMETERS.COMPACTNESS_GAIN_PER_ATTEMPT
+    compactnessThreshold = PARAMETERS.COMPACTNESS_LIMIT
     nonTransparentMask = (shipImage[:, :, 3] == VISIBLE_ALPHA_VALUE)
     nrNonTransparentPixels = nonTransparentMask.sum()
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
-    compactnessToUse = 0.3
-    compactnessGainPerAttempt = 0.05
-    compactnessThreshold = 2.5
     percentage = 100.
+
     if segmentQuickAndDirty == True:
         compactnessToUse = 1.
         compactnessGainPerAttempt = 0.5
     # compensate for first increment
     compactnessToUse -= compactnessGainPerAttempt
     while (
-            nrSuccessfulGibs < nrGibs or percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE) and compactnessToUse < compactnessThreshold:  # TODO: proper nr attempts approach
+            nrSuccessfulGibs < nrGibs or percentage > PARAMETERS.MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE) and compactnessToUse < compactnessThreshold:  # TODO: proper nr attempts approach
         nrSegmentationAttempts += 1
         compactnessToUse += compactnessGainPerAttempt  # TODO: make configurable
         cleanUpMemory()
@@ -39,21 +40,21 @@ def segment(shipImage, shipImageName, nrGibs, segmentQuickAndDirty):
         # TODO: try additional parameters e.g. channel-axis
         segments = slic(shipImage, n_segments=nrGibs, compactness=compactnessToUse, max_num_iter=100,
                         mask=nonTransparentMask)
-        nrSuccessfulGibs = determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels)
+        nrSuccessfulGibs = determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels, PARAMETERS)
         if nrSuccessfulGibs == nrGibs:
             percentage = determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, nrSuccessfulGibs,
                                                                                            shipImage)
-            if percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
+            if percentage > PARAMETERS.MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
                 logger.warning(
                     "Retrying due to gibs not combining into base image for %s, pixel deviation is at %.2f%%, which is above allowed threshold of %.2f%%" % (
-                        shipImageName, percentage, MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
+                        shipImageName, percentage, PARAMETERS.MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
     if nrSuccessfulGibs == 0:
         logger.error("FAILED to generate any gibs for %s" % shipImageName)
         return []
-    if percentage > MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
+    if percentage > PARAMETERS.MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE:
         logger.error(
             "Reconstructing ship from gibs for %s deviates by %.2f%% pixels, which is above allowed threshold of %.2f%%" % (
-                shipImageName, percentage, MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
+                shipImageName, percentage, PARAMETERS.MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE))
     if nrSuccessfulGibs < nrGibs:
         # TODO: consider it a failure instead?
         logger.error(
@@ -74,10 +75,10 @@ def determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, 
     return imageDifferenceInPercentage(shipImage, reconstructedFromSegments)
 
 
-def determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels):
+def determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels, PARAMETERS):
     nrSuccessfulGibs = 0
     for gibId in range(1, nrGibs + 1):
-        if float(len(np.where(segments == gibId)[0])) * nrGibs / nrNonTransparentPixels >= MINIMAL_WEIGHTED_SEGMENT_RATIO:
+        if float(len(np.where(segments == gibId)[0])) * nrGibs / nrNonTransparentPixels >= PARAMETERS.MINIMAL_WEIGHTED_SEGMENT_RATIO:
             nrSuccessfulGibs += 1
     return nrSuccessfulGibs
 

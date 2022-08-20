@@ -70,7 +70,7 @@ def populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                           seamImageArray, shipImage,
                                                                                           tilesToUse,
                                                                                           seamDistanceScores,
-                                                                                          shipColorMean)
+                                                                                          shipColorMean, True)
     return metalBits
 
 
@@ -97,7 +97,7 @@ def populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                           seamImageArray, shipImage,
                                                                                           tilesToUse,
                                                                                           seamDistanceScores,
-                                                                                          shipColorMean)
+                                                                                          shipColorMean, False)
     return metalBits
 
 
@@ -116,7 +116,7 @@ def precalculateSeamDistanceScores(seamCoordinates):
 
 def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits, originalGibImageArray,
                           remainingUncoveredSeamPixels, seamCoordinates, seamImageArray, shipImage, tilesToUse,
-                          seamDistanceScores, shipColorMean):
+                          seamDistanceScores, shipColorMean, shadeTile):
     isCandidateOriginCoveredByGib = False
     isCandidateValid = False
 
@@ -141,7 +141,8 @@ def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits,
                                                                                                      shipImage,
                                                                                                      tileImageArray,
                                                                                                      tileOriginCenterPoint,
-                                                                                                     shipColorMean)
+                                                                                                     shipColorMean,
+                                                                                                     shadeTile)
     if isCandidateValid == True:
         metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate,
                                                                    originalGibImageArray, seamPixelsCoveredByCandidate)
@@ -176,8 +177,9 @@ def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCand
 
 def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gifFrames, inwardsSearchX, inwardsSearchY,
                             metalBits, originalGibImageArray, seamImageArray, shipImage, tileImageArray,
-                            tileOriginCenterPoint, shipColorMean):
-    tileImageArray = shadeImage(tileImageArray, shipColorMean, random.uniform(0.2, 0.7))
+                            tileOriginCenterPoint, shipColorMean, shadeTile):
+    if shadeTile == True:
+        tileImageArray = shadeImage(tileImageArray, shipColorMean, random.uniform(PARAMETERS.SHADING_MINIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR, PARAMETERS.SHADING_MAXIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR))
     metalBitsCandidate, seamPixelsCoveredByCandidate, isCandidateValidInitially = constructMetalBitsCandidateBelowMetalBits(
         inwardsSearchX,
         inwardsSearchY,

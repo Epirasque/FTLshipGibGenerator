@@ -3,14 +3,14 @@ import numpy as np
 from metadata.GibEntryCreator import createGibEntry
 
 
-def addGibEntriesToLayout(layout, gibs):
+def addGibEntriesToLayout(layout, gibs, PARAMETERS):
     explosionNode, imgNode = getNodes(layout)
     removeOldGibs(explosionNode)
-    addGibEntries(explosionNode, gibs, imgNode)
+    addGibEntries(explosionNode, gibs, imgNode, PARAMETERS)
     return layout
 
 
-def addGibEntries(explosionNode, gibs, imgNode):
+def addGibEntries(explosionNode, gibs, imgNode, PARAMETERS):
     # TODO: work with cropped shipimage-shape instead?
     baseWidth = int(imgNode.attrib['w'])
     baseHeight = int(imgNode.attrib['h'])
@@ -20,7 +20,7 @@ def addGibEntries(explosionNode, gibs, imgNode):
 
     for gib in gibs:
         gibEntry = createGibEntry(baseHeight, baseWidth, biggestPossibleShipRadius, gib, nrGibs,
-                                  shipPixelsIncludingTransparentOnes)
+                                  shipPixelsIncludingTransparentOnes, PARAMETERS)
         explosionNode.append(gibEntry)
         # TODO: proper linebreaks for new entries in xml file
 
