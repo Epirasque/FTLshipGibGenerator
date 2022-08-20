@@ -1,3 +1,3 @@
-@RD /S /Q "C:\Users\roman\PycharmProjects\glaive\projects\FTL-Multiverse 5.2.3 hotfix"
+@RD /S /Q "C:\Users\roman\PycharmProjects\glaive\projects\FTL-Multiverse 5.3 playtest"
 
-robocopy  "C:\Users\roman\PycharmProjects\glaive\projects\FTL-Multiverse 5.2.3 hotfix - BACKUP" "C:\Users\roman\PycharmProjects\glaive\projects\FTL-Multiverse 5.2.3 hotfix" /COPYALL /E
+robocopy  "C:\Users\roman\PycharmProjects\glaive\projects\FTL-Multiverse 5.3 playtest - BACKUP" "C:\Users\roman\PycharmProjects\glaive\projects\FTL-Multiverse 5.3 playtest" /COPYALL /E
