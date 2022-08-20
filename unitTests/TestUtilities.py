@@ -20,6 +20,27 @@ def initializeLoggingForTest(test):
     logger.info('RUNNING TEST ' + str(test))
 
 def resetTestResources(standaloneFolderPath, addonFolderPath, imageIdsToKeepGibsFor):
+    for shipId in range(1, 4 + 1):
+        try:
+            os.remove('stabilityMarkers/SHIP_started_TEST_SHIP%u.marker' % shipId)
+        except:
+            pass
+        try:
+            os.remove('stabilityMarkers/READY_TEST_SHIP%u.dictionary' % shipId)
+        except:
+            pass
+        try:
+            os.remove('stabilityMarkers/FAILED_TEST_SHIP%u.dictionary' % shipId)
+        except:
+            pass
+    try:
+        os.remove(addonFolderPath + '/data/test_layoutB.xml.append')
+    except:
+        pass
+    try:
+        os.remove(addonFolderPath + '/data/test_layoutB.xml.append')
+    except:
+        pass
     for imageId in range(1, 4 + 1):
         if imageId in imageIdsToKeepGibsFor:
             print('Keeping gibs for image ID %u' % imageId)
