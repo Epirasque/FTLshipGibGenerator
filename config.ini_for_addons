@@ -19,7 +19,7 @@ BACKUP_SEGMENTS_FOR_DEVELOPER = False
 BACKUP_LAYOUTS_FOR_DEVELOPER = False
 
 # if enabled, all ships except SPECIFIC_SHIP_NAMES are skipped
-CHECK_SPECIFIC_SHIPS = True
+CHECK_SPECIFIC_SHIPS = False
 SPECIFIC_SHIP_NAMES = PLAYER_SHIP_POTENTIAL
 # if enabled, only ITERATION_LIMIT amount of ships will be processed
 LIMIT_ITERATIONS = False

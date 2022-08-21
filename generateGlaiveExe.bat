@@ -8,8 +8,8 @@ robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\g
 robocopy C:\Users\roman\PycharmProjects\glaive\dist\ C:\Users\roman\PycharmProjects\glaive\binary\ Core.exe
 ren Core.exe GLAIVE.exe
 robocopy C:\Users\roman\PycharmProjects\glaive\metalBits C:\Users\roman\PycharmProjects\glaive\binary\metalBits /COPYALL /E
-robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ config.ini_for_addons
-ren config.ini_for_addons config.ini
+robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ config.ini_for_standalone
+ren config.ini_for_standalone config.ini
 robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ loggingForCore.yaml
 robocopy C:\Users\roman\PycharmProjects\glaive\ C:\Users\roman\PycharmProjects\glaive\binary\ loggingForSubprocess.yaml
 mkdir stabilityMarkers

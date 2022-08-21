@@ -4,7 +4,7 @@
 
 # note: use / instead of \ to avoid character-escaping issues
 INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = FTL-Multiverse 5.x
-# ADDON_OUTPUT_FOLDERPATH = MyAddon
+#ADDON_OUTPUT_FOLDERPATH = MyAddon
 # tutorial is part of vanilla and should have gibs. MU_COALITION_CONSTRUCTION seems to be a bug in MV, has no layout file
 SHIPS_TO_IGNORE = PLAYER_SHIP_TUTORIAL, MU_COALITION_CONSTRUCTION
 
