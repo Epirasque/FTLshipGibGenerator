@@ -223,6 +223,7 @@ is repeated until a maximum radius of 500 is reached; the biggest known radius n
 - Glow can sometimes cause an issue (might have been fixed in the meantime)
 - Subprocesses are not writing into the log files (consider copying the console-output)
 - test_ReusedLayoutFile is failing after multi-process refactoring as it was not updated yet
+- some gibs can have unfortunate results breaking apart in weird places
 
 ## Performance
 
@@ -235,10 +236,11 @@ With that huge amount of ships the time to load the game initially is increased 
 In arbitrary order, *no promises if or when these will be done*:
 
 - More content and improvements regarding metal bits (see below)
+- Avoid having longer lines sticking out of gibs (usually thin black lines that separate parts of the base ship image)
 - Additional debris-pieces independent of the ship image (think Flak projectiles), also added to ships with already
   existing gibs (there will definitely be a way to turn that off as it does not look like standard FTL gibs anymore)
+- Dust-mode with very small or even 1 pixel-sized-gibs
 - Resolving remaining TODOs in the code
-- Avoid having longer lines sticking out of gibs (usually thin black lines that separate parts of the base ship image)
 
 # Progress Of Metal Bits
 
@@ -253,10 +255,10 @@ In arbitrary order, *no promises if or when these will be done*:
         - [x] feature toggle
         - [x] flow to class at lowest level
         - [ ] profiling
-    - [ ] support different layers
+    - [x] support different layers
     - [ ] support different themes
-        - [ ] classify ships during gib generation
-        - [ ] shading
+        - [ ] classify ships during gib generation?
+        - [x] shading
 - [x] mark seams between gibs
     - [x] prototype
     - [ ] dark edge in final gib, invisible before flying apart?
@@ -271,9 +273,9 @@ In arbitrary order, *no promises if or when these will be done*:
     - [x] iteration
     - [x] proper seam-travel strategy
 - [ ] layer2 both edge-endings
-- [ ] layer3 metal beams
+- [x] layer3 metal beams
     - [x] prototype
-    - [ ] tiles to cover angles
+    - [x] tiles to cover angles
 - [ ] layer4
 - [ ] layer5?
 - [x] ensure metal bits are always hidden initially
@@ -289,10 +291,13 @@ In arbitrary order, *no promises if or when these will be done*:
       - [x] fix slowdown when determining attachment detection
       - [x] multiprocessing
     - [ ] subprocess logging into main log file
-- [ ] deal with re-use layout mechanism: issue differentiating core gib and metal bits
+- [x] deal with re-use layout mechanism: issue differentiating core gib and metal bits
     - [x] write unit test: no identical (including color!) pixels shared between gibs
     - [x] avoid caching attached metal bits on gibs
-    - [ ] prevent skewed coordinates by caching unique metal bits per layout (should not be necessary; verify)
+    - [x] prevent skewed coordinates
+- [ ] special options
+    - [x] implosion effect
+    - [ ] dust mode?
 - [ ] tweak until it looks great
 
 # What does G.L.A.I.V.E. stand for?
@@ -306,7 +311,7 @@ Epirasque: developer, GMT+1
 
 Dalvest: providing tilesets for metal bits, GMT+2
 
-You can find us in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb)
+You can find us in the [FTL: Multiverse Addon Megashipyard](https://discord.com/channels/903853002132193360/999924963794493450) where we have our own subsection, and we're also hanging around in the [FTL: Multiverse public discord server](https://discord.gg/UTuxGNSb)
 
 Of course you are very welcome to post in the official [Subsetgames forum thread](https://subsetgames.com/forum/viewtopic.php?f=12&t=38264)
 
