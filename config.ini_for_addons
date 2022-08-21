@@ -55,9 +55,9 @@ LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 15
 # how much the angle of a layer 3 tile may be different from the angle of a surface to still be used, the actual spread will be twice this value
 LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION = 10
 # lower end of random weight of the base ship color's mean color when shading a metal bit tile of layer 1
-SHADING_MINIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR = .2
+SHADING_MINIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR = .3
 # upper end of random weight of the base ship color's mean color when shading a metal bit tile of layer 1
-SHADING_MAXIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR = .5
+SHADING_MAXIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR = .6
 
 # --- ingame behaviour of gibs ---
 
@@ -72,7 +72,7 @@ MAXIMUM_ANGULAR_SPREAD_IN_DEGREES = 1.4
 
 # --- implosion feature ---
 
-# if enabled, gibs will implode inward instead. recommended: set MAXIMUM_ANGULAR_SPREAD_IN_DEGREES=0. and TOTAL_DIRECTION_SPREAD_IN_DEGREES=0
+# if enabled, gibs will implode inward instead. recommended: set a high amount of gibs, MAXIMUM_ANGULAR_SPREAD_IN_DEGREES=0. and TOTAL_DIRECTION_SPREAD_IN_DEGREES=0
 IMPLODE = False
 # if IMPLODE is enabled, a different velocity-formula is used based on this factor
 IMPLODE_SPEED_FACTOR = 0.6
