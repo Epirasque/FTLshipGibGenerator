@@ -32,12 +32,19 @@ def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto):
     mask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
     mask[transparentPixels] = 1
     kernel=np.array([[1,1,1],[1,10,1],[1,1,1]]) # consider bigger one? for 2 pixel width lines, and MAYBE get rid off 2nd mask
-    # todo: proper mode for borders, probably constant transparency +1
-    convultedMask = convolve(mask, kernel)
+
+    # todo: loop n times?
+    convultedMask = convolve(mask, kernel, mode='constant', cval=1)
     newMask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
     newMask[convultedMask >= (8-2)] = 1
-    newMask = convolve(newMask, kernel)
-    thinLinesCoordinates = np.where((newMask >= (8 - 2)) & (mask == 0))
+
+    convolutedNewMask = convolve(newMask, kernel, mode='constant', cval=1)
+    newestMask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
+    newestMask[convolutedNewMask >= (8-2)] = 1
+
+    convolutedNewestMask = convolve(newestMask, kernel, mode='constant', cval=1)
+
+    thinLinesCoordinates = np.where((convolutedNewestMask >= (8 - 2)) & (mask == 0))
     silhouettesWithNeighbours = []
     for imageToPotentiallyMoveInto in imagesToMoveInto:
         silhouette = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
