@@ -1,4 +1,4 @@
-GeneratedGibs Version 1.1.0
+GeneratedGibs Version 1.2.0
 
 Quick guide:
 1. Copy (not move!) your addon folder next to the GLAIVE.exe
