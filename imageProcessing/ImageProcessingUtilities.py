@@ -5,6 +5,8 @@ from copy import deepcopy
 import numpy as np
 
 # takes numpy array and RGB color of the filter in form of an array
+from scipy.ndimage import convolve
+
 from flow.LoggerUtils import getSubProcessLogger
 
 
@@ -24,6 +26,42 @@ def pasteNonTransparentValuesIntoArray(source, target):
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = source[colorMaskCoordinates[0],
                                                                   colorMaskCoordinates[1], :]
+
+def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto):
+    transparentPixels = np.nonzero(~imageToProcess[:, :, 3])
+    mask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
+    mask[transparentPixels] = 1
+    kernel=np.array([[1,1,1],[1,10,1],[1,1,1]]) # consider bigger one? for 2 pixel width lines, and MAYBE get rid off 2nd mask
+    # todo: proper mode for borders, probably constant transparency +1
+    convultedMask = convolve(mask, kernel)
+    newMask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
+    newMask[convultedMask >= (8-2)] = 1
+    newMask = convolve(newMask, kernel)
+    thinLinesCoordinates = np.where((newMask >= (8 - 2)) & (mask == 0))
+    silhouettesWithNeighbours = []
+    for imageToPotentiallyMoveInto in imagesToMoveInto:
+        silhouette = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
+        transparentToMoveInto = np.nonzero(imageToPotentiallyMoveInto[:, :, 3])
+        silhouette[transparentToMoveInto] = 1
+        silhouette[thinLinesCoordinates] = 1
+        countNeighboursKernel = np.array([[1,1,1],[1,0,1],[1,1,1]])
+        silhouettesWithNeighbours.append(convolve(silhouette, countNeighboursKernel))
+
+    for coordinatesId in range(thinLinesCoordinates[0].size):
+        coordinates = (thinLinesCoordinates[0][coordinatesId], thinLinesCoordinates[1][coordinatesId])
+        bestShilouetteId = 0
+        highestAmountOfNeighbours = 0
+        for shilouetteId in range(len(silhouettesWithNeighbours)):
+            shilouetteWithNeighbours = silhouettesWithNeighbours[shilouetteId]
+            nrNeighbours = shilouetteWithNeighbours[coordinates]
+            if nrNeighbours > highestAmountOfNeighbours:
+                highestAmountOfNeighbours = nrNeighbours
+                bestShilouetteId = shilouetteId
+        if np.all(imagesToMoveInto[bestShilouetteId][coordinates] == [0, 0, 0, 0], axis=-1):
+            imagesToMoveInto[bestShilouetteId][coordinates] = imageToProcess[coordinates]
+            imageToProcess[coordinates] = [0, 0, 0, 0]
+        else:
+            imagesToMoveInto[bestShilouetteId][coordinates] = imageToProcess[coordinates]
 
 
 def removeNonTransparentValuesFromArray(source, target):

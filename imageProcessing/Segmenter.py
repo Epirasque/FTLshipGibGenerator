@@ -7,7 +7,7 @@ from skimage.segmentation import slic
 # TODO: remove shipImageName as parameter
 from flow.LoggerUtils import getSubProcessLogger
 from flow.MemoryManagement import cleanUpMemory
-from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceInPercentage
+from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceInPercentage, moveThinLinesToMatchingGib
 
 # glow around ships should not be part of the gibs
 VISIBLE_ALPHA_VALUE = 255
@@ -91,16 +91,31 @@ def turnSegmentsIntoGibs(nrGibs, segments, shipImage):
         matchingSegmentIndex = (segments == gibId)
         gibImage = np.zeros(shipImage.shape, dtype=np.uint8)
         gibImage[matchingSegmentIndex] = shipImage[matchingSegmentIndex]
+        gib = {}
+        gib['img'] = gibImage
+        gib['id'] = gibId
+        gibs.append(gib)
+
+    gibs = removeThinLines(gibs)
+
+    for gibId in range(1, nrGibs +1):
+        gib = gibs[gibId - 1]
+        gibImage = gib['img']
         croppedGibImage, center, minX, minY = cropImage(gibImage)
         # TODO: reenable, but its slow nrVisiblePixels = sum(matchingSegmentIndex.flatten() == True)
-
-        gib = {}
-        gib['id'] = gibId
         gib['z'] = gibId
         gib['img'] = croppedGibImage
         gib['center'] = center
         gib['x'] = minX
         gib['y'] = minY
         gib['mass'] = (center['x'] - minX) * (center['y'] - minY) * 4  # TODO: reenable nrVisiblePixels
-        gibs.append(gib)
+    return gibs
+
+def removeThinLines(gibs):
+    gibImages = []
+    for gib in gibs:
+        gibImages.append(gib['img'])
+    for gib in gibs:
+        gibToProcess = gib['img']
+        moveThinLinesToMatchingGib(gibToProcess, gibImages)
     return gibs
