@@ -3,7 +3,7 @@ import traceback
 
 from skimage.draw import line
 
-from fileHandling.MetalBitsLoader import LAYER1, LAYER3
+from fileHandling.MetalBitsLoader import LAYER1, LAYER3, LAYER2
 from flow.GeneratorLooper import logHighestMemoryUsage
 from flow.MemoryManagement import cleanUpMemory
 from imageProcessing.DebugAnimator import saveGif
@@ -30,14 +30,21 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     originalGibImageArray = np.ma.copy(gibImage)  # todo: use this more often? more efficient?
     seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     seamDistanceScores = precalculateSeamDistanceScores(seamCoordinates)
+    #logger = getSubProcessLogger()
+    #logger.debug('Populating Metalbits Gib %u to %u (there are %u Gibs in total), Layer 1 / 3' % (gibToPopulate['id'], neighbourId, len(gibs)))
     metalBitsLayer1AndBeyond = populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray,
                                               seamCoordinates,
                                               seamDistanceScores, shipImage,
                                               tilesets,
                                               shipColorMean)  # TODO new seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
+    #logger.debug('Populating Metalbits Gib %u / %u, Layer 2 / 3' % (gibToPopulate['id'], len(gibs)))
+    metalBitsLayer2 = populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
+                                     shipImage, tilesets, shipColorMean)
+    #logger.debug('Populating Metalbits Gib %u / %u, Layer 3 / 3' % (gibToPopulate['id'], len(gibs)))
     metalBitsLayer3 = populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
                                      seamDistanceScores, shipImage, tilesets, shipColorMean)
     try:
+        pasteNonTransparentValuesIntoArray(metalBitsLayer2, metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
         finalGib = deepcopy(metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, finalGib)
@@ -71,6 +78,100 @@ def populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                           tilesToUse,
                                                                                           seamDistanceScores,
                                                                                           shipColorMean, True)
+    return metalBits
+
+
+def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates, shipImage,
+                   tilesets, shipColorMean):
+    metalBits = np.zeros(shipImage.shape, dtype=np.uint8)
+    tilesToUse = tilesets[LAYER2]
+    tileId = random.randint(0, len(tilesToUse[0]) - 1)
+    tileImageArray = tilesToUse[0][tileId]['img']
+    tileOriginArea, tileOriginCoordinates, tileOriginCenterPoint = tilesToUse[0][tileId]['origin']
+
+    # TODO: currently placeholder. remember to do it twice!
+    # is gib uncropped?
+
+    transparentPixels = np.nonzero(~shipImage[:, :, 3])
+    mask = np.zeros((shipImage.shape[0], shipImage.shape[1]), dtype=np.int8)
+    mask[transparentPixels] = 1
+    kernel = np.array([[1, 1, 1], [1, 0, 1],
+                       [1, 1, 1]])  # consider bigger one? for 2 pixel width lines, and MAYBE get rid off 2nd mask
+    convolutedMask = convolve(mask, kernel, mode='constant', cval=1)
+
+    bestPointIdA = -1
+    bestPointIdB = -1  # B is a second-class citizen
+    highestTransparentNeighbourAmountA = 0
+    highestTransparentNeighbourAmountB = 0
+    for seamPixelId in range(len(seamCoordinates)):
+        nrTransparentNeighbours = convolutedMask[seamCoordinates[seamPixelId][0], seamCoordinates[seamPixelId][1]]
+        if nrTransparentNeighbours > highestTransparentNeighbourAmountA and nrTransparentNeighbours > highestTransparentNeighbourAmountB and nrTransparentNeighbours < 8:
+            highestTransparentNeighbourAmountB = highestTransparentNeighbourAmountA
+            bestPointIdB = bestPointIdA
+            highestTransparentNeighbourAmountA = nrTransparentNeighbours
+            bestPointIdA = seamPixelId
+        elif nrTransparentNeighbours > highestTransparentNeighbourAmountB and nrTransparentNeighbours < 8:
+            highestTransparentNeighbourAmountB = nrTransparentNeighbours
+            bestPointIdB = seamPixelId
+
+    shadeTile = True
+    cutTileAtShipEdge = True
+
+    attachmentPointA = seamCoordinates[bestPointIdA][0], seamCoordinates[bestPointIdA][1]
+    attachmentPointB = seamCoordinates[bestPointIdB][0], seamCoordinates[bestPointIdB][1]
+
+    seamImageArray = np.ma.copy(metalBits)
+    seamImageArray[attachmentPointA[0], attachmentPointA[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
+    seamImageArray[attachmentPointB[0], attachmentPointB[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
+
+    inwardsSearchX = attachmentPointA[1]
+    inwardsSearchY = attachmentPointA[0]
+
+    isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
+                                                                                                 attachmentPointA,
+                                                                                                 gibToPopulate,
+                                                                                                 gibs,
+                                                                                                 gifFrames,
+                                                                                                 inwardsSearchX,
+                                                                                                 inwardsSearchY,
+                                                                                                 metalBits,
+                                                                                                 originalGibImageArray,
+                                                                                                 seamImageArray,
+                                                                                                 shipImage,
+                                                                                                 tileImageArray,
+                                                                                                 tileOriginCenterPoint,
+                                                                                                 shipColorMean,
+                                                                                                 shadeTile,
+                                                                                                 cutTileAtShipEdge)
+
+    if isCandidateValid == True:
+        inwardsSearchX = attachmentPointA[1]
+        inwardsSearchY = attachmentPointA[0]
+
+        isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
+                                                                                                     attachmentPointA,
+                                                                                                     gibToPopulate,
+                                                                                                     gibs,
+                                                                                                     gifFrames,
+                                                                                                     inwardsSearchX,
+                                                                                                     inwardsSearchY,
+                                                                                                     metalBits,
+                                                                                                     originalGibImageArray,
+                                                                                                     seamImageArray,
+                                                                                                     shipImage,
+                                                                                                     tileImageArray,
+                                                                                                     tileOriginCenterPoint,
+                                                                                                     shipColorMean,
+                                                                                                     shadeTile,
+                                                                                                     cutTileAtShipEdge)
+
+    if isCandidateValid == True:
+        metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate,
+                                                                   originalGibImageArray, seamPixelsCoveredByCandidate)
+    else:
+        pass
+        #logger = getSubProcessLogger()
+        #logger.debug("Candidate was not valid for layer 2, probably because of gib topology")
     return metalBits
 
 
@@ -142,7 +243,7 @@ def attemptTileAttachment(PARAMETERS, gibToPopulate, gibs, gifFrames, metalBits,
                                                                                                      tileImageArray,
                                                                                                      tileOriginCenterPoint,
                                                                                                      shipColorMean,
-                                                                                                     shadeTile)
+                                                                                                     shadeTile, False)
     if isCandidateValid == True:
         metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate,
                                                                    originalGibImageArray, seamPixelsCoveredByCandidate)
@@ -177,9 +278,11 @@ def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCand
 
 def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gifFrames, inwardsSearchX, inwardsSearchY,
                             metalBits, originalGibImageArray, seamImageArray, shipImage, tileImageArray,
-                            tileOriginCenterPoint, shipColorMean, shadeTile):
+                            tileOriginCenterPoint, shipColorMean, shadeTile, cutTileAtShipEdge):
     if shadeTile == True:
-        tileImageArray = shadeImage(tileImageArray, shipColorMean, random.uniform(PARAMETERS.SHADING_MINIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR, PARAMETERS.SHADING_MAXIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR))
+        tileImageArray = shadeImage(tileImageArray, shipColorMean,
+                                    random.uniform(PARAMETERS.SHADING_MINIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR,
+                                                   PARAMETERS.SHADING_MAXIMUM_WEIGHT_OF_SHIP_COLOR_AGAINST_TILE_COLOR))
     metalBitsCandidate, seamPixelsCoveredByCandidate, isCandidateValidInitially = constructMetalBitsCandidateBelowMetalBits(
         inwardsSearchX,
         inwardsSearchY,
@@ -190,6 +293,8 @@ def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gi
     if not isCandidateValidInitially:
         isCandidateValid = False
     else:
+        if cutTileAtShipEdge:
+            metalBitsCandidate[getTransparentPixels(shipImage)] = [0, 0, 0, 0]
         animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, metalBitsCandidate,
                                            originalGibImageArray)
         isCandidateValid, blockingNeighbourId = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate,
@@ -365,11 +470,13 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
             try:
                 gifFrame[lineY_A, lineX_A] = [0, 127, 255, 255]
             except IndexError:
+                logger = getSubProcessLogger()
                 logger.warning('Could not render line for gifFrame')
         else:
             try:
                 gifFrame[lineY_A, lineX_A] = [255, 127, 0, 255]
             except IndexError:
+                logger = getSubProcessLogger()
                 logger.warning('Could not render line for gifFrame')
         gifFrame[attachmentPoint] = ATTACHMENT_POINT_COLOR
         gifFrames.append(gifFrame)

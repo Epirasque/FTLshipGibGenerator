@@ -255,3 +255,6 @@ def shadeImage(imageToShade, colorToIncorporate, weightForColorToIncorporate):
     blue = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 2], imageToShade[:, :, 2])
     rgba = np.dstack((red, green, blue, alpha))
     return rgba
+
+def getTransparentPixels(imageArray):
+    return np.nonzero(~imageArray[:, :, 3])

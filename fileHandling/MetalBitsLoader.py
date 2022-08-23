@@ -14,6 +14,7 @@ from imageProcessing.MetalBitsConstants import TILESET_ATTACHMENT_EDGE_COLOR, TI
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 LAYER1 = 'layer1'
+LAYER2 = 'layer2'
 LAYER3 = 'layer3'
 # always end with trailing / here
 FOLDER_NAME = "metalBits/"
@@ -75,10 +76,14 @@ def distributeTilesToAngles(tilesets, layerName, angleTolerance):
 def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets, PARAMETERS):
     layer, tilesetDimension = parseFilenameParameters(tilesetFilepath)
     validLayer = False
+    staticLayer = False
     rotationTolerance = 0
     if layer == LAYER1:
         validLayer = True
         rotationTolerance = PARAMETERS.LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
+    if layer == LAYER2:
+        validLayer = True
+        staticLayer = True
     elif layer == LAYER3:
         validLayer = True
         rotationTolerance = PARAMETERS.LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
@@ -88,12 +93,34 @@ def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets, PARAM
         ymax = determineFileDimensions(imageArray, tilesetDimension, tilesetFilepath)
         nrTiles = determineNrOfTiles(tilesetDimension, tilesetFilepath, ymax)
         for tileId in range(nrTiles):
-            addTileWithIDToDictionary(imageArray, layer, rotationTolerance, nrTiles, tileId, tilesetDimension,
-                                      tilesetFilepath, tilesets)
+            if staticLayer == True:
+                addStaticTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimension, tilesetFilepath,
+                                                tilesets)
+            else:
+                addRotationalTileWithIDToDictionary(imageArray, layer, rotationTolerance, nrTiles, tileId,
+                                                    tilesetDimension,
+                                                    tilesetFilepath, tilesets)
 
 
-def addTileWithIDToDictionary(imageArray, layer, rotationTolerance, nrTiles, tileId, tilesetDimension, tilesetFilepath,
-                              tilesets):
+def addStaticTileWithIDToDictionary(imageArray, layer, nrTiles, tileId, tilesetDimension, tilesetFilepath,
+                                    tilesets):
+    tile = extractTileArray(imageArray, tileId, tilesetDimension)
+    remainingUncoveredAttachmentEdgePixels = np.where(
+        np.all(tile == TILESET_ATTACHMENT_EDGE_COLOR, axis=-1))
+    if remainingUncoveredAttachmentEdgePixels[0].size != 1:
+        logger.error(
+            '%s: Failed to determine exactly one attachment point (were %u) for tile nr %u / %u in %s with static attachment' % (
+            layer, remainingUncoveredAttachmentEdgePixels[0].size, tileId + 1, nrTiles, tilesetFilepath))
+    else:
+        logger.debug(
+            '%s: Determined tile nr %u / %u in %s with static attachment' % (
+            layer, tileId + 1, nrTiles, tilesetFilepath))
+        addTileToTileset(0, layer, tile, tilesets)
+
+
+def addRotationalTileWithIDToDictionary(imageArray, layer, rotationTolerance, nrTiles, tileId, tilesetDimension,
+                                        tilesetFilepath,
+                                        tilesets):
     tile = extractTileArray(imageArray, tileId, tilesetDimension)
     tile0turned = np.ma.copy(tile)
     remainingUncoveredAttachmentEdgePixels = np.where(
@@ -108,7 +135,7 @@ def addTileWithIDToDictionary(imageArray, layer, rotationTolerance, nrTiles, til
     medianOrientationInFirstQuadrant = medianOrientation % 90
     standardDeviationForOrientation = determineStandardDeviation(determinedOrientations)
     logger.debug(
-        '%s: Determined tile nr %u / %u in %s with %u%% orientation detection rate for %u attachment pixels, median orientation: %u, median rotation as in first quadrant: %u, (standard deviation: %.2f), orientatinos: %s' %
+        '%s: Determined tile nr %u / %u in %s with %u%% orientation detection rate for %u attachment pixels, median orientation: %u, median rotation as in first quadrant: %u, (standard deviation: %.2f), orientations: %s' %
         (layer, tileId + 1, nrTiles, tilesetFilepath, successRate, initialNrAttachmentEdgePixels, medianOrientation,
          medianOrientationInFirstQuadrant, standardDeviationForOrientation, determinedOrientations))
     # has processed attachment edge color
