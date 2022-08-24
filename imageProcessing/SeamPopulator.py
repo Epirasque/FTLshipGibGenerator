@@ -120,6 +120,8 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
     attachmentPointA = seamCoordinates[bestPointIdA][0], seamCoordinates[bestPointIdA][1]
     attachmentPointB = seamCoordinates[bestPointIdB][0], seamCoordinates[bestPointIdB][1]
 
+
+
     seamImageArray = np.ma.copy(metalBits)
     seamImageArray[attachmentPointA[0], attachmentPointA[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
     seamImageArray[attachmentPointB[0], attachmentPointB[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
@@ -127,27 +129,14 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
     inwardsSearchX = attachmentPointA[1]
     inwardsSearchY = attachmentPointA[0]
 
-    isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
-                                                                                                 attachmentPointA,
-                                                                                                 gibToPopulate,
-                                                                                                 gibs,
-                                                                                                 gifFrames,
-                                                                                                 inwardsSearchX,
-                                                                                                 inwardsSearchY,
-                                                                                                 metalBits,
-                                                                                                 originalGibImageArray,
-                                                                                                 seamImageArray,
-                                                                                                 shipImage,
-                                                                                                 tileImageArray,
-                                                                                                 tileOriginCenterPoint,
-                                                                                                 shipColorMean,
-                                                                                                 shadeTile,
-                                                                                                 cutTileAtShipEdge)
-
-    if isCandidateValid == True:
-        inwardsSearchX = attachmentPointA[1]
-        inwardsSearchY = attachmentPointA[0]
-
+    nrTransparentNeighbours = convolutedMask[attachmentPointA[0], attachmentPointA[1]]
+    if nrTransparentNeighbours == 0:
+        isCandidateValid = True
+        metalBitsCandidate = metalBits
+        seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidate, seamImageArray)
+        logger = getSubProcessLogger()
+        logger.debug("First attachment was invvalid for layer 2, probably because being in the center of the ship")
+    else:
         isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
                                                                                                      attachmentPointA,
                                                                                                      gibToPopulate,
@@ -166,12 +155,40 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                                      cutTileAtShipEdge)
 
     if isCandidateValid == True:
-        metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidate,
+        inwardsSearchX = attachmentPointB[1]
+        inwardsSearchY = attachmentPointB[0]
+
+        nrTransparentNeighbours = convolutedMask[attachmentPointB[0], attachmentPointB[1]]
+        if nrTransparentNeighbours == 0:
+            isCandidateValid = True #False?
+            metalBitsCandidateAfterSecondAttachment = metalBitsCandidate
+            seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidateAfterSecondAttachment, seamImageArray)
+            logger = getSubProcessLogger()
+            logger.debug("First attachment was invvalid for layer 2, probably because being in the center of the ship")
+        else:
+            isCandidateValid, metalBitsCandidateAfterSecondAttachment, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
+                                                                                                         attachmentPointB,
+                                                                                                         gibToPopulate,
+                                                                                                         gibs,
+                                                                                                         gifFrames,
+                                                                                                         inwardsSearchX,
+                                                                                                         inwardsSearchY,
+                                                                                                         metalBitsCandidate,
+                                                                                                         originalGibImageArray,
+                                                                                                         seamImageArray,
+                                                                                                         shipImage,
+                                                                                                         tileImageArray,
+                                                                                                         tileOriginCenterPoint,
+                                                                                                         shipColorMean,
+                                                                                                         shadeTile,
+                                                                                                         cutTileAtShipEdge)
+
+    if isCandidateValid == True:
+        metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidateAfterSecondAttachment,
                                                                    originalGibImageArray, seamPixelsCoveredByCandidate)
     else:
-        pass
-        #logger = getSubProcessLogger()
-        #logger.debug("Candidate was not valid for layer 2, probably because of gib topology")
+        logger = getSubProcessLogger()
+        logger.debug("Candidate was not valid for layer 2, probably because of gib topology")
     return metalBits
 
 
