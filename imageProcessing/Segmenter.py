@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 from PIL import Image
 from skimage.segmentation import slic
@@ -12,9 +10,14 @@ from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceI
 # glow around ships should not be part of the gibs
 VISIBLE_ALPHA_VALUE = 255
 
-def segment(shipImage, shipImageName, PARAMETERS):
+def segment(shipType, shipImage, shipImageName, PARAMETERS):
     logger = getSubProcessLogger()
-    nrGibs = PARAMETERS.NR_GIBS
+    if shipType == 'BOSS':
+        nrGibs = PARAMETERS.NR_GIBS_BOSS
+    elif shipType == 'PLAYER':
+        nrGibs = PARAMETERS.NR_GIBS_PLAYER
+    else:
+        nrGibs = PARAMETERS.NR_GIBS_ENEMY
     segmentQuickAndDirty = PARAMETERS.QUICK_AND_DIRTY_SEGMENT
     compactnessToUse = PARAMETERS.STARTING_COMPACTNESS
     compactnessGainPerAttempt = PARAMETERS.COMPACTNESS_GAIN_PER_ATTEMPT
@@ -81,7 +84,6 @@ def determineNrSuccessfulGibs(segments, nrGibs, nrNonTransparentPixels, PARAMETE
         if float(len(np.where(segments == gibId)[0])) * nrGibs / nrNonTransparentPixels >= PARAMETERS.MINIMAL_WEIGHTED_SEGMENT_RATIO:
             nrSuccessfulGibs += 1
     return nrSuccessfulGibs
-
 
 
 def turnSegmentsIntoGibs(nrGibs, segments, shipImage):

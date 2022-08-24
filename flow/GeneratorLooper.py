@@ -90,7 +90,7 @@ def startGeneratorLoop(PARAMETERS):
     logger.info("Already processed in previous runs: %u" % nrPreviouslyFinishedSubmissions)
     firstOfMultipleLayoutUsages = {}
     with concurrent.futures.ProcessPoolExecutor(max_workers=NR_SUBPROCESSES) as executor:
-        for shipName, filenames in ships.items():
+        for shipName, shipMetadata in ships.items():
             if PARAMETERS.LIMIT_ITERATIONS == True and nrSubmissions >= PARAMETERS.ITERATION_LIMIT:
                 logger.info("Reached iteration limit of %u" % PARAMETERS.ITERATION_LIMIT)
                 break
@@ -103,7 +103,8 @@ def startGeneratorLoop(PARAMETERS):
             if shipName in PARAMETERS.SHIPS_TO_IGNORE:
                 logger.debug("Skipping %s (is in blacklist)" % shipName)
                 continue
-            layoutName = filenames['layout']
+            shipType = shipMetadata['type']
+            layoutName = shipMetadata['layout']
             if doStatsExist(shipName) == True:
                 logger.debug("Skipping %s because it was processed in previous run" % shipName)
                 continue
@@ -119,12 +120,12 @@ def startGeneratorLoop(PARAMETERS):
                     continue
                 else:
                     firstOfMultipleLayoutUsages[layoutName] = True
-            shipImageName = filenames['img']
+            shipImageName = shipMetadata['img']
             # printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats)
             logger.debug("Submitting %s..." % shipName)
             nrSubmissions += 1
             futures.append(
-                executor.submit(processShipInParallel, PARAMETERS, layoutName, layoutUsages[layoutName],
+                executor.submit(processShipInParallel, PARAMETERS, shipType, layoutName, layoutUsages[layoutName],
                                 shipImageName, shipName, ships, deepcopy(stats), tilesets))
             logger.debug("Submitted %s" % shipName)
 
@@ -187,7 +188,7 @@ def startGeneratorLoop(PARAMETERS):
         nrPreviouslyFinishedSubmissions = countNrProcessedShipStats()
         phaseStart = time.time()
 
-        for shipName, filenames in ships.items():
+        for shipName, shipMetadata in ships.items():
             if PARAMETERS.LIMIT_ITERATIONS == True and nrSubmissions >= PARAMETERS.ITERATION_LIMIT:
                 logger.info("Reached iteration limit of %u" % PARAMETERS.ITERATION_LIMIT)
                 break
@@ -200,7 +201,7 @@ def startGeneratorLoop(PARAMETERS):
             if shipName in PARAMETERS.SHIPS_TO_IGNORE:
                 logger.debug("Skipping %s (is in blacklist)" % shipName)
                 continue
-            layoutName = filenames['layout']
+            layoutName = shipMetadata['layout']
             if doStatsExist(shipName) == True:
                 logger.debug("Skipping %s because it was processed in previous run" % shipName)
                 continue
@@ -208,12 +209,12 @@ def startGeneratorLoop(PARAMETERS):
                 logger.error(
                     "Skipping %s as it is not a layout reusing ship; should not occur in this stage!" % shipName)
                 continue
-            shipImageName = filenames['img']
+            shipImageName = shipMetadata['img']
             # printIterationInfo(globalStart, shipName, layoutName, shipImageName, stats)
             logger.debug("Submitting %s..." % shipName)
             nrSubmissions += 1
             futures.append(
-                executor.submit(processShipInParallel, PARAMETERS, layoutName, layoutUsages[layoutName],
+                executor.submit(processShipInParallel, PARAMETERS, shipType, layoutName, layoutUsages[layoutName],
                                 shipImageName, shipName, ships, deepcopy(stats), tilesets))
             # just delete all layout markers at very end? deleteMarker('LAYOUT_%s_started' % layoutName)
             logger.debug("Submitted %s" % shipName)
@@ -291,7 +292,7 @@ def startGeneratorLoop(PARAMETERS):
     logger.info('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
 
-def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, shipImageName, shipName, ships, stats, tilesets):
+def processShipInParallel(PARAMETERS, shipType, layoutName, nrLayoutUsages, shipImageName, shipName, ships, stats, tilesets):
     # print('Initializing logging for %u...' % os.getpid())
     process = current_process()
     process.name = shipName
@@ -314,7 +315,7 @@ def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, shipImageName,
         stats['nrShipsWithGibsAlreadyPresent'] += 1
         status = STATE_READY
     else:
-        stats, status = createNewGibs(PARAMETERS, layout, layoutName,
+        stats, status = createNewGibs(PARAMETERS, shipType, layout, layoutName,
                                       shipName, shipImageName, ships, stats, tilesets)
     storeStatsToMarkShipAsProcessed(shipName, stats, status)
     deleteMarker('SHIP_started_%s' % shipName)
@@ -322,7 +323,7 @@ def processShipInParallel(PARAMETERS, layoutName, nrLayoutUsages, shipImageName,
     return shipName, layoutName, shipImageName, stats
 
 
-def createNewGibs(PARAMETERS, layout, layoutName, name, shipImageName, ships, stats, tilesets):
+def createNewGibs(PARAMETERS, shipType, layout, layoutName, name, shipImageName, ships, stats, tilesets):
     logger = getSubProcessLogger()
     status = STATE_FAILED
     foundGibsSameLayout = False
@@ -344,7 +345,7 @@ def createNewGibs(PARAMETERS, layout, layoutName, name, shipImageName, ships, st
             logger.debug("There are gib-images for base image %s, but no layout entries in %s for it." % (
                 shipImageName, layoutName))
         try:
-            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(PARAMETERS, layout, layoutName,
+            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(PARAMETERS, shipType, layout, layoutName,
                                                                                      shipImageName, stats, tilesets)
             saveCacheForLayoutName(layoutName, shipImageName, len(gibs), layoutWithNewGibs)
             logger.debug("Succeeded in generating gibs from scratch")
@@ -384,11 +385,11 @@ def determineTargetFolderPath(PARAMETERS):
     return targetFolderPath
 
 
-def generateGibsForShip(PARAMETERS, layout, layoutName, shipImageName, stats, tilesets):
+def generateGibsForShip(PARAMETERS, shipType, layout, layoutName, shipImageName, stats, tilesets):
     logger = getSubProcessLogger()
     baseImg, shipImageSubfolder, stats = loadShipBaseImageWithProfiling(PARAMETERS, shipImageName, stats)
     logger.debug('Segmenting %s into individual Gibs...' % shipImageName)
-    gibs, stats = segmentWithProfiling(PARAMETERS, baseImg, shipImageName, stats)
+    gibs, stats = segmentWithProfiling(PARAMETERS, shipType, baseImg, shipImageName, stats)
     if PARAMETERS.GENERATE_METAL_BITS == True:
         logger.debug('Attaching metalbits to %s...' % shipImageName)
         gibs, uncroppedGibsWithoutMetalBits = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
@@ -463,9 +464,9 @@ def saveGibImagesWithProfiling(PARAMETERS, gibs, uncroppedGibsWithoutMetalBits, 
     return stats
 
 
-def segmentWithProfiling(PARAMETERS, baseImg, shipImageName, stats):
+def segmentWithProfiling(PARAMETERS, shipType, baseImg, shipImageName, stats):
     start = time.time()
-    gibs = segment(baseImg, shipImageName, PARAMETERS)
+    gibs = segment(shipType, baseImg, shipImageName, PARAMETERS)
     stats['totalSegmentDuration'] += time.time() - start
     return gibs, stats
 

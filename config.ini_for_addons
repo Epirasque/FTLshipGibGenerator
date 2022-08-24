@@ -28,7 +28,9 @@ ITERATION_LIMIT = 40
 # --- segmenting base ship image into gib shapes ---
 
 # actual number can be less: if the algorithm has an issue it is retried with fewer gibs
-NR_GIBS = 5
+NR_GIBS_PLAYER = 7
+NR_GIBS_BOSS = 7
+NR_GIBS_NORMAL_ENEMY = 5
 # enable for sanity checks
 QUICK_AND_DIRTY_SEGMENT = False
 # start segmenting with this compactness value, the higher the compactness the more compact (blocky/spherical) the gibs will be
