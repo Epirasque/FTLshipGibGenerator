@@ -48,6 +48,11 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         pasteNonTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
         finalGib = deepcopy(metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, finalGib)
+        # TODO: remove again
+        #for seamPoint in seamCoordinates:
+        #    y, x = seamPoint
+        #    finalGib[y, x] = [255, 0, 0, 255]
+
     except Exception:
         logger = getSubProcessLogger()
         logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
@@ -116,27 +121,21 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
 
     shadeTile = True
     cutTileAtShipEdge = True
-
+# TODO: fix both attachmentpoints being next to each other...
     attachmentPointA = seamCoordinates[bestPointIdA][0], seamCoordinates[bestPointIdA][1]
     attachmentPointB = seamCoordinates[bestPointIdB][0], seamCoordinates[bestPointIdB][1]
 
-
-
     seamImageArray = np.ma.copy(metalBits)
-    seamImageArray[attachmentPointA[0], attachmentPointA[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
-    seamImageArray[attachmentPointB[0], attachmentPointB[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
-
-    inwardsSearchX = attachmentPointA[1]
-    inwardsSearchY = attachmentPointA[0]
 
     nrTransparentNeighbours = convolutedMask[attachmentPointA[0], attachmentPointA[1]]
-    if nrTransparentNeighbours == 0:
+    if nrTransparentNeighbours == 0 or bestPointIdA == -1:
         isCandidateValid = True
         metalBitsCandidate = metalBits
         seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidate, seamImageArray)
-        logger = getSubProcessLogger()
-        logger.debug("First attachment was invvalid for layer 2, probably because being in the center of the ship")
     else:
+        seamImageArray[attachmentPointA[0], attachmentPointA[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
+        inwardsSearchX = attachmentPointA[1]
+        inwardsSearchY = attachmentPointA[0]
         isCandidateValid, metalBitsCandidate, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
                                                                                                      attachmentPointA,
                                                                                                      gibToPopulate,
@@ -155,17 +154,15 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                                      cutTileAtShipEdge)
 
     if isCandidateValid == True:
-        inwardsSearchX = attachmentPointB[1]
-        inwardsSearchY = attachmentPointB[0]
-
         nrTransparentNeighbours = convolutedMask[attachmentPointB[0], attachmentPointB[1]]
-        if nrTransparentNeighbours == 0:
+        if nrTransparentNeighbours == 0 or bestPointIdB == -1:
             isCandidateValid = True #False?
             metalBitsCandidateAfterSecondAttachment = metalBitsCandidate
             seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidateAfterSecondAttachment, seamImageArray)
-            logger = getSubProcessLogger()
-            logger.debug("First attachment was invvalid for layer 2, probably because being in the center of the ship")
         else:
+            seamImageArray[attachmentPointB[0], attachmentPointB[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
+            inwardsSearchX = attachmentPointB[1]
+            inwardsSearchY = attachmentPointB[0]
             isCandidateValid, metalBitsCandidateAfterSecondAttachment, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
                                                                                                          attachmentPointB,
                                                                                                          gibToPopulate,

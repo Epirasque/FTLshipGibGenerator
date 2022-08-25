@@ -25,7 +25,7 @@ def determineParameters():
     OUTPUT_MODE = coreConfig.get('OUTPUT_MODE', fallback=STANDALONE_MODE)
     BACKUP_SEGMENTS_FOR_DEVELOPER = coreConfig.getboolean('BACKUP_SEGMENTS_FOR_DEVELOPER', fallback=False)
     BACKUP_LAYOUTS_FOR_DEVELOPER = coreConfig.getboolean('BACKUP_LAYOUTS_FOR_DEVELOPER', fallback=False)
-    NR_GIBS_PLAYER = coreConfig.getint('NR_GIBS', fallback=7)
+    NR_GIBS_PLAYER = coreConfig.getint('NR_GIBS_PLAYER', fallback=7)
     NR_GIBS_BOSS = coreConfig.getint('NR_GIBS_BOSS', fallback=7)
     NR_GIBS_NORMAL_ENEMY = coreConfig.getint('NR_GIBS_NORMAL_ENEMY', fallback=5)
     QUICK_AND_DIRTY_SEGMENT = coreConfig.getboolean('QUICK_AND_DIRTY_SEGMENT', fallback=False)

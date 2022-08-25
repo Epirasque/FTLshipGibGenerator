@@ -41,6 +41,7 @@ ADDON_MODE = 'addon'
 NR_SUBPROCESSES = multiprocessing.cpu_count() - 1
 CLEAR_ALL_STATS_FOR_PROCESSED_SHIPS = True
 
+
 def startGeneratorLoop(PARAMETERS):
     globalStart = time.time()
     logger.info(
@@ -292,7 +293,8 @@ def startGeneratorLoop(PARAMETERS):
     logger.info('Total runtime in minutes: %u' % ((time.time() - globalStart) / 60))
 
 
-def processShipInParallel(PARAMETERS, shipType, layoutName, nrLayoutUsages, shipImageName, shipName, ships, stats, tilesets):
+def processShipInParallel(PARAMETERS, shipType, layoutName, nrLayoutUsages, shipImageName, shipName, ships, stats,
+                          tilesets):
     # print('Initializing logging for %u...' % os.getpid())
     process = current_process()
     process.name = shipName
@@ -345,7 +347,8 @@ def createNewGibs(PARAMETERS, shipType, layout, layoutName, name, shipImageName,
             logger.debug("There are gib-images for base image %s, but no layout entries in %s for it." % (
                 shipImageName, layoutName))
         try:
-            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(PARAMETERS, shipType, layout, layoutName,
+            stats, gibs, shipImageSubfolder, layoutWithNewGibs = generateGibsForShip(PARAMETERS, shipType, layout,
+                                                                                     layoutName,
                                                                                      shipImageName, stats, tilesets)
             saveCacheForLayoutName(layoutName, shipImageName, len(gibs), layoutWithNewGibs)
             logger.debug("Succeeded in generating gibs from scratch")
@@ -367,8 +370,15 @@ def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout, layoutName, nam
     try:
         logger.debug('Trying to find gibs already existing for the layout before this run...')
         targetFolderPath = determineTargetFolderPath(PARAMETERS)
+        shipType = ships[shipImageName]['type']
+        if shipType == 'BOSS':
+            nrGibs = PARAMETERS.NR_GIBS_BOSS
+        elif shipType == 'PLAYER':
+            nrGibs = PARAMETERS.NR_GIBS_PLAYER
+        else:
+            nrGibs = PARAMETERS.NR_GIBS_NORMAL_ENEMY
         foundGibsSameLayout, newGibsWithMetalBits, newGibsWithoutMetalBits, folderPath = generateGibsBasedOnSameLayoutGibMask(
-            PARAMETERS, layout, layoutName, name, PARAMETERS.NR_GIBS, shipImageName, ships,
+            PARAMETERS, layout, layoutName, name, nrGibs, shipImageName, ships,
             PARAMETERS.INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH, targetFolderPath)
     except Exception:
         logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
@@ -403,7 +413,8 @@ def generateGibsForShip(PARAMETERS, shipType, layout, layoutName, shipImageName,
         stats = saveGibImagesWithProfiling(PARAMETERS, gibs, uncroppedGibsWithoutMetalBits, shipImageName,
                                            targetFolderPath,
                                            stats)
-        layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats, PARAMETERS)
+        layoutWithNewGibs, appendContentString, stats = addGibEntriesToLayoutWithProfiling(gibs, layout, stats,
+                                                                                           PARAMETERS)
         appendContentString, nrWeaponMountsWithoutGibId, stats = setWeaponMountGibIdsWithProfiling(gibs,
                                                                                                    layoutWithNewGibs,
                                                                                                    appendContentString,

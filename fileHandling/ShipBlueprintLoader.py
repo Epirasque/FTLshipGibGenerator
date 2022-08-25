@@ -4,6 +4,8 @@ from os.path import exists
 import re
 
 SHIP_BLUEPRINT_ATTRIBUTE = 'shipBlueprint'
+BOSS_SHIP_TAGNAME = 'bossShip'
+PLAYER_SHIP_TAGNAME = 'ship'
 MOD_TAG_PREFIXES = ['mod:', 'mod-append:', 'mod-overwrite:']
 
 logger = logging.getLogger('GLAIVE.' + __name__)
@@ -13,6 +15,7 @@ def loadShipFileNames(sourceFolderpath):
     layoutUsages = {}
     ships = {}
     allBlueprints = []
+    bossShipNames, playerShipNames = getShipPropertiesFromHyperspace(sourceFolderpath, 'hyperspace.xml')
     playershipBlueprints = getBlueprintsFromFile(sourceFolderpath, 'blueprints.xml.append')
     autoBlueprints = getBlueprintsFromFile(sourceFolderpath, 'autoBlueprints.xml.append')
     bossBlueprints = getBlueprintsFromFile(sourceFolderpath, 'bosses.xml.append')
@@ -44,14 +47,62 @@ def loadShipFileNames(sourceFolderpath):
             nrShipsInMultiUsage += nr
 
     for blueprint in playershipBlueprints:
-        ships[blueprint.attrib['name']]['type'] = 'PLAYER'
+        if blueprint.attrib['name'] in ships:
+            ships[blueprint.attrib['name']]['type'] = 'PLAYER'
     for blueprint in bossBlueprints:
-        ships[blueprint.attrib['name']]['type'] = 'BOSS'
+        if blueprint.attrib['name'] in ships:
+            ships[blueprint.attrib['name']]['type'] = 'BOSS'
 
-    # TODO: check hyperspace.xml for <bossShip>
+    for playerShipName in playerShipNames:
+        if playerShipName in ships:
+            ships[playerShipName]['type'] = 'PLAYER'
+    for bossShipName in bossShipNames:
+        if bossShipName in ships:
+            ships[bossShipName]['type'] = 'BOSS'
 
-    logger.info("Layouts with single usage: %u, with multiple usages: %u (affects %u ships)" % (nrSingleUsage, nrMultipleUsages, nrShipsInMultiUsage))
+    nrPlayerShips = 0
+    nrBossShips = 0
+    nrNormalEnemyShips = 0
+    for shipName in ships:
+        type = ships[shipName]['type']
+        if type == 'PLAYER':
+            nrPlayerShips += 1
+        elif type == 'BOSS':
+            nrBossShips += 1
+        else:
+            nrNormalEnemyShips += 1
+    logger.info(
+        "Layouts with single usage: %u, with multiple usages: %u (affects %u ships)" % (
+            nrSingleUsage, nrMultipleUsages, nrShipsInMultiUsage))
+    logger.info(
+        "Ship types: %u playerships, %u bosses, %u normal enemies" % (nrPlayerShips, nrBossShips, nrNormalEnemyShips))
     return ships, layoutUsages
+
+
+def getShipPropertiesFromHyperspace(sourceFolderpath, filename):
+    bossShipNames = []
+    playerShipNames = []
+    if exists(sourceFolderpath + '\\data\\' + filename) == True:
+        try:
+            with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
+                rawXml = file.read()
+            xmlWithoutGeneralTag = re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml)
+            xmlWithShortenedStartCommentTag = re.sub(r"(<!-{2,})", r"<!--", xmlWithoutGeneralTag)
+            xmlWithShortenedEndCommentTag = re.sub(r"(-{2,}>)", r"-->", xmlWithShortenedStartCommentTag)
+            xmlWithShortenedEmptyCommentTag = re.sub(r"<!-{2,}>", r"<!-- -->", xmlWithShortenedEndCommentTag)
+            treeFormedXmlString = '<root>' + xmlWithShortenedEmptyCommentTag + '</root>'
+            parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
+            bossShipNodes = parsed.getroot().findall(".//" + BOSS_SHIP_TAGNAME)
+            for bossShipNode in bossShipNodes:
+                bossShipNames.append(bossShipNode.text)
+            playerShipNodes = parsed.getroot().findall(".//" + PLAYER_SHIP_TAGNAME)
+            for playerShipNode in playerShipNodes:
+                playerShipNames.append(playerShipNode.text)
+        except Exception as e:
+            logger.exception(
+                "ERROR: Failed to parse xml content of %s: %s" % (sourceFolderpath + '\\data\\' + filename, e))
+            raise e
+    return bossShipNames, playerShipNames
 
 
 def getBlueprintsFromFile(sourceFolderpath, filename):
@@ -60,16 +111,17 @@ def getBlueprintsFromFile(sourceFolderpath, filename):
         try:
             with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
                 rawXml = file.read()
-            # TODO: get rid of all <mod:...> sections
             xmlWithoutGeneralTag = re.sub(r"(<\?xml[^>]+\?>)", r"", rawXml)
             xmlWithShortenedStartCommentTag = re.sub(r"(<!-{2,})", r"<!--", xmlWithoutGeneralTag)
             xmlWithShortenedEndCommentTag = re.sub(r"(-{2,}>)", r"-->", xmlWithShortenedStartCommentTag)
-            treeFormedXmlString = '<root>' + xmlWithShortenedEndCommentTag + '</root>'
+            xmlWithShortenedEmptyCommentTag = re.sub(r"<!-{2,}>", r"<!-- -->", xmlWithShortenedEndCommentTag)
+            treeFormedXmlString = '<root>' + xmlWithShortenedEmptyCommentTag + '</root>'
             for modPrefix in MOD_TAG_PREFIXES:
                 treeFormedXmlString = treeFormedXmlString.replace(modPrefix, modPrefix[:-1] + "_")
             parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
             blueprints = parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE)
         except Exception as e:
-            logger.exception("ERROR: Failed to parse xml content of %s: %s" % (sourceFolderpath + '\\data\\' + filename,e))
+            logger.exception(
+                "ERROR: Failed to parse xml content of %s: %s" % (sourceFolderpath + '\\data\\' + filename, e))
             raise e
     return blueprints;

@@ -17,7 +17,7 @@ def segment(shipType, shipImage, shipImageName, PARAMETERS):
     elif shipType == 'PLAYER':
         nrGibs = PARAMETERS.NR_GIBS_PLAYER
     else:
-        nrGibs = PARAMETERS.NR_GIBS_ENEMY
+        nrGibs = PARAMETERS.NR_GIBS_NORMAL_ENEMY
     segmentQuickAndDirty = PARAMETERS.QUICK_AND_DIRTY_SEGMENT
     compactnessToUse = PARAMETERS.STARTING_COMPACTNESS
     compactnessGainPerAttempt = PARAMETERS.COMPACTNESS_GAIN_PER_ATTEMPT
