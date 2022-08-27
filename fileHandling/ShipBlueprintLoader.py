@@ -6,6 +6,7 @@ import re
 SHIP_BLUEPRINT_ATTRIBUTE = 'shipBlueprint'
 BOSS_SHIP_TAGNAME = 'bossShip'
 PLAYER_SHIP_TAGNAME = 'ship'
+FTL_TAGNAME = 'FTL'
 MOD_TAG_PREFIXES = ['mod:', 'mod-append:', 'mod-overwrite:']
 
 logger = logging.getLogger('GLAIVE.' + __name__)
@@ -16,17 +17,31 @@ def loadShipFileNames(sourceFolderpath):
     ships = {}
     allBlueprints = []
     bossShipNames, playerShipNames = getShipPropertiesFromHyperspace(sourceFolderpath, 'hyperspace.xml')
-    playershipBlueprints = getBlueprintsFromFile(sourceFolderpath, 'blueprints.xml.append')
-    autoBlueprints = getBlueprintsFromFile(sourceFolderpath, 'autoBlueprints.xml.append')
-    bossBlueprints = getBlueprintsFromFile(sourceFolderpath, 'bosses.xml.append')
-    dlcBlueprints = getBlueprintsFromFile(sourceFolderpath, 'dlcBlueprints.xml.append')
-    dlcOverwriteBlueprints = getBlueprintsFromFile(sourceFolderpath, 'dlcBlueprintsOverwrite.xml.append')
+
+    playershipBlueprints = getBlueprintsFromFile(sourceFolderpath, 'blueprints.xml')
+    autoBlueprints = getBlueprintsFromFile(sourceFolderpath, 'autoBlueprints.xml')
+    bossBlueprints = getBlueprintsFromFile(sourceFolderpath, 'bosses.xml')
+    dlcBlueprints = getBlueprintsFromFile(sourceFolderpath, 'dlcBlueprints.xml')
+    dlcOverwriteBlueprints = getBlueprintsFromFile(sourceFolderpath, 'dlcBlueprintsOverwrite.xml')
+
+    playershipBlueprintsAppend = getBlueprintsFromFile(sourceFolderpath, 'blueprints.xml.append')
+    autoBlueprintsAppend = getBlueprintsFromFile(sourceFolderpath, 'autoBlueprints.xml.append')
+    bossBlueprintsAppend = getBlueprintsFromFile(sourceFolderpath, 'bosses.xml.append')
+    dlcBlueprintsAppend = getBlueprintsFromFile(sourceFolderpath, 'dlcBlueprints.xml.append')
+    dlcOverwriteBlueprintsAppend = getBlueprintsFromFile(sourceFolderpath, 'dlcBlueprintsOverwrite.xml.append')
 
     allBlueprints.extend(playershipBlueprints)
     allBlueprints.extend(autoBlueprints)
     allBlueprints.extend(bossBlueprints)
     allBlueprints.extend(dlcBlueprints)
     allBlueprints.extend(dlcOverwriteBlueprints)
+
+    allBlueprints.extend(playershipBlueprintsAppend)
+    allBlueprints.extend(autoBlueprintsAppend)
+    allBlueprints.extend(bossBlueprintsAppend)
+    allBlueprints.extend(dlcBlueprintsAppend)
+    allBlueprints.extend(dlcOverwriteBlueprintsAppend)
+
     for blueprint in allBlueprints:
         ships[blueprint.attrib['name']] = {}
         ships[blueprint.attrib['name']]['type'] = 'NORMAL_ENEMY'
@@ -49,7 +64,13 @@ def loadShipFileNames(sourceFolderpath):
     for blueprint in playershipBlueprints:
         if blueprint.attrib['name'] in ships:
             ships[blueprint.attrib['name']]['type'] = 'PLAYER'
+    for blueprint in playershipBlueprintsAppend:
+        if blueprint.attrib['name'] in ships:
+            ships[blueprint.attrib['name']]['type'] = 'PLAYER'
     for blueprint in bossBlueprints:
+        if blueprint.attrib['name'] in ships:
+            ships[blueprint.attrib['name']]['type'] = 'BOSS'
+    for blueprint in bossBlueprintsAppend:
         if blueprint.attrib['name'] in ships:
             ships[blueprint.attrib['name']]['type'] = 'BOSS'
 
@@ -107,6 +128,7 @@ def getShipPropertiesFromHyperspace(sourceFolderpath, filename):
 
 def getBlueprintsFromFile(sourceFolderpath, filename):
     blueprints = []
+    isAppend = filename.endswith('.append')
     if exists(sourceFolderpath + '\\data\\' + filename) == True:
         try:
             with open(sourceFolderpath + '\\data\\' + filename, encoding='utf-8') as file:
@@ -119,7 +141,10 @@ def getBlueprintsFromFile(sourceFolderpath, filename):
             for modPrefix in MOD_TAG_PREFIXES:
                 treeFormedXmlString = treeFormedXmlString.replace(modPrefix, modPrefix[:-1] + "_")
             parsed = ET.ElementTree(ET.fromstring(treeFormedXmlString))
-            blueprints = parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE)
+            if isAppend == True:
+                blueprints = parsed.getroot().findall(".//" + SHIP_BLUEPRINT_ATTRIBUTE)
+            else:
+                blueprints = parsed.getroot().find(FTL_TAGNAME).findall(SHIP_BLUEPRINT_ATTRIBUTE)
         except Exception as e:
             logger.exception(
                 "ERROR: Failed to parse xml content of %s: %s" % (sourceFolderpath + '\\data\\' + filename, e))
