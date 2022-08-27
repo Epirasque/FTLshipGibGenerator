@@ -48,10 +48,6 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
         pasteNonTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
         finalGib = deepcopy(metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, finalGib)
-        # TODO: remove again
-        #for seamPoint in seamCoordinates:
-        #    y, x = seamPoint
-        #    finalGib[y, x] = [255, 0, 0, 255]
 
     except Exception:
         logger = getSubProcessLogger()

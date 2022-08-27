@@ -401,7 +401,7 @@ def generateGibsForShip(PARAMETERS, shipType, layout, layoutName, shipImageName,
     logger.debug('Segmenting %s into individual Gibs...' % shipImageName)
     gibs, stats = segmentWithProfiling(PARAMETERS, shipType, baseImg, shipImageName, stats)
     if PARAMETERS.GENERATE_METAL_BITS == True:
-        logger.debug('Attaching metalbits to %s...' % shipImageName)
+        logger.debug('Adding Metalbits to %s...' % shipImageName)
         gibs, uncroppedGibsWithoutMetalBits = attachMetalBits(gibs, baseImg, tilesets, PARAMETERS, shipImageName)
     else:
         uncroppedGibsWithoutMetalBits = deepcopy(gibs)

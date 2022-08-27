@@ -27,20 +27,22 @@ def pasteNonTransparentValuesIntoArray(source, target):
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = source[colorMaskCoordinates[0],
                                                                   colorMaskCoordinates[1], :]
 
+
 def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto):
     transparentPixels = np.nonzero(~imageToProcess[:, :, 3])
     mask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
     mask[transparentPixels] = 1
-    kernel=np.array([[1,1,1],[1,10,1],[1,1,1]]) # consider bigger one? for 2 pixel width lines, and MAYBE get rid off 2nd mask
+    kernel = np.array([[1, 1, 1], [1, 10, 1],
+                       [1, 1, 1]])  # consider bigger one? for 2 pixel width lines, and MAYBE get rid off 2nd mask
 
     # todo: loop n times?
     convultedMask = convolve(mask, kernel, mode='constant', cval=1)
     newMask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
-    newMask[convultedMask >= (8-2)] = 1
+    newMask[convultedMask >= (8 - 2)] = 1
 
     convolutedNewMask = convolve(newMask, kernel, mode='constant', cval=1)
     newestMask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
-    newestMask[convolutedNewMask >= (8-2)] = 1
+    newestMask[convolutedNewMask >= (8 - 2)] = 1
 
     convolutedNewestMask = convolve(newestMask, kernel, mode='constant', cval=1)
 
@@ -51,7 +53,7 @@ def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto):
         transparentToMoveInto = np.nonzero(imageToPotentiallyMoveInto[:, :, 3])
         silhouette[transparentToMoveInto] = 1
         silhouette[thinLinesCoordinates] = 1
-        countNeighboursKernel = np.array([[1,1,1],[1,0,1],[1,1,1]])
+        countNeighboursKernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
         silhouettesWithNeighbours.append(convolve(silhouette, countNeighboursKernel))
 
     for coordinatesId in range(thinLinesCoordinates[0].size):
@@ -79,8 +81,14 @@ def removeNonTransparentValuesFromArray(source, target):
 
 def pasteNonTransparentValuesIntoArrayWithOffset(source, target, yOffset, xOffset):
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
-    target[colorMaskCoordinates[0] + yOffset, colorMaskCoordinates[1] + xOffset, :] = source[colorMaskCoordinates[0],
-                                                                                      colorMaskCoordinates[1], :]
+    indicesToRemove = []
+    indicesToRemove.extend(np.where(colorMaskCoordinates[0] + yOffset <= 0)[0])
+    indicesToRemove.extend(np.where(colorMaskCoordinates[0] + yOffset >= target.shape[0])[0])
+    indicesToRemove.extend(np.where(colorMaskCoordinates[1] + xOffset <= 0)[0])
+    indicesToRemove.extend(np.where(colorMaskCoordinates[1] + xOffset >= target.shape[1])[0])
+    yCoordinates = np.delete(colorMaskCoordinates[0], indicesToRemove)
+    xCoordinates = np.delete(colorMaskCoordinates[1], indicesToRemove)
+    target[yCoordinates + yOffset, xCoordinates + xOffset, :] = source[yCoordinates, xCoordinates, :]
 
 
 def areAnyVisiblePixelsOverlapping(imageArrayA, imageArrayB):
@@ -248,13 +256,14 @@ def shadeImage(imageToShade, colorToIncorporate, weightForColorToIncorporate):
     imageToShadeWithoutAlpha = imageToShade[:, :, 0:3]
     alpha = imageToShade[:, :, 3]
     shadedImage = np.uint8(np.add(np.multiply(1. - weightForColorToIncorporate, imageToShadeWithoutAlpha),
-                                            np.multiply(weightForColorToIncorporate, colorToIncorporate)))
+                                  np.multiply(weightForColorToIncorporate, colorToIncorporate)))
     visibleNonBlackCoordinates = np.any(imageToShade != [0, 0, 0, 0], axis=-1)
     red = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 0], imageToShade[:, :, 0])
     green = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 1], imageToShade[:, :, 1])
     blue = np.where(visibleNonBlackCoordinates, shadedImage[:, :, 2], imageToShade[:, :, 2])
     rgba = np.dstack((red, green, blue, alpha))
     return rgba
+
 
 def getTransparentPixels(imageArray):
     return np.nonzero(~imageArray[:, :, 3])
