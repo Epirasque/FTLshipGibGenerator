@@ -14,6 +14,8 @@ from imageProcessing.MetalBitsConstants import *
 def populateSeams(gibs, shipImageName, shipImage, tilesets, shipColorMean, PARAMETERS):
     for gibToPopulate in gibs:
         gibToPopulateId = gibToPopulate['id']
+        logger = getSubProcessLogger()
+        logger.debug('Attaching Metalbits to Gib %u / %u' % (gibToPopulateId, len(gibs)))
         for neighbouringGib in gibs:
             neighbourId = neighbouringGib['id']
             if gibToPopulateId != neighbourId:
@@ -30,17 +32,17 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     originalGibImageArray = np.ma.copy(gibImage)  # todo: use this more often? more efficient?
     seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     seamDistanceScores = precalculateSeamDistanceScores(seamCoordinates)
-    #logger = getSubProcessLogger()
-    #logger.debug('Populating Metalbits Gib %u to %u (there are %u Gibs in total), Layer 1 / 3' % (gibToPopulate['id'], neighbourId, len(gibs)))
+    # logger = getSubProcessLogger()
+    # logger.debug('Populating Metalbits Gib %u to %u (there are %u Gibs in total), Layer 1 / 3' % (gibToPopulate['id'], neighbourId, len(gibs)))
     metalBitsLayer1AndBeyond = populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray,
                                               seamCoordinates,
                                               seamDistanceScores, shipImage,
                                               tilesets,
                                               shipColorMean)  # TODO new seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
-    #logger.debug('Populating Metalbits Gib %u / %u, Layer 2 / 3' % (gibToPopulate['id'], len(gibs)))
+    # logger.debug('Populating Metalbits Gib %u / %u, Layer 2 / 3' % (gibToPopulate['id'], len(gibs)))
     metalBitsLayer2 = populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
                                      shipImage, tilesets, shipColorMean)
-    #logger.debug('Populating Metalbits Gib %u / %u, Layer 3 / 3' % (gibToPopulate['id'], len(gibs)))
+    # logger.debug('Populating Metalbits Gib %u / %u, Layer 3 / 3' % (gibToPopulate['id'], len(gibs)))
     metalBitsLayer3 = populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
                                      seamDistanceScores, shipImage, tilesets, shipColorMean)
     try:
@@ -117,9 +119,13 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
 
     shadeTile = True
     cutTileAtShipEdge = True
-# TODO: fix both attachmentpoints being next to each other...
+    # TODO: fix both attachmentpoints being next to each other...
     attachmentPointA = seamCoordinates[bestPointIdA][0], seamCoordinates[bestPointIdA][1]
-    attachmentPointB = seamCoordinates[bestPointIdB][0], seamCoordinates[bestPointIdB][1]
+    if abs(seamCoordinates[bestPointIdA][0] - seamCoordinates[bestPointIdB][0]) <= 1 and abs(
+            seamCoordinates[bestPointIdA][1] - seamCoordinates[bestPointIdB][1]) <= 1:
+        bestPointIdB = -1
+    else:
+        attachmentPointB = seamCoordinates[bestPointIdB][0], seamCoordinates[bestPointIdB][1]
 
     seamImageArray = np.ma.copy(metalBits)
 
@@ -150,34 +156,39 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
                                                                                                      cutTileAtShipEdge)
 
     if isCandidateValid == True:
-        nrTransparentNeighbours = convolutedMask[attachmentPointB[0], attachmentPointB[1]]
+        nrTransparentNeighbours = 0
+        if bestPointIdB != -1:
+            nrTransparentNeighbours = convolutedMask[attachmentPointB[0], attachmentPointB[1]]
         if nrTransparentNeighbours == 0 or bestPointIdB == -1:
-            isCandidateValid = True #False?
+            isCandidateValid = True  # False?
             metalBitsCandidateAfterSecondAttachment = metalBitsCandidate
-            seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidateAfterSecondAttachment, seamImageArray)
+            seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidateAfterSecondAttachment,
+                                                                       seamImageArray)
         else:
             seamImageArray[attachmentPointB[0], attachmentPointB[1]] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
             inwardsSearchX = attachmentPointB[1]
             inwardsSearchY = attachmentPointB[0]
-            isCandidateValid, metalBitsCandidateAfterSecondAttachment, seamPixelsCoveredByCandidate = constructValidCandidate(PARAMETERS,
-                                                                                                         attachmentPointB,
-                                                                                                         gibToPopulate,
-                                                                                                         gibs,
-                                                                                                         gifFrames,
-                                                                                                         inwardsSearchX,
-                                                                                                         inwardsSearchY,
-                                                                                                         metalBitsCandidate,
-                                                                                                         originalGibImageArray,
-                                                                                                         seamImageArray,
-                                                                                                         shipImage,
-                                                                                                         tileImageArray,
-                                                                                                         tileOriginCenterPoint,
-                                                                                                         shipColorMean,
-                                                                                                         shadeTile,
-                                                                                                         cutTileAtShipEdge)
+            isCandidateValid, metalBitsCandidateAfterSecondAttachment, seamPixelsCoveredByCandidate = constructValidCandidate(
+                PARAMETERS,
+                attachmentPointB,
+                gibToPopulate,
+                gibs,
+                gifFrames,
+                inwardsSearchX,
+                inwardsSearchY,
+                metalBitsCandidate,
+                originalGibImageArray,
+                seamImageArray,
+                shipImage,
+                tileImageArray,
+                tileOriginCenterPoint,
+                shipColorMean,
+                shadeTile,
+                cutTileAtShipEdge)
 
     if isCandidateValid == True:
-        metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames, metalBitsCandidateAfterSecondAttachment,
+        metalBits, remainingUncoveredSeamPixels = approveCandidate(PARAMETERS, gifFrames,
+                                                                   metalBitsCandidateAfterSecondAttachment,
                                                                    originalGibImageArray, seamPixelsCoveredByCandidate)
     else:
         logger = getSubProcessLogger()
