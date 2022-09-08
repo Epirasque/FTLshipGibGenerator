@@ -40,8 +40,8 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                                               tilesets,
                                               shipColorMean)  # TODO new seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     # logger.debug('Populating Metalbits Gib %u / %u, Layer 2 / 3' % (gibToPopulate['id'], len(gibs)))
-    metalBitsLayer2 = populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
-                                     shipImage, tilesets, shipColorMean)
+    #metalBitsLayer2 = populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
+    #                                 shipImage, tilesets, shipColorMean)
     # logger.debug('Populating Metalbits Gib %u / %u, Layer 3 / 3' % (gibToPopulate['id'], len(gibs)))
     metalBitsLayer3 = populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
                                      seamDistanceScores, shipImage, tilesets, shipColorMean)
