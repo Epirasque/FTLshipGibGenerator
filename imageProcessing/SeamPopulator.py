@@ -46,7 +46,7 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
     metalBitsLayer3 = populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
                                      seamDistanceScores, shipImage, tilesets, shipColorMean)
     try:
-        pasteNonTransparentValuesIntoArray(metalBitsLayer2, metalBitsLayer1AndBeyond)
+    #    pasteNonTransparentValuesIntoArray(metalBitsLayer2, metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
         finalGib = deepcopy(metalBitsLayer1AndBeyond)
         pasteNonTransparentValuesIntoArray(originalGibImageArray, finalGib)
