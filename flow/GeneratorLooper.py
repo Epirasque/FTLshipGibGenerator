@@ -370,7 +370,7 @@ def attemptGeneratingGibsFromIdenticalLayout(PARAMETERS, layout, layoutName, nam
     try:
         logger.debug('Trying to find gibs already existing for the layout before this run...')
         targetFolderPath = determineTargetFolderPath(PARAMETERS)
-        shipType = ships[shipImageName]['type']
+        shipType = ships[name]['type']
         if shipType == 'BOSS':
             nrGibs = PARAMETERS.NR_GIBS_BOSS
         elif shipType == 'PLAYER':
