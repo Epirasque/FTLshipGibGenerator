@@ -15,7 +15,7 @@ VISIBLE_ALPHA_THRESHOLD = 255
 def loadShipBaseImage(shipImageName, sourceFolderpath):
     logger = getSubProcessLogger()
     try:
-        imageArray = prepareShipImage("ship_glow", shipImageName, sourceFolderpath)
+        imageArray = prepareShipImage("ships_glow", shipImageName, sourceFolderpath)
         return imageArray, "ships_glow"
     except FileNotFoundError:
         try:
