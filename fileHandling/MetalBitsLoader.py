@@ -44,6 +44,7 @@ def loadTilesetsIntoDictionary(folderName, tilesetFilepaths, PARAMETERS):
         loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets, PARAMETERS)
 
     distributeTilesToAngles(tilesets, LAYER1, PARAMETERS.LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
+    distributeTilesToAngles(tilesets, LAYER2, PARAMETERS.LAYER2_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
     distributeTilesToAngles(tilesets, LAYER3, PARAMETERS.LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION)
     return tilesets
 
@@ -83,7 +84,8 @@ def loadSingleTilesetIntoDictionary(folderName, tilesetFilepath, tilesets, PARAM
         rotationTolerance = PARAMETERS.LAYER1_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
     if layer == LAYER2:
         validLayer = True
-        staticLayer = True
+        #staticLayer = True
+        rotationTolerance = PARAMETERS.LAYER2_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION
     elif layer == LAYER3:
         validLayer = True
         rotationTolerance = PARAMETERS.LAYER3_ANGLE_TOLERANCE_SPREAD_FOR_TILE_RANDOM_SELECTION

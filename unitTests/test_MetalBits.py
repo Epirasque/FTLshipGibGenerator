@@ -27,7 +27,11 @@ class MetalBitsTest(unittest.TestCase):
                                              ANIMATE_METAL_BITS_FOR_DEVELOPER=True, ANIMATE_METAL_BITS_FPS=5.,
                                              CHECK_SPECIFIC_SHIPS=False, SPECIFIC_SHIP_NAMES='unset',
                                              LIMIT_ITERATIONS=False,
-                                             ITERATION_LIMIT=0)
+                                             ITERATION_LIMIT=0, IMPLODE=False, IMPLODE_SPEED_FACTOR=0.6,
+                                             LOWER_BOUND_VELOCITY=.1,
+        UPPER_BOUND_VELOCITY = 1.5,
+        TOTAL_DIRECTION_SPREAD_IN_DEGREES = 16,
+        MAXIMUM_ANGULAR_SPREAD_IN_DEGREES = 1.4)
 
         resetTestResources(standaloneFolderPath, addonFolderPath, [])
 
