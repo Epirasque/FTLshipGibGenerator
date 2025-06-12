@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import numpy as np
 
-from imageProcessing.ImageProcessingUtilities import pasteNonTransparentValuesIntoArray, getDistanceBetweenPoints
+from imageProcessing.ImageProcessingUtilities import pasteNonCompletelyTransparentValuesIntoArray, getDistanceBetweenPoints
 from imageProcessing.MetalBitsConstants import SEAM_DETECTION_SEARCH_RADIUS
 
 
@@ -58,7 +58,7 @@ def animateTopology(gifImages, PARAMETERS, gibs):
         gibImageArray = np.zeros(gibs[0]['img'].shape, dtype=np.uint8)
         # here: decreasing z-values
         for gibToShow in gibs:
-            pasteNonTransparentValuesIntoArray(gibToShow['img'], gibImageArray)
+            pasteNonCompletelyTransparentValuesIntoArray(gibToShow['img'], gibImageArray)
             for neighbouringGib in gibs:
                 neighbourId = neighbouringGib['id']
                 if gibToShow['id'] != neighbourId:
@@ -98,17 +98,17 @@ def determineSeamsWithNeighbours(gibToProcess, gibs, shipImage):
     # TODO: refactor into something more efficient to improve performance
     for x in range(gibImageArray.shape[1]):
         for y in range(gibImageArray.shape[0]):
-            if gibImageArray[y, x, 3] == 255:
+            if gibImageArray[y, x, 3] > 0:
                 for xSearchOffset in range(-SEAM_DETECTION_SEARCH_RADIUS, SEAM_DETECTION_SEARCH_RADIUS + 1):
                     xSearch = x + xSearchOffset
                     for ySearchOffset in range(-SEAM_DETECTION_SEARCH_RADIUS, SEAM_DETECTION_SEARCH_RADIUS + 1):
                         ySearch = y + ySearchOffset
                         try:
-                            if gibImageArray[ySearch, xSearch, 3] < 255:
-                                if shipImage[ySearch, xSearch, 3] == 255:
+                            if gibImageArray[ySearch, xSearch, 3] == 0:
+                                if shipImage[ySearch, xSearch, 3] > 0:
                                     for gibNeighbour in gibs:
                                         if gibNeighbour['id'] != gibToProcess['id']:
-                                            if gibNeighbour['img'][ySearch, xSearch, 3] == 255:
+                                            if gibNeighbour['img'][ySearch, xSearch, 3] > 0:
                                                 gibToProcess['neighbourToSeam'][gibNeighbour['id']].append(
                                                     (y, x))
                         except:

@@ -1,15 +1,13 @@
 import logging
 
-import numpy as np
 from skimage.io import imread
 
 from flow.LoggerUtils import getSubProcessLogger
+from imageProcessing.GlowRemover import removeGlow
 
 logger = logging.getLogger('GLAIVE.' + __name__)
 
 BASE_SUFFIX = '_base'
-
-VISIBLE_ALPHA_THRESHOLD = 255
 
 
 def loadShipBaseImage(shipImageName, sourceFolderpath):
@@ -30,11 +28,5 @@ def loadShipBaseImage(shipImageName, sourceFolderpath):
 
 
 def prepareShipImage(shipSubfolderName, shipImageName, sourceFolderpath):
-    imageArray = imread(
-        sourceFolderpath + '\\img\\' + shipSubfolderName + '\\' + shipImageName + BASE_SUFFIX + '.png')
-    # glow should be ignored, is treated as completely transparent
-    imageArray[imageArray[:, :, 3] < VISIBLE_ALPHA_THRESHOLD] = 0
-    # only overwrite alpha, not the colors
-    visiblePoints = np.where(imageArray[:, :, 3] >= VISIBLE_ALPHA_THRESHOLD)
-    imageArray[visiblePoints[0], visiblePoints[1], 3] = 255
-    return imageArray
+    return removeGlow(imread(
+        sourceFolderpath + '\\img\\' + shipSubfolderName + '\\' + shipImageName + BASE_SUFFIX + '.png'))

@@ -7,9 +7,9 @@ from PIL import Image
 
 from fileHandling.CacheDao import isLayoutNameInCache, loadCacheForLayoutName
 from fileHandling.GibImageChecker import areGibsPresentAsImageFiles
-from fileHandling.ShipImageLoader import loadShipBaseImage, VISIBLE_ALPHA_THRESHOLD
+from fileHandling.ShipImageLoader import loadShipBaseImage
 from flow.LoggerUtils import getSubProcessLogger
-from imageProcessing.ImageProcessingUtilities import cropImage, pasteNonTransparentValuesIntoArray
+from imageProcessing.ImageProcessingUtilities import cropImage, pasteNonCompletelyTransparentValuesIntoArray
 from imageProcessing.MetalBitsAttacher import attachMetalBits
 from metadata.GibEntryChecker import getExplosionNode
 
@@ -60,14 +60,15 @@ def generateGibsBasedOnSameLayoutGibMask(PARAMETERS, layout, layoutName, name, n
         for gibForMask in gibsForMask:  # TODO: test case for deviating number of maskgibs
             uncroppedSearchGibImg = Image.fromarray(np.zeros(newBaseImage.shape, dtype=np.uint8))
             # TODO: different x-y offset: coordinates without metalbits!
+            # TODO: maybe gibForMask['img'] is wrong if there is partial transparency?
             uncroppedSearchGibImg.paste(gibForMask['img'], (gibForMask['x_no_metalbits'], gibForMask['y_no_metalbits']),
                                         gibForMask['img'])
-            searchGibTransparentMask = np.asarray(uncroppedSearchGibImg)[:, :, 3] < VISIBLE_ALPHA_THRESHOLD
+            searchGibTransparentMask = np.asarray(uncroppedSearchGibImg)[:, :, 3] == 0
             uncroppedNewGib = deepcopy(newBaseImage)
             uncroppedNewGib[searchGibTransparentMask] = (0, 0, 0, 0)
             if PARAMETERS.GENERATE_METAL_BITS == True:
-                pasteNonTransparentValuesIntoArray(np.asarray(gibForMask['uncropped_metalbits']),
-                                                   uncroppedNewGib)
+                pasteNonCompletelyTransparentValuesIntoArray(np.asarray(gibForMask['uncropped_metalbits']),
+                                                             uncroppedNewGib)
 
             # uncroppedSearchGibImgArray = np.zeros(newBaseImage.shape, dtype=np.uint8)
             # if PARAMETERS.GENERATE_METAL_BITS == True:

@@ -21,7 +21,7 @@ def findColorInImage(imageArray, colorToFind):
     return coloredArea, coloredCoordinates
 
 
-def pasteNonTransparentValuesIntoArray(source, target):
+def pasteNonCompletelyTransparentValuesIntoArray(source, target):
     # NOTE: has to ensure source is not altered
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = source[colorMaskCoordinates[0],
@@ -78,13 +78,13 @@ def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto, gibLoopIndex):
             imagesToMoveInto[bestShilouetteId][coordinates] = imageToProcess[coordinates]
 
 
-def removeNonTransparentValuesFromArray(source, target):
+def removeNonCompletelyTransparentValuesFromArray(source, target):
     # NOTE: has to ensure source is not altered
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
     target[colorMaskCoordinates[0], colorMaskCoordinates[1], :] = [0, 0, 0, 0]
 
 
-def pasteNonTransparentValuesIntoArrayWithOffset(source, target, yOffset, xOffset):
+def pasteNonCompletelyTransparentValuesIntoArrayWithOffset(source, target, yOffset, xOffset):
     colorMaskCoordinates = np.where(np.any(source != [0, 0, 0, 0], axis=-1))
     indicesToRemove = []
     indicesToRemove.extend(np.where(colorMaskCoordinates[0] + yOffset <= 0)[0])
@@ -180,13 +180,13 @@ def determineOutwardVector(pointOfDetection, vectorA, vectorB, imageArray, scanF
     if scanY_A < 0 or scanY_A >= imageArray.shape[0] or scanX_A < 0 or scanX_A >= imageArray.shape[1]:
         isDetectionSuccessful = False
     else:
-        isAtowardsTransparency = np.any(imageArray[scanY_A, scanX_A][3] < 255)
+        isAtowardsTransparency = np.any(imageArray[scanY_A, scanX_A][3] == 0)
     scanX_B = pointOfDetection[1] + round(vectorB[1] * scanForTransparencyDistance)
     scanY_B = pointOfDetection[0] + round(vectorB[0] * scanForTransparencyDistance)
     if scanY_B < 0 or scanY_B >= imageArray.shape[0] or scanX_B < 0 or scanX_B >= imageArray.shape[1]:
         isDetectionSuccessful = False
     else:
-        isBtowardsTransparency = np.any(imageArray[scanY_B, scanX_B][3] < 255)
+        isBtowardsTransparency = np.any(imageArray[scanY_B, scanX_B][3] == 0)
 
     if isAtowardsTransparency and isBtowardsTransparency:
         isDetectionSuccessful = False
@@ -270,7 +270,7 @@ def shadeImage(imageToShade, colorToIncorporate, weightForColorToIncorporate):
     return rgba
 
 
-def getTransparentPixels(imageArray):
+def getPartiallyTransparentPixels(imageArray):
     return np.nonzero(~imageArray[:, :, 3])
 
 

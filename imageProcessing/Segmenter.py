@@ -7,9 +7,6 @@ from flow.LoggerUtils import getSubProcessLogger
 from flow.MemoryManagement import cleanUpMemory
 from imageProcessing.ImageProcessingUtilities import cropImage, imageDifferenceInPercentage, moveThinLinesToMatchingGib
 
-# glow around ships should not be part of the gibs
-VISIBLE_ALPHA_VALUE = 255
-
 def segment(shipType, shipImage, shipImageName, PARAMETERS):
     logger = getSubProcessLogger()
     if shipType == 'BOSS':
@@ -22,7 +19,7 @@ def segment(shipType, shipImage, shipImageName, PARAMETERS):
     compactnessToUse = PARAMETERS.STARTING_COMPACTNESS
     compactnessGainPerAttempt = PARAMETERS.COMPACTNESS_GAIN_PER_ATTEMPT
     compactnessThreshold = PARAMETERS.COMPACTNESS_LIMIT
-    nonTransparentMask = (shipImage[:, :, 3] == VISIBLE_ALPHA_VALUE)
+    nonTransparentMask = (shipImage[:, :, 3] > 0)
     nrNonTransparentPixels = nonTransparentMask.sum()
     nrSuccessfulGibs = 0
     nrSegmentationAttempts = 0
@@ -74,7 +71,7 @@ def determinePixelDeviationPercentageByReconstructingBaseWithSegments(segments, 
         matchingSegmentIndex = (segments == gibId)
         gibImage = np.zeros(shipImage.shape, dtype=np.uint8)
         gibImage[matchingSegmentIndex] = shipImage[matchingSegmentIndex]
-        reconstructedFromSegments.paste(Image.fromarray(gibImage), (0, 0), Image.fromarray(gibImage))
+        reconstructedFromSegments.paste(Image.fromarray(gibImage), (0, 0), Image.fromarray(gibImage[:,:,3] > 0))
     return imageDifferenceInPercentage(shipImage, reconstructedFromSegments)
 
 

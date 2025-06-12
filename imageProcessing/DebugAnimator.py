@@ -12,5 +12,7 @@ def saveGif(gifFrames, filename, PARAMETERS):
             os.remove(filePath)
         finalFrameToRecognizeEndOfGif = np.zeros(gifFrames[0].shape, dtype=np.uint8)
         gifFrames.append(finalFrameToRecognizeEndOfGif)
+        for frame in gifFrames:
+            frame[np.where(np.all(frame == [0, 0, 0, 0], axis=-1))] = [255, 255, 255, 0]
         imageio.mimwrite(filePath, gifFrames, format='GIF', fps=PARAMETERS.ANIMATE_METAL_BITS_FPS)
         # TODO: smaller filesize using pygifsicle.optimize(filePath)

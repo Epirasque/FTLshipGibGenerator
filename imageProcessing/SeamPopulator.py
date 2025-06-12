@@ -100,26 +100,26 @@ def populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageA
     # TODO: currently placeholder. remember to do it twice!
     # is gib uncropped?
 
-    transparentPixels = np.nonzero(~shipImage[:, :, 3])
+    fullyTransparentPixels = getFullyTransparentPixels(~shipImage[:, :, 3])
     mask = np.zeros((shipImage.shape[0], shipImage.shape[1]), dtype=np.int8)
-    mask[transparentPixels] = 1
+    mask[fullyTransparentPixels] = 1
     kernel = np.array([[1, 1, 1], [1, 0, 1],
                        [1, 1, 1]])  # consider bigger one? for 2 pixel width lines, and MAYBE get rid off 2nd mask
     convolutedMask = convolve(mask, kernel, mode='constant', cval=1)
 
     bestPointIdA = -1
     bestPointIdB = -1  # B is a second-class citizen
-    highestTransparentNeighbourAmountA = 0
-    highestTransparentNeighbourAmountB = 0
+    highestCompletelyTransparentNeighbourAmountA = 0
+    highestCompletelyTransparentNeighbourAmountB = 0
     for seamPixelId in range(len(seamCoordinates)):
         nrTransparentNeighbours = convolutedMask[seamCoordinates[seamPixelId][0], seamCoordinates[seamPixelId][1]]
-        if nrTransparentNeighbours > highestTransparentNeighbourAmountA and nrTransparentNeighbours > highestTransparentNeighbourAmountB and nrTransparentNeighbours < 8:
-            highestTransparentNeighbourAmountB = highestTransparentNeighbourAmountA
+        if nrTransparentNeighbours > highestCompletelyTransparentNeighbourAmountA and nrTransparentNeighbours > highestCompletelyTransparentNeighbourAmountB and nrTransparentNeighbours < 8:
+            highestCompletelyTransparentNeighbourAmountB = highestCompletelyTransparentNeighbourAmountA
             bestPointIdB = bestPointIdA
-            highestTransparentNeighbourAmountA = nrTransparentNeighbours
+            highestCompletelyTransparentNeighbourAmountA = nrTransparentNeighbours
             bestPointIdA = seamPixelId
-        elif nrTransparentNeighbours > highestTransparentNeighbourAmountB and nrTransparentNeighbours < 8:
-            highestTransparentNeighbourAmountB = nrTransparentNeighbours
+        elif nrTransparentNeighbours > highestCompletelyTransparentNeighbourAmountB and nrTransparentNeighbours < 8:
+            highestCompletelyTransparentNeighbourAmountB = nrTransparentNeighbours
             bestPointIdB = seamPixelId
 
     shadeTile = True
@@ -299,7 +299,7 @@ def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCand
         # TODO: double check if we really want red transparent here
         blockingImage[np.any(blockingImage != [0, 0, 0, 0], axis=-1)] = [255, 0, 0, 0]
         gifFrame = np.ma.copy(blockingImage)
-        pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
+        pasteNonCompletelyTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
         gifFrames.append(gifFrame)
 
 
@@ -321,7 +321,7 @@ def constructValidCandidate(PARAMETERS, attachmentPoint, gibToPopulate, gibs, gi
         isCandidateValid = False
     else:
         if cutTileAtShipEdge:
-            metalBitsCandidate[getTransparentPixels(shipImage)] = [0, 0, 0, 0]
+            metalBitsCandidate[getFullyTransparentPixels(shipImage)] = [0, 0, 0, 0]
         animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, metalBitsCandidate,
                                            originalGibImageArray)
         isCandidateValid, blockingNeighbourId = doesCandidateSatisfyConstraints(gibToPopulate, gibs, metalBitsCandidate,
@@ -337,7 +337,7 @@ def determineCandidateTileWithCoveredOrigin(PARAMETERS, attachmentPoint, gifFram
     tileImageArray, tileOriginCenterPoint, tileOriginCoordinates = determineTileToAttach(outwardAngle,
                                                                                          tilesToUse)
     alreadyCoveredArea = np.ma.copy(originalGibImageArray)
-    pasteNonTransparentValuesIntoArray(metalBits, alreadyCoveredArea)
+    pasteNonCompletelyTransparentValuesIntoArray(metalBits, alreadyCoveredArea)
     animateAlreadyCoveredArea(PARAMETERS, alreadyCoveredArea, attachmentPoint, gifFrames)
     isCandidateOriginCoveredByGib, inwardsSearchX, inwardsSearchY = searchInwardUntilOriginIsCoveredByGib(PARAMETERS,
                                                                                                           alreadyCoveredArea,
@@ -367,7 +367,7 @@ def animateGibResultAndSeamPreview(PARAMETERS, gifFrames, metalBits, originalGib
                                    remainingUncoveredSeamPixels):
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER:
         gifFrame = np.ma.copy(metalBits)
-        pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
+        pasteNonCompletelyTransparentValuesIntoArray(originalGibImageArray, gifFrame)
         gifFrames.append(gifFrame)
         gifFrameNextSeamPixels = np.ma.copy(gifFrame)
         gifFrameNextSeamPixels[remainingUncoveredSeamPixels] = REMAINING_UNCOVERED_SEAM_PIXEL_COLOR
@@ -379,7 +379,7 @@ def animateUnverifiedCandidateAttached(PARAMETERS, attachmentPoint, gifFrames, m
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
         gifFrame = np.ma.copy(originalGibImageArray)
         try:
-            pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
+            pasteNonCompletelyTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
         except:
             pass
         # TODO: try: gifFrame[np.any(metalBits != [0, 0, 0, 0], axis=-1)] = [0, 0, 255, 255]
@@ -392,15 +392,15 @@ def constructMetalBitsCandidateBelowMetalBits(inwardsSearchX, inwardsSearchY, me
     isCandidateValidInitially = True
     metalBitsCandidate = np.zeros(metalBits.shape, dtype=np.uint8)
     try:
-        pasteNonTransparentValuesIntoArrayWithOffset(tileImageArray, metalBitsCandidate,
-                                                     inwardsSearchY - tileOriginCenterPoint[0],
-                                                     inwardsSearchX - tileOriginCenterPoint[1])
+        pasteNonCompletelyTransparentValuesIntoArrayWithOffset(tileImageArray, metalBitsCandidate,
+                                                               inwardsSearchY - tileOriginCenterPoint[0],
+                                                               inwardsSearchX - tileOriginCenterPoint[1])
     except IndexError:
         logger = getSubProcessLogger()
         logger.debug('Discarding candidate with metal bits stretching out of bounds')
         isCandidateValidInitially = False
     seamPixelsCoveredByCandidate = getVisibleOverlappingPixels(metalBitsCandidate, seamImageArray)
-    pasteNonTransparentValuesIntoArray(metalBits, metalBitsCandidate)
+    pasteNonCompletelyTransparentValuesIntoArray(metalBits, metalBitsCandidate)
     return metalBitsCandidate, seamPixelsCoveredByCandidate, isCandidateValidInitially
 
 
@@ -479,7 +479,7 @@ def animateAttachmentPointWithOrientation(PARAMETERS, attachmentPoint, gifFrames
     logger = getSubProcessLogger()
     if PARAMETERS.ANIMATE_METAL_BITS_FOR_DEVELOPER == True:
         gifFrame = np.ma.copy(metalBits)
-        pasteNonTransparentValuesIntoArray(originalGibImageArray, gifFrame)
+        pasteNonCompletelyTransparentValuesIntoArray(originalGibImageArray, gifFrame)
         edgeCoordinatesInRadiusY, edgeCoordinatesInRadiusX = findEdgePixelsInSearchRadius(seamCoordinates,
                                                                                           attachmentPoint,
                                                                                           NEARBY_EDGE_PIXEL_SCAN_RADIUS)
