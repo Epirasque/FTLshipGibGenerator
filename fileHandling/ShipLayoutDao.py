@@ -6,7 +6,6 @@ from multiprocessing import current_process
 
 # logger = logging.getLogger('GLAIVE.' + __name__)
 
-
 def loadShipLayout(shipLayoutName, sourceFolderpath):
     logger = logging.getLogger('GLAIVE.' + __name__ + '|' + current_process().name)
     os.makedirs(sourceFolderpath + '\\data\\', exist_ok=True)
@@ -14,7 +13,8 @@ def loadShipLayout(shipLayoutName, sourceFolderpath):
         # workaround: ElementTree expect a single root node
         with open(sourceFolderpath + '\\data\\' + shipLayoutName + '.xml', encoding='utf-8') as file:
             rawXml = file.read()
-        return ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", rawXml) + "</root>")
+        # issue with e.g. <mv:hullAnims ...
+        return ET.fromstring(re.sub(r"(<\?xml[^>]+\?>)", r"\1<root>", rawXml.replace(':', '_')) + "</root>")
         # return ET.parse(sourceFolderpath + '\\data\\' + shipLayoutName + '.xml')
     except FileNotFoundError:
         logger.error('No layout XML file found for shipBlueprint layout attribute: %s' % shipLayoutName)

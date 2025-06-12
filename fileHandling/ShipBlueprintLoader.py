@@ -7,7 +7,7 @@ SHIP_BLUEPRINT_ATTRIBUTE = 'shipBlueprint'
 BOSS_SHIP_TAGNAME = 'bossShip'
 PLAYER_SHIP_TAGNAME = 'ship'
 FTL_TAGNAME = 'FTL'
-MOD_TAG_PREFIXES = ['mod:', 'mod-append:', 'mod-overwrite:']
+MOD_TAG_PREFIXES = ['mod:', 'mod-append:', 'mod-overwrite:', 'mv:']
 
 logger = logging.getLogger('GLAIVE.' + __name__)
 
