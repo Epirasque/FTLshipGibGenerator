@@ -22,7 +22,7 @@ def attachMetalBits(gibs, shipImage, tilesets, PARAMETERS, shipImageName):
     animateTopology(gifFrames, PARAMETERS, gibs)
     saveGif(gifFrames, shipImageName + "_topology", PARAMETERS)
     shipColorMean = determineShipColorMean(shipImage)
-    populateSeams(gibs, shipImageName, shipImage, tilesets, shipColorMean, PARAMETERS)
+    populateSeams(gibs, uncroppedGibsWithoutMetalBits, shipImageName, shipImage, tilesets, shipColorMean, PARAMETERS)
     cropAndUpdateGibs(gibs, shipImage)
     return gibs, uncroppedGibsWithoutMetalBits
 
@@ -61,5 +61,5 @@ def uncropGibs(gibs, shipImage):
     for gib in gibs:
         croppedGib = Image.fromarray(gib['img'])
         uncroppedGib = Image.fromarray(np.zeros(shipImage.shape, dtype=np.uint8))
-        uncroppedGib.paste(croppedGib, (gib['x'], gib['y']), croppedGib)
-        gib['img'] = np.asarray(uncroppedGib)
+        uncroppedGib.paste(croppedGib, (gib['x'], gib['y']), None)
+        gib['img'] = np.asarray(uncroppedGib, dtype=np.uint8)

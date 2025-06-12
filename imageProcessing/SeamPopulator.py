@@ -11,7 +11,7 @@ from imageProcessing.ImageProcessingUtilities import *
 from imageProcessing.MetalBitsConstants import *
 
 
-def populateSeams(gibs, shipImageName, shipImage, tilesets, shipColorMean, PARAMETERS):
+def populateSeams(gibs, uncroppedGibsWithoutMetalBits, shipImageName, shipImage, tilesets, shipColorMean, PARAMETERS):
     for gibToPopulate in gibs:
         gibToPopulateId = gibToPopulate['id']
         logger = getSubProcessLogger()
@@ -21,15 +21,16 @@ def populateSeams(gibs, shipImageName, shipImage, tilesets, shipColorMean, PARAM
             if gibToPopulateId != neighbourId:
                 if gibToPopulate['coveredByNeighbour'][neighbourId] == True:
                     gifFrames = []
-                    populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, shipColorMean,
-                                 PARAMETERS)
+                    populateSeam(gibToPopulate, uncroppedGibsWithoutMetalBits[gibToPopulateId - 1]['img'], gibs,
+                                 neighbourId, shipImage, tilesets, gifFrames, shipColorMean,
+                                 PARAMETERS, shipImageName)
                     saveGif(gifFrames, '%s_gib%uto%u' % (shipImageName, gibToPopulateId, neighbourId), PARAMETERS)
 
 
-def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrames, shipColorMean, PARAMETERS):
+def populateSeam(gibToPopulate, uncroppedGibWithoutMetalBits, gibs, neighbourId, shipImage, tilesets, gifFrames,
+                 shipColorMean, PARAMETERS):
     cleanUpMemory()
-    gibImage = gibToPopulate['img']
-    originalGibImageArray = np.ma.copy(gibImage)  # todo: use this more often? more efficient?
+    originalGibImageArray = np.ma.copy(uncroppedGibWithoutMetalBits)  # todo: use this more often? more efficient?
     seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     seamDistanceScores = precalculateSeamDistanceScores(seamCoordinates)
     # logger = getSubProcessLogger()
@@ -40,23 +41,27 @@ def populateSeam(gibToPopulate, gibs, neighbourId, shipImage, tilesets, gifFrame
                                               tilesets,
                                               shipColorMean)  # TODO new seamCoordinates = deepcopy(gibToPopulate['neighbourToSeam'][neighbourId])
     # logger.debug('Populating Metalbits Gib %u / %u, Layer 2 / 3' % (gibToPopulate['id'], len(gibs)))
-    #metalBitsLayer2 = populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
+    # metalBitsLayer2 = populateLayer2(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
     #                                 shipImage, tilesets, shipColorMean)
     # logger.debug('Populating Metalbits Gib %u / %u, Layer 3 / 3' % (gibToPopulate['id'], len(gibs)))
     metalBitsLayer3 = populateLayer3(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
                                      seamDistanceScores, shipImage, tilesets, shipColorMean)
     try:
-    #    pasteNonTransparentValuesIntoArray(metalBitsLayer2, metalBitsLayer1AndBeyond)
-        pasteNonTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
+        #    pasteNonTransparentValuesIntoArray(metalBitsLayer2, metalBitsLayer1AndBeyond)
+        pasteNonCompletelyTransparentValuesIntoArray(metalBitsLayer3, metalBitsLayer1AndBeyond)
         finalGib = deepcopy(metalBitsLayer1AndBeyond)
-        pasteNonTransparentValuesIntoArray(originalGibImageArray, finalGib)
+        pasteNonCompletelyTransparentValuesIntoArray(gibToPopulate['img'], finalGib)
 
     except Exception:
         logger = getSubProcessLogger()
         logger.error("UNEXPECTED EXCEPTION: %s" % traceback.format_exc())
     gibToPopulate['img'] = finalGib
-    gibToPopulate['uncropped_metalbits'] = deepcopy(metalBitsLayer1AndBeyond)
-    removeNonTransparentValuesFromArray(originalGibImageArray, gibToPopulate['uncropped_metalbits'])
+    if 'uncropped_metalbits' not in gibToPopulate:
+        gibToPopulate['uncropped_metalbits'] = deepcopy(finalGib)
+    else:
+        pasteNonCompletelyTransparentValuesIntoArray(finalGib, gibToPopulate['uncropped_metalbits'])
+
+    removeNonCompletelyTransparentValuesFromArray(originalGibImageArray, gibToPopulate['uncropped_metalbits'])
 
 
 def populateLayer1(PARAMETERS, gibToPopulate, gibs, gifFrames, originalGibImageArray, seamCoordinates,
@@ -291,6 +296,7 @@ def animateBlockingImage(PARAMETERS, gifFrames, metalBitsCandidate, gibs, isCand
                 if gib['id'] == blockingNeighbourId:
                     gibImage = gib['img']
                     blockingImage = np.ma.copy(gibImage)
+        # TODO: double check if we really want red transparent here
         blockingImage[np.any(blockingImage != [0, 0, 0, 0], axis=-1)] = [255, 0, 0, 0]
         gifFrame = np.ma.copy(blockingImage)
         pasteNonTransparentValuesIntoArray(metalBitsCandidate, gifFrame)
