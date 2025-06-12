@@ -117,7 +117,7 @@ def removeThinLines(gibs):
     gibImages = []
     for gib in gibs:
         gibImages.append(gib['img'])
-    for gib in gibs:
+    for gibLoopIndex, gib in enumerate(gibs):
         gibToProcess = gib['img']
-        moveThinLinesToMatchingGib(gibToProcess, gibImages)
+        moveThinLinesToMatchingGib(gibToProcess, gibImages, gibLoopIndex)
     return gibs

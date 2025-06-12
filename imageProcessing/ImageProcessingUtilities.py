@@ -28,10 +28,10 @@ def pasteNonTransparentValuesIntoArray(source, target):
                                                                   colorMaskCoordinates[1], :]
 
 
-def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto):
-    transparentPixels = np.nonzero(~imageToProcess[:, :, 3])
+def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto, gibLoopIndex):
+    fullyTransparentPixels = getFullyTransparentPixels(imageToProcess)
     mask = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
-    mask[transparentPixels] = 1
+    mask[fullyTransparentPixels] = 1
     kernel = np.array([[1, 1, 1], [1, 10, 1],
                        [1, 1, 1]])  # consider bigger one? for 2 pixel width lines, and MAYBE get rid off 2nd mask
 
@@ -50,10 +50,11 @@ def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto):
     silhouettesWithNeighbours = []
     for imageToPotentiallyMoveInto in imagesToMoveInto:
         silhouette = np.zeros((imageToProcess.shape[0], imageToProcess.shape[1]), dtype=np.int8)
-        transparentToMoveInto = np.nonzero(imageToPotentiallyMoveInto[:, :, 3])
-        silhouette[transparentToMoveInto] = 1
-        silhouette[thinLinesCoordinates] = 1
+        nonTransparent = np.nonzero(imageToPotentiallyMoveInto[:, :, 3])
+        silhouette[nonTransparent] = 1
+        silhouette[thinLinesCoordinates] = 0
         countNeighboursKernel = np.array([[1, 1, 1], [1, 0, 1], [1, 1, 1]])
+        # nr transparent neighbours (after some 'melting' iterations)
         silhouettesWithNeighbours.append(convolve(silhouette, countNeighboursKernel))
 
     for coordinatesId in range(thinLinesCoordinates[0].size):
@@ -66,9 +67,13 @@ def moveThinLinesToMatchingGib(imageToProcess, imagesToMoveInto):
             if nrNeighbours > highestAmountOfNeighbours:
                 highestAmountOfNeighbours = nrNeighbours
                 bestShilouetteId = shilouetteId
+        if highestAmountOfNeighbours == 0:
+            bestShilouetteId = gibLoopIndex
+        # new/different target image
         if np.all(imagesToMoveInto[bestShilouetteId][coordinates] == [0, 0, 0, 0], axis=-1):
             imagesToMoveInto[bestShilouetteId][coordinates] = imageToProcess[coordinates]
             imageToProcess[coordinates] = [0, 0, 0, 0]
+        # existing target image
         else:
             imagesToMoveInto[bestShilouetteId][coordinates] = imageToProcess[coordinates]
 
@@ -267,3 +272,7 @@ def shadeImage(imageToShade, colorToIncorporate, weightForColorToIncorporate):
 
 def getTransparentPixels(imageArray):
     return np.nonzero(~imageArray[:, :, 3])
+
+
+def getFullyTransparentPixels(imageArray):
+    return np.where(imageArray[:, :, 3] == 0)
