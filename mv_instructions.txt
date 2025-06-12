@@ -1,0 +1,23 @@
+0. ensure current branch is really the correct one (e.g. right now for official MV releases: fix/1.2.1)
+1. navigate to main glaive folder including config.ini, README.md and so on
+2. extract downloaded assets, then put contents of extracted data into that same folder (for ship metadata), e.g. projects/Multiverse 5.5 which then has subfolders data, img etc.
+3. ensure general settings of config.ini are standard (and not changed due to some previous investigation or something) e.g. by copying it over from config.ini_for_addons
+4. update config.ini with appropriate folder paths (usually the middle version should increase for a new upcoming MV release e.g. 1.3.5 -> 1.4.0; updates/fixes during playtesting result in version 1.4.1 and so on), in this case:
+INPUT_AND_STANDALONE_OUTPUT_FOLDERPATH = projects/Multiverse 5.5
+ADDON_OUTPUT_FOLDERPATH = output/MV Addon GenGibs v1.4.3
+
+Note: The output folder structure is automatically created
+
+5. if there are any scripts for handling results and backups, update paths in those as well (resetAddOnFolderFromBackup.bat, zipAddOnFolderIntoSlipstream.bat)
+6. run Core.py,  this will take quite a while; estimates are given
+6.1. if there are any issues before actual generation starts (e.g. Failed to parse xml content of projects/Multiverse 5.5\data\blueprints.xml.append) then simply fix them and run again
+6.2. if there are any issues during generation (or other reasons to abort it) clean up and run again:
+The most reliable way is to completely delete the target folder as well as all files within stabilityMarkers and statsForProcessedShips (aside from one marker file in each of these two folders). 
+If you feel like know what you're doing then only specific files need to be deleted from there. When only re-generating a specific ship its important to also re-generate all ships sharing the same layout in the same run of the programm! 
+7. when generation is done, check the summary for errors e.g. Errors when loading source: 0. Failed ship segmentations: 0. Ships with unassociated weaponMounts: 3. Unknown errors: 1
+7.1 to investigate, check GLAIVE.log (contains all logs so far) and/or GLAIVE_LAST_RUN.log (contains log of previous execution, consider making a backup so its not overriden)
+7.1.1 to find the error, check for ERROR (case-sensitive), if that doesn't help search for the first entry with the number e.g. search for 'Unknown errors: 1' and find the first error from above
+8. add the metadata.xml to the output (e.g. copy it from an older version and adjust text accordingly)
+9. test the result ingame for a few ships
+10. repeat it all for TRC
+11. release, including updating the forum thread unless its a playtest version
