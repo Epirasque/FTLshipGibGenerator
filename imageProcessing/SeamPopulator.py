@@ -23,7 +23,7 @@ def populateSeams(gibs, uncroppedGibsWithoutMetalBits, shipImageName, shipImage,
                     gifFrames = []
                     populateSeam(gibToPopulate, uncroppedGibsWithoutMetalBits[gibToPopulateId - 1]['img'], gibs,
                                  neighbourId, shipImage, tilesets, gifFrames, shipColorMean,
-                                 PARAMETERS, shipImageName)
+                                 PARAMETERS)
                     saveGif(gifFrames, '%s_gib%uto%u' % (shipImageName, gibToPopulateId, neighbourId), PARAMETERS)
 
 
