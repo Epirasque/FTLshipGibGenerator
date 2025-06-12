@@ -36,9 +36,9 @@ QUICK_AND_DIRTY_SEGMENT = False
 # start segmenting with this compactness value, the higher the compactness the more compact (blocky/spherical) the gibs will be
 STARTING_COMPACTNESS = 0.3
 # increase compactness by this amount whenever a segmentation attempt is rejected
-COMPACTNESS_GAIN_PER_ATTEMPT = 0.05
+COMPACTNESS_GAIN_PER_ATTEMPT = 0.025
 # stop further segmentation attempts when reaching this limit, then use the last one with possibly less gibs than desired
-COMPACTNESS_LIMIT = 2.5
+COMPACTNESS_LIMIT = 1.25
 # when segmenting, reject the result if the combination of gibs deviates too much (in percentage of pixels) from the original base ship image
 MAXIMUM_DEVIATION_FROM_BASE_IMAGE_PERCENTAGE = 1.
 # when segmenting, reject the result if a gib is unexpectedly small. after accounting for the amount of gibs, a gib should not cover less than this portion of all visible base ship pixels
